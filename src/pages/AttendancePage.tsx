@@ -1,6 +1,7 @@
 import { useState } from "react";
 import NcCard, { CardHeader, CardTitle } from "@/components/shared/NcCard";
 import { students, circles, getInitials } from "@/data/mockData";
+import { Check, X } from "lucide-react";
 
 export default function AttendancePage() {
   const attStudents = students.slice(0, 8);
@@ -34,8 +35,8 @@ export default function AttendancePage() {
                   <div className="text-[13px] font-medium text-foreground">{s.name}</div>
                 </div>
                 <div className="flex gap-1.5">
-                  <AttButton label="✓" active={status === 'present'} color="bg-nc-green" />
-                  <AttButton label="✗" active={status === 'absent'} color="bg-nc-red" />
+                  <AttButton icon="present" active={status === 'present'} color="bg-nc-green" />
+                  <AttButton icon="absent" active={status === 'absent'} color="bg-nc-red" />
                   <AttButton label="E" active={status === 'excused'} color="bg-nc-amber" />
                 </div>
               </div>
@@ -70,10 +71,10 @@ export default function AttendancePage() {
   );
 }
 
-function AttButton({ label, active, color }: { label: string; active: boolean; color: string }) {
+function AttButton({ label, icon, active, color }: { label?: string; icon?: "present" | "absent"; active: boolean; color: string }) {
   return (
     <button className={`px-3 py-1 rounded text-xs cursor-pointer border border-border ${active ? `${color} text-primary-foreground` : 'bg-transparent text-nc-muted'}`}>
-      {label}
+      {icon === "present" ? <Check className="h-3.5 w-3.5" /> : icon === "absent" ? <X className="h-3.5 w-3.5" /> : label}
     </button>
   );
 }

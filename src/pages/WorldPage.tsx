@@ -1,6 +1,7 @@
 import QuranBox from "@/components/shared/QuranBox";
 import NcCard from "@/components/shared/NcCard";
 import SectionTitle from "@/components/shared/SectionTitle";
+import { Link2, MapPin, Medal, MoonStar, UserRound, BarChart3 } from "lucide-react";
 
 const curriculum = [
   { months: 'Month 1–2', theme: 'Identity & Honesty', bg: 'bg-teal-lt', border: 'border-teal', color: 'text-teal' },
@@ -12,12 +13,12 @@ const curriculum = [
 ];
 
 const features = [
-  { icon: '🌙', title: 'Fitrah-First Design', desc: 'Every session builds on what Allah already placed in the child — not correction, but activation. The circle unlocks what is already there.' },
-  { icon: '📍', title: 'Hyper-Local Model', desc: 'Formation happens where life happens — in the neighbourhood. Every circle is rooted in a specific street and community, making it real and lasting.' },
-  { icon: '👤', title: 'Maximum 10 Children', desc: 'Never a class. Always a circle. Every child is known by name, watched with care, and seen in their full individuality — every session, every year.' },
-  { icon: '📊', title: 'Data-Driven Tarbiyah', desc: 'Attendance, character growth indicators, parent engagement, and milestone tracking — bringing Islamic formation into the era of evidence and accountability.' },
-  { icon: '🏆', title: 'Incentive Architecture', desc: 'A points system that rewards character, service, and consistency — not just knowledge. Murabbis are recognised and supported through structured awards.' },
-  { icon: '🔗', title: 'Parent Partnership', desc: 'Weekly home action cards, parent evenings, progress reports, and a parent portal — the family is not the audience of the circle, they are its partners.' },
+  { icon: MoonStar, title: 'Fitrah-First Design', desc: 'Every session builds on what Allah already placed in the child — not correction, but activation. The circle unlocks what is already there.' },
+  { icon: MapPin, title: 'Hyper-Local Model', desc: 'Formation happens where life happens — in the neighbourhood. Every circle is rooted in a specific street and community, making it real and lasting.' },
+  { icon: UserRound, title: 'Maximum 10 Children', desc: 'Never a class. Always a circle. Every child is known by name, watched with care, and seen in their full individuality — every session, every year.' },
+  { icon: BarChart3, title: 'Data-Driven Tarbiyah', desc: 'Attendance, character growth indicators, parent engagement, and milestone tracking — bringing Islamic formation into the era of evidence and accountability.' },
+  { icon: Medal, title: 'Incentive Architecture', desc: 'A points system that rewards character, service, and consistency — not just knowledge. Murabbis are recognised and supported through structured awards.' },
+  { icon: Link2, title: 'Parent Partnership', desc: 'Weekly home action cards, parent evenings, progress reports, and a parent portal — the family is not the audience of the circle, they are its partners.' },
 ];
 
 const scholars = [
@@ -33,15 +34,30 @@ export default function WorldPage() {
 
       <div className="grid grid-cols-2 gap-5 mb-6">
         {/* Hero card */}
-        <div className="bg-gradient-to-br from-nc-dark to-teal-dk rounded-lg p-6 border-none text-primary-foreground">
-          <div className="font-arabic text-4xl text-sidebar-primary mb-2">نور حلقہ</div>
-          <div className="font-serif text-[22px] mb-1">Noor Circles</div>
-          <div className="text-sm text-white/60 italic mb-4">Circles of Light in Every Neighbourhood</div>
-          <div className="text-[13px] text-white/50 leading-[1.7]">A neighbourhood-based Tarbiyah programme — small circles of 8–10 children, ages 6–13, gathering weekly for 2.5 hours, guided by a trained Murabbi, sustained across 12 months of intentional Islamic character formation.</div>
+        <div className="bg-sidebar from-nc-dark to-teal-dk rounded-lg p-6 border-none text-primary-foreground">
+          <div className="flex justify-center mb-4">
+            <img
+              src="/noor-circle-logo-white.png"   
+              alt="Noor Circles Logo"
+              width={250}
+              height={160}
+              className="object-contain"
+            />
+          </div>
+          <div className="text-[13px] text-white/50 leading-[1.7] mb-4">
+            A neighbourhood-based Tarbiyah programme — small circles of 8–10 children, ages 6–13, gathering weekly for 2.5 hours, guided by a trained Murabbi, sustained across 12 months of intentional Islamic character formation.
+          </div>
+
           <div className="flex gap-4 mt-5">
-            {[{ val: '40', label: 'Sessions/year' }, { val: '12', label: 'Themes' }, { val: '8–10', label: 'Children/circle' }].map((s) => (
+            {[
+              { val: "40", label: "Sessions/year" },
+              { val: "12", label: "Themes" },
+              { val: "8–10", label: "Children/circle" }
+            ].map((s) => (
               <div key={s.label} className="text-center">
-                <div className="text-[28px] font-serif text-sidebar-primary">{s.val}</div>
+                <div className="text-[28px] font-serif text-sidebar-primary">
+                  {s.val}
+                </div>
                 <div className="text-[11px] text-white/40">{s.label}</div>
               </div>
             ))}
@@ -66,7 +82,9 @@ export default function WorldPage() {
       <div className="grid grid-cols-3 gap-5 mb-6">
         {features.map((f) => (
           <div key={f.title} className="bg-gradient-to-br from-teal-lt to-card border border-teal/15 rounded-lg p-5 transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_28px_rgba(14,107,114,0.1)]">
-            <div className="w-11 h-11 rounded-xl bg-teal flex items-center justify-center text-xl mb-3">{f.icon}</div>
+            <div className="w-11 h-11 rounded-xl bg-teal flex items-center justify-center mb-3">
+              <f.icon className="h-5 w-5 text-white" />
+            </div>
             <div className="text-sm font-semibold text-foreground mb-1.5">{f.title}</div>
             <div className="text-[12.5px] text-nc-muted leading-relaxed">{f.desc}</div>
           </div>

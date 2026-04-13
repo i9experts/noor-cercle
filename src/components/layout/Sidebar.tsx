@@ -41,7 +41,7 @@ const navGroups: NavGroup[] = [
     label: 'Formation',
     items: [
       { icon: '◈', label: 'Performance & Reviews', page: 'performance' },
-      { icon: '✦', label: 'Incentives & Awards', page: 'incentives' },
+      { icon: '◍', label: 'Incentives & Awards', page: 'incentives' },
     ],
   },
   {

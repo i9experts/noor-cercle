@@ -4,6 +4,7 @@ import NcCard, { CardHeader, CardTitle } from "@/components/shared/NcCard";
 import NcBadge from "@/components/shared/NcBadge";
 import Timeline from "@/components/shared/Timeline";
 import { useMemo } from "react";
+import { ClipboardList, GraduationCap, HandCoins } from "lucide-react";
 
 export default function DashboardPage() {
   const attData = [72, 75, 79, 82, 85, 84, 87, 86, 88, 89, 91, 88, 90, 92, 91, 87];
@@ -58,21 +59,21 @@ export default function DashboardPage() {
           <NcCard>
             <CardHeader><CardTitle>Announcements</CardTitle></CardHeader>
             <div className="flex gap-3.5 p-3.5 bg-gold-lt border border-gold/20 rounded-sm mb-3">
-              <span className="text-xl flex-shrink-0">📋</span>
+              <ClipboardList className="h-5 w-5 flex-shrink-0 text-gold-dim" />
               <div>
                 <div className="text-[13px] font-semibold text-gold-dim">Session 16 — Gratitude Ceremony this Friday</div>
                 <div className="text-xs text-slate mt-0.5">All circles: prepare Gratitude Jar and bring parent letters for delivery.</div>
               </div>
             </div>
             <div className="flex gap-3.5 p-3.5 bg-gold-lt border border-gold/20 rounded-sm mb-3">
-              <span className="text-xl flex-shrink-0">🎓</span>
+              <GraduationCap className="h-5 w-5 flex-shrink-0 text-gold-dim" />
               <div>
                 <div className="text-[13px] font-semibold text-gold-dim">Tier 1 Training — Batch 3 starts 20 April</div>
                 <div className="text-xs text-slate mt-0.5">6 new Murabbi candidates registered. Training venue: TDW Campus.</div>
               </div>
             </div>
             <div className="flex gap-3.5 p-3.5 bg-teal-lt border border-teal/20 rounded-sm">
-              <span className="text-xl flex-shrink-0">💰</span>
+              <HandCoins className="h-5 w-5 flex-shrink-0 text-teal" />
               <div>
                 <div className="text-[13px] font-semibold text-teal">Donor milestone: PKR 420,000 raised</div>
                 <div className="text-xs text-slate mt-0.5">7 Circle Founders and 12 Noor Donors confirmed for Year 1.</div>

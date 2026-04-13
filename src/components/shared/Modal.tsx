@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { X } from "lucide-react";
 
 interface ModalProps {
   open: boolean;
@@ -20,7 +21,7 @@ export default function Modal({ open, onClose, title, subtitle, children }: Moda
   return (
     <div className="fixed inset-0 bg-black/45 z-[200] flex items-center justify-center" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="bg-card rounded-lg p-8 w-[560px] max-w-[95vw] max-h-[90vh] overflow-y-auto relative">
-        <button className="absolute top-5 right-5 bg-muted border-none w-8 h-8 rounded-full cursor-pointer text-base text-nc-muted flex items-center justify-center hover:bg-teal-lt" onClick={onClose}>✕</button>
+        <button className="absolute top-5 right-5 bg-muted border-none w-8 h-8 rounded-full cursor-pointer text-base text-nc-muted flex items-center justify-center hover:bg-teal-lt" onClick={onClose}><X className="h-4 w-4" /></button>
         <div className="font-serif text-[22px] text-foreground mb-1.5">{title}</div>
         {subtitle && <div className="text-[13px] text-nc-muted mb-6">{subtitle}</div>}
         {children}

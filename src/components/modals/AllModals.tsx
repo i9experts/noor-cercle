@@ -70,12 +70,12 @@ export function AwardPointsModal({ open, onClose }: { open: boolean; onClose: ()
       </FormGroup>
       <FormGroup label="Award Type" required>
         <FormSelect>
-          <option>🌟 Noor Star (50 pts) — Exemplary character</option>
-          <option>📿 Circle Champion (100 pts) — 100% attendance</option>
-          <option>🤝 Sadaqah Hero (75 pts) — Community service</option>
-          <option>📖 Knowledge Seeker (25 pts) — Outstanding question</option>
-          <option>💛 Kindness Award (30 pts) — Act of generosity</option>
-          <option>🦁 Courage Award (40 pts) — Moral courage shown</option>
+          <option>Noor Star (50 pts) — Exemplary character</option>
+          <option>Circle Champion (100 pts) — 100% attendance</option>
+          <option>Sadaqah Hero (75 pts) — Community service</option>
+          <option>Knowledge Seeker (25 pts) — Outstanding question</option>
+          <option>Kindness Award (30 pts) — Act of generosity</option>
+          <option>Courage Award (40 pts) — Moral courage shown</option>
         </FormSelect>
       </FormGroup>
       <FormGroup label="Reason (shown to student)" required><FormTextarea placeholder="Describe the specific act that earned this award…" /></FormGroup>

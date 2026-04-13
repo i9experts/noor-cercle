@@ -1,6 +1,7 @@
 import StatCard from "@/components/shared/StatCard";
 import NcCard, { CardHeader, CardTitle } from "@/components/shared/NcCard";
 import NcBadge from "@/components/shared/NcBadge";
+import { Star } from "lucide-react";
 
 const feedback = [
   { parent: 'Uzma Tariq', child: 'Nadia', msg: 'She came home and immediately wrote in her journal for the first time without being asked. Alhamdulillah.', stars: 5 },
@@ -60,7 +61,14 @@ export default function ParentsPage() {
               <div key={f.parent} className="p-3 bg-muted rounded-sm">
                 <div className="flex justify-between mb-1">
                   <span className="text-[13px] font-semibold text-foreground">{f.parent} — about {f.child}</span>
-                  <span className="text-sm">{'★'.repeat(f.stars)}{'☆'.repeat(5 - f.stars)}</span>
+                  <span className="text-sm flex items-center gap-0.5">
+                    {Array.from({ length: 5 }, (_, i) => (
+                      <Star
+                        key={i}
+                        className={`h-3.5 w-3.5 ${i < f.stars ? 'fill-gold text-gold' : 'text-border'}`}
+                      />
+                    ))}
+                  </span>
                 </div>
                 <div className="text-[12.5px] text-slate italic leading-relaxed">"{f.msg}"</div>
               </div>

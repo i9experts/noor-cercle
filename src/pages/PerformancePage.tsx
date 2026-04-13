@@ -2,6 +2,7 @@ import StatCard from "@/components/shared/StatCard";
 import NcCard, { CardHeader, CardTitle } from "@/components/shared/NcCard";
 import NcBadge from "@/components/shared/NcBadge";
 import ProgressBar from "@/components/shared/ProgressBar";
+import { Star } from "lucide-react";
 
 const charIndicators = [
   { name: 'Honesty & Trust (Sidq)', value: 82, color: 'teal' as const },
@@ -57,7 +58,11 @@ export default function PerformancePage() {
                   <span className="text-[11px] text-nc-muted">{r.session}</span>
                 </div>
                 <div className="text-[12.5px] text-slate leading-relaxed">{r.text}</div>
-                {r.stars > 0 && <div className="text-[13px] text-gold mt-1.5">{'★'.repeat(r.stars)}</div>}
+                {r.stars > 0 && (
+                  <div className="text-[13px] text-gold mt-1.5 flex items-center gap-0.5">
+                    {Array.from({ length: r.stars }, (_, i) => <Star key={i} className="h-3.5 w-3.5 fill-gold text-gold" />)}
+                  </div>
+                )}
                 {r.alert && <NcBadge variant="amber" className="mt-1.5">Follow-up required</NcBadge>}
               </div>
             ))}
