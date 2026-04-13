@@ -1,0 +1,134 @@
+@import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 200 14% 96%;
+    --foreground: 341 32% 38%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 341 32% 38%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 341 32% 38%;
+
+    --primary: 185 78% 25%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 185 40% 94%;
+    --secondary-foreground: 341 32% 38%;
+
+    --muted: 200 14% 96%;
+    --muted-foreground: 197 16% 46%;
+
+    --accent: 42 90% 42%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 5 75% 46%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 185 78% 25% / 0.12;
+    --input: 185 78% 25% / 0.12;
+    --ring: 185 78% 25%;
+
+    --radius: 14px;
+
+    /* Noor Circles custom tokens */
+    --gold: 40 88% 42%;
+    --gold-lt: 42 95% 95%;
+    --gold-dim: 38 85% 29%;
+
+    --teal: 185 78% 25%;
+    --teal-lt: 185 40% 93%;
+    --teal-md: 184 72% 34%;
+    --teal-dk: 185 76% 16%;
+
+    --nc-dark: 341 32% 38%;
+    --nc-dark2: 204 37% 15%;
+    --nc-dark3: 200 30% 18%;
+
+    --slate: 200 24% 30%;
+    --nc-muted: 197 16% 46%;
+    --pale: 197 25% 71%;
+
+    --nc-green: 150 63% 29%;
+    --nc-green-lt: 150 40% 93%;
+
+    --nc-amber: 26 88% 38%;
+    --nc-amber-lt: 34 95% 94%;
+
+    --nc-purple: 255 30% 49%;
+    --nc-purple-lt: 255 60% 93%;
+
+    --nc-red: 5 65% 46%;
+    --nc-red-lt: 5 78% 96%;
+
+    --shadow: 0 2px 16px hsl(185 78% 25% / 0.08);
+
+    --sidebar-background: 341 32% 38%;
+    --sidebar-foreground: 0 0% 100% / 0.55;
+    --sidebar-primary: 46 82% 59%;
+    --sidebar-primary-foreground: 341 32% 38%;
+    --sidebar-accent: 42 90% 42% / 0.12;
+    --sidebar-accent-foreground: 46 82% 59%;
+    --sidebar-border: 0 0% 100% / 0.07;
+    --sidebar-ring: 185 78% 25%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, .serif {
+    font-family: 'DM Serif Display', serif;
+  }
+
+  .arabic {
+    font-family: 'Amiri', serif;
+  }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: hsl(var(--pale)); border-radius: 3px; }
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.page-animate {
+  animation: fadeIn 0.25s ease;
+}
+
+/* Button utilities */
+.btn-primary {
+  @apply inline-flex items-center gap-1.5 px-[18px] py-2 rounded-sm text-[13.5px] font-medium cursor-pointer border-none transition-all bg-teal text-white hover:bg-teal-dk;
+  font-family: 'DM Sans', sans-serif;
+}
+.btn-gold {
+  @apply inline-flex items-center gap-1.5 px-[18px] py-2 rounded-sm text-[13.5px] font-medium cursor-pointer border-none transition-all bg-gold text-white hover:bg-gold-dim;
+  font-family: 'DM Sans', sans-serif;
+}
+.btn-outline {
+  @apply inline-flex items-center gap-1.5 px-[18px] py-2 rounded-sm text-[13.5px] font-medium cursor-pointer transition-all bg-transparent border border-border text-slate hover:border-teal hover:text-teal;
+  font-family: 'DM Sans', sans-serif;
+}
+.btn-ghost {
+  @apply inline-flex items-center gap-1.5 px-[18px] py-2 rounded-sm text-[13.5px] font-medium cursor-pointer border-none transition-all bg-transparent text-nc-muted hover:bg-teal-lt hover:text-teal;
+  font-family: 'DM Sans', sans-serif;
+}
