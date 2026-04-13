@@ -68,10 +68,26 @@ interface SidebarProps {
 export default function Sidebar({ activePage, onNavigate }: SidebarProps) {
   return (
     <nav className="fixed left-0 top-0 bottom-0 w-[260px] bg-sidebar flex flex-col z-[100]">
-      <div className="px-6 pt-7 pb-5 border-b border-sidebar-border">
-        <span className="font-arabic text-[22px] text-sidebar-primary tracking-wide block mb-0.5">نور حلقہ</span>
-        <div className="text-[13px] text-white/50 font-light tracking-[2px] uppercase">Noor Circles</div>
-        <div className="text-[11px] text-white/30 mt-1">TDW Education Network · Karachi</div>
+      <div className="px-6 pt-6 pb-5 border-b border-sidebar-border">
+
+        {/* Logo */}
+        <div className="px-5">
+
+          {/* Outer soft container */}
+          <div className="bg-white/10 border border-white/10 rounded-2xl p-3 flex justify-center">
+
+            {/* Inner logo container */}
+            <div className="bg-white rounded-xl p-1 flex items-center justify-center">
+              <img
+                src="/noor-circle-logo.jpeg"
+                alt="logo"
+                className="h-38"
+              />
+            </div>
+
+          </div>
+        </div>
+
       </div>
       <div className="flex-1 overflow-y-auto px-3 pt-4">
         {navGroups.map((group) => (
