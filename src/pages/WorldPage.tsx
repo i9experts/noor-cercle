@@ -34,34 +34,50 @@ export default function WorldPage() {
 
       <div className="grid grid-cols-2 gap-5 mb-6">
         {/* Hero card */}
-        <div className="bg-sidebar from-nc-dark to-teal-dk rounded-lg p-6 border-none text-primary-foreground">
-          <div className="flex justify-center mb-4">
-            <img
-              src="/noor-circle-logo-white.png"   
-              alt="Noor Circles Logo"
-              width={250}
-              height={160}
-              className="object-contain"
-            />
-          </div>
-          <div className="text-[13px] text-white/50 leading-[1.7] mb-4">
-            A neighbourhood-based Tarbiyah programme — small circles of 8–10 children, ages 6–13, gathering weekly for 2.5 hours, guided by a trained Murabbi, sustained across 12 months of intentional Islamic character formation.
+        <div className="bg-gradient-to-br from-teal-lt to-card border border-teal/15 rounded-xl p-4 sm:p-5 md:p-6 transition-all shadow-sm">
+
+          {/* Top Section (Responsive) */}
+          <div className="flex flex-col md:flex-row items-center md:items-start gap-4 md:gap-6 mb-6">
+
+            {/* Logo */}
+            <div className="bg-white/5 p-3 sm:p-4 rounded-xl backdrop-blur-sm flex-shrink-0">
+              <img
+                src="/noor-circle-logo-white.png"
+                alt="Noor Circles Logo"
+                className="h-24 sm:h-28 md:h-32 w-auto object-contain mx-auto"
+              />
+            </div>
+
+            {/* Description */}
+            <p className="text-[12px] sm:text-[13px] md:text-[14px] text-black/70 leading-relaxed text-center md:text-left">
+              A neighbourhood-based Tarbiyah programme — small circles of 8–10 children, ages 6–13,
+              gathering weekly for 2.5 hours, guided by a trained Murabbi, sustained across
+              12 months of intentional Islamic character formation.
+            </p>
+
           </div>
 
-          <div className="flex gap-4 mt-5">
+          {/* Stats */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {[
               { val: "40", label: "Sessions/year" },
               { val: "12", label: "Themes" },
               { val: "8–10", label: "Children/circle" }
             ].map((s) => (
-              <div key={s.label} className="text-center">
-                <div className="text-[28px] font-serif text-sidebar-primary">
+              <div
+                key={s.label}
+                className="text-center bg-black/5 rounded-lg py-3"
+              >
+                <div className="text-[20px] sm:text-[22px] md:text-[24px] font-semibold text-sidebar-primary">
                   {s.val}
                 </div>
-                <div className="text-[11px] text-white/40">{s.label}</div>
+                <div className="text-[10px] sm:text-[11px] text-black/50 mt-1">
+                  {s.label}
+                </div>
               </div>
             ))}
           </div>
+
         </div>
 
         {/* Curriculum */}

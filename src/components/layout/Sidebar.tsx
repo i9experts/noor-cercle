@@ -68,27 +68,25 @@ interface SidebarProps {
 export default function Sidebar({ activePage, onNavigate }: SidebarProps) {
   return (
     <nav className="fixed left-0 top-0 bottom-0 w-[260px] bg-sidebar flex flex-col z-[100]">
-      <div className="px-6 pt-6 pb-5 border-b border-sidebar-border">
 
         {/* Logo */}
-        <div className="px-5">
+        <div className="bg-white border border-gray-200 flex justify-center shadow-sm p-4">
 
-          {/* Outer soft container */}
-          <div className="bg-white/10 border border-white/10 rounded-2xl p-3 flex justify-center">
+          {/* Outer white container */}
 
             {/* Inner logo container */}
-            <div className="bg-white rounded-xl p-1 flex items-center justify-center">
+            <div className="flex items-center justify-center">
               <img
-                src="/noor-circle-logo.jpeg"
+                src="/noor-circle-logo-white.png"
                 alt="logo"
-                className="h-38"
+                className="h-32 sm:h-32 md:h-28 w-auto object-contain"
               />
             </div>
 
-          </div>
+          
         </div>
 
-      </div>
+
       <div className="flex-1 overflow-y-auto px-3 pt-4">
         {navGroups.map((group) => (
           <div key={group.label}>

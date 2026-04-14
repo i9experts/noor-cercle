@@ -20,23 +20,23 @@ export default function IncentivesPage({ onAwardPoints }: { onAwardPoints: () =>
       </div>
 
       <div className="grid grid-cols-3 gap-5 mb-6">
-        <div className="bg-gradient-to-br from-nc-dark to-teal-dk rounded-lg p-5 text-primary-foreground relative overflow-hidden">
+        <div className="bg-gradient-to-br from-teal-lt to-card border border-teal/15 rounded-xl p-4 sm:p-5 md:p-6 transition-all shadow-sm">
           <Sparkles className="absolute right-4 top-3 h-8 w-8 text-sidebar-primary/20" />
           <div className="font-serif text-lg text-sidebar-primary mb-1 flex items-center gap-2"><Award className="h-4 w-4" /> Noor Star</div>
-          <div className="text-[13px] text-white/65">50+ points in one session — exemplary character, courage, or service</div>
-          <div className="font-serif text-4xl mt-2.5">50 <span className="text-sm font-normal text-white/50">pts</span></div>
+          <div className="text-[13px] text-black/65">50+ points in one session — exemplary character, courage, or service</div>
+          <div className="font-serif text-4xl mt-2.5">50 <span className="text-sm font-normal text-black/50">pts</span></div>
         </div>
-        <div className="bg-gradient-to-br from-teal-dk to-teal rounded-lg p-5 text-primary-foreground relative overflow-hidden">
+        <div className="bg-gradient-to-br from-teal-lt to-card border border-teal/15 rounded-xl p-4 sm:p-5 md:p-6 transition-all shadow-sm">
           <Sparkles className="absolute right-4 top-3 h-8 w-8 text-sidebar-primary/20" />
-          <div className="font-serif text-lg mb-1 flex items-center gap-2"><Crown className="h-4 w-4" /> Circle Champion</div>
-          <div className="text-[13px] text-white/65">100% attendance for one full month — consistency is character</div>
-          <div className="font-serif text-4xl mt-2.5">100 <span className="text-sm font-normal text-white/50">pts</span></div>
+          <div className="font-serif text-lg text-sidebar-primary mb-1 flex items-center gap-2"><Crown className="h-4 w-4" /> Circle Champion</div>
+          <div className="text-[13px] text-black/65">100% attendance for one full month — consistency is character</div>
+          <div className="font-serif text-4xl mt-2.5">100 <span className="text-sm font-normal text-black/50">pts</span></div>
         </div>
-        <div className="bg-gradient-to-br from-[#1A4A2E] to-nc-green rounded-lg p-5 text-primary-foreground relative overflow-hidden">
+        <div className="bg-gradient-to-br from-teal-lt to-card border border-teal/15 rounded-xl p-4 sm:p-5 md:p-6 transition-all shadow-sm">
           <Sparkles className="absolute right-4 top-3 h-8 w-8 text-sidebar-primary/20" />
           <div className="font-serif text-lg text-sidebar-primary mb-1 flex items-center gap-2"><HandHeart className="h-4 w-4" /> Sadaqah Hero</div>
-          <div className="text-[13px] text-white/65">Completed a community service act beyond the session requirement</div>
-          <div className="font-serif text-4xl mt-2.5">75 <span className="text-sm font-normal text-white/50">pts</span></div>
+          <div className="text-[13px] text-black/65">Completed a community service act beyond the session requirement</div>
+          <div className="font-serif text-4xl mt-2.5">75 <span className="text-sm font-normal text-black/50">pts</span></div>
         </div>
       </div>
 
