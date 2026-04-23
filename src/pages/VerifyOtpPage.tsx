@@ -1,75 +1,110 @@
-import { FormEvent, useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
+import { FormEvent, useEffect, useState, useCallback } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import AuthShell from "@/components/auth/AuthShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-
 import { authService } from "@/services/auth.service";
 import { useToast } from "@/hooks/use-toast";
 
 function getApiErrorMessage(error: unknown) {
-  const message = (error as { response?: { data?: { message?: unknown } } })?.response?.data?.message;
+  const message = (error as { response?: { data?: { message?: unknown } } })
+    ?.response?.data?.message;
   return typeof message === "string" && message.length > 0 ? message : null;
 }
+
+const OTP_TIMER_SECONDS = 120; // 2 minute
 
 const VerifyOtpPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isResending, setIsResending] = useState(false);
 
+  // ── Timer state ──────────────────────────────────────────────
+  const [timeLeft, setTimeLeft] = useState(OTP_TIMER_SECONDS);
+  const [timerActive, setTimerActive] = useState(true);
+
+  // ── Timer logic ──────────────────────────────────────────────
   useEffect(() => {
-    const savedEmail = localStorage.getItem("resetEmail") || "";
-    if (savedEmail) setEmail(savedEmail);
-  }, []);
+    if (!timerActive) return;
+    if (timeLeft <= 0) {
+      setTimerActive(false);
+      return;
+    }
 
+    const interval = setInterval(() => {
+      setTimeLeft((prev) => prev - 1);
+    }, 1000);
+
+    return () => clearInterval(interval); // cleanup
+  }, [timeLeft, timerActive]);
+
+  // ── Timer format: 1:45 ───────────────────────────────────────
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  };
+
+  // ── OTP Submit ───────────────────────────────────────────────
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsSubmitting(true);
     try {
-      await authService.verifyOtp({ email, otp });
-      toast({
-        title: "OTP verified",
-        description: "You can now reset your password.",
-      });
+      const res = await authService.verifyOtp(otp);
+      localStorage.setItem("resetToken", res.data.resetToken);
       navigate("/reset-password");
     } catch (e: unknown) {
       toast({
         variant: "destructive",
-        title: "Invalid OTP",
-        description: getApiErrorMessage(e) || "Please check the code and try again.",
+        title: "OTP verify nahi hua",
+        description: getApiErrorMessage(e) || "Code check karo aur dobara try karo.",
       });
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  // ── Resend OTP ───────────────────────────────────────────────
+  const handleResend = useCallback(async () => {
+    setIsResending(true);
+    try {
+      await authService.resendOtp();
+
+      // Timer reset karo
+      setTimeLeft(OTP_TIMER_SECONDS);
+      setTimerActive(true);
+      setOtp(""); // field clear karo
+
+      toast({
+        title: "OTP dobara bhej diya!",
+        description: "Email check karo — naya code aa gaya hoga.",
+      });
+    } catch (e: unknown) {
+      toast({
+        variant: "destructive",
+        title: "Resend nahi hua",
+        description: getApiErrorMessage(e) || "Dobara koshish karo.",
+      });
+    } finally {
+      setIsResending(false);
+    }
+  }, [toast]);
+
   return (
     <AuthShell
       title="Verify OTP"
-      subtitle="We have sent a 6-digit code to your email. Enter it below to continue password reset."
+      subtitle="Tumhare email pe 6 digit code bheja hai. Neeche enter karo."
     >
-      <p className="text-sm text-muted-foreground">Please check your inbox and enter the OTP.</p>
+      <p className="text-sm text-muted-foreground">
+        Inbox check karo aur OTP enter karo.
+      </p>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-2">
-          <label htmlFor="email" className="text-sm font-medium text-nc-dark">
-            Email
-          </label>
-          <Input
-            id="email"
-            type="email"
-            placeholder="you@example.com"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            disabled={isSubmitting}
-          />
-        </div>
 
+        {/* Sirf OTP field */}
         <div className="space-y-2">
           <label htmlFor="otp" className="text-sm font-medium text-nc-dark">
             OTP Code
@@ -77,24 +112,67 @@ const VerifyOtpPage = () => {
           <Input
             id="otp"
             type="text"
-            placeholder="123456"
+            inputMode="numeric"
+            placeholder="• • • • • •"
             maxLength={6}
             required
             value={otp}
-            onChange={(e) => setOtp(e.target.value)}
+            onChange={(e) => {
+              // Sirf numbers allow karo
+              const val = e.target.value.replace(/\D/g, '');
+              setOtp(val);
+            }}
             disabled={isSubmitting}
+            className="text-center text-xl tracking-widest"
           />
         </div>
 
-        <Button type="submit" className="h-11 w-full bg-teal text-white hover:bg-teal-dk" disabled={isSubmitting}>
-          {isSubmitting ? "Verifying..." : "Verify OTP"}
+        {/* Timer */}
+        <div className="text-center">
+          {timerActive ? (
+            <p className="text-sm text-muted-foreground">
+              Code expire hoga:{" "}
+              <span className={`font-semibold ${timeLeft <= 30 ? "text-red-500" : "text-teal"}`}>
+                {formatTime(timeLeft)}
+              </span>
+            </p>
+          ) : (
+            <p className="text-sm text-red-500 font-medium">
+              Code expire ho gaya — resend karo
+            </p>
+          )}
+        </div>
+
+        {/* Submit Button */}
+        <Button
+          type="submit"
+          className="h-11 w-full bg-teal text-white hover:bg-teal-dk"
+          disabled={isSubmitting || otp.length !== 6}
+        >
+          {isSubmitting ? "Verify ho raha hai..." : "Verify OTP"}
         </Button>
+
+        {/* Resend Button — timer khatam hone pe active hoga */}
+        <Button
+          type="button"
+          variant="outline"
+          className="h-11 w-full"
+          onClick={handleResend}
+          disabled={timerActive || isResending}
+        >
+          {isResending
+            ? "Bhej raha hai..."
+            : timerActive
+            ? `Resend OTP (${formatTime(timeLeft)})`
+            : "Resend OTP"}
+        </Button>
+
       </form>
 
       <p className="text-center text-sm text-muted-foreground">
-        Did not receive code?{" "}
+        Email yaad aa gaya?{" "}
         <Link to="/forgot-password" className="font-semibold text-teal hover:text-teal-dk">
-          Resend OTP
+          Back
         </Link>
       </p>
     </AuthShell>

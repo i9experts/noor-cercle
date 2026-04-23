@@ -46,17 +46,16 @@ const ResetPasswordPage = () => {
 
     setIsSubmitting(true);
     try {
-      await authService.resetPassword({ resetToken, newPassword });
-      toast({
-        title: "Password updated",
-        description: "Your password has been reset successfully.",
-      });
+      await authService.resetPassword(newPassword, resetToken);
+      localStorage.removeItem("resetToken");
+      localStorage.removeItem("resetEmail");
+
       navigate("/reset-success");
     } catch (e: unknown) {
       toast({
         variant: "destructive",
-        title: "Could not reset password",
-        description: getApiErrorMessage(e) || "Please try again.",
+        title: "Password reset nahi hua",
+        description: getApiErrorMessage(e) || "Dobara koshish karo.",
       });
     } finally {
       setIsSubmitting(false);

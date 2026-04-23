@@ -25,6 +25,7 @@ const ForgotPasswordPage = () => {
     setIsSubmitting(true);
     try {
       await authService.forgotPassword({ email });
+      localStorage.setItem("resetEmail", email); // ← YEH LINE HAI?
       toast({
         title: "OTP sent",
         description: "If the email exists, we sent a 6-digit code. Please check your inbox.",
