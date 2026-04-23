@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 
 interface ProgressBarProps {
   value: number;
-  color?: 'teal' | 'gold' | 'green';
+  color?: 'teal' | 'gold' | 'green' | 'primary' | 'purple';
   className?: string;
 }
 
@@ -10,6 +10,8 @@ const fillColors = {
   teal: 'bg-teal',
   gold: 'bg-gold',
   green: 'bg-nc-green',
+  primary: 'bg-primary',
+  purple: 'bg-nc-purple',
 };
 
 export default function ProgressBar({ value, color = 'teal', className }: ProgressBarProps) {

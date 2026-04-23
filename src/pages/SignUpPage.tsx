@@ -42,8 +42,9 @@ const SignUpPage = () => {
     } catch (e: unknown) {
       // Debug log
       console.error("❌ Signup failed:", e);
-      console.error("Error response:", (e as any)?.response?.data);
-      console.error("Error status:", (e as any)?.response?.status);
+      const err = e as { response?: { data?: unknown; status?: number } };
+      console.error("Error response:", err?.response?.data);
+      console.error("Error status:", err?.response?.status);
       
       toast({
         variant: "destructive",

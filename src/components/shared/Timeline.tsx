@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 interface TimelineItem {
   title: string;
   meta: string;
-  dotColor?: 'teal' | 'gold' | 'green';
+  dotColor?: 'teal' | 'gold' | 'green' | 'purple' | 'amber' | 'red';
 }
 
 interface TimelineProps {
@@ -14,6 +14,9 @@ const dotColors = {
   teal: 'bg-teal',
   gold: 'bg-gold',
   green: 'bg-nc-green',
+  purple: 'bg-nc-purple',
+  amber: 'bg-nc-amber',
+  red: 'bg-nc-red',
 };
 
 export default function Timeline({ items }: TimelineProps) {

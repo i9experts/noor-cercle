@@ -98,20 +98,27 @@ export const neighbourhoods: Neighbourhood[] = [
 ];
 
 export const pageNames: Record<string, string> = {
-  dashboard: 'Dashboard',
-  world: 'Noor Circles — About the Programme',
-  students: 'Students',
-  murabbis: 'Murabbis',
-  parents: 'Parent Engagement',
-  circles: 'All Circles',
-  attendance: 'Attendance',
+  dashboard: 'Admin Dashboard',
+  'murabbi-dashboard': 'Murabbi Dashboard',
+  'murabbi-students': 'My Students',
+  'murabbi-circles': 'My Circles',
+  'murabbi-attendance': 'Mark Attendance',
+  'murabbi-lessons': 'Lesson Plans',
+  'murabbi-training': 'Training Materials',
+  'murabbi-reports': 'My Reports',
+  world: 'Noor Circles World',
+  students: 'Student Management',
+  murabbis: 'Murabbi Management',
+  parents: 'Parent Network',
+  circles: 'Circle Management',
+  attendance: 'Attendance Overview',
   sessions: 'Sessions & Curriculum',
   performance: 'Performance & Reviews',
   incentives: 'Incentives & Awards',
   training: 'Murabbi Training',
   neighbourhoods: 'Neighbourhoods',
   reports: 'Reports & Analytics',
-  settings: 'Settings',
+  settings: 'System Settings',
 };
 
 export function getInitials(name: string): string {

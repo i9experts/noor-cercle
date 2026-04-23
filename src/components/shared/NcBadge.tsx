@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 
-type BadgeVariant = 'green' | 'amber' | 'red' | 'teal' | 'purple' | 'dark';
+type BadgeVariant = 'green' | 'amber' | 'red' | 'teal' | 'purple' | 'dark' | 'slate';
 
 interface NcBadgeProps {
   variant: BadgeVariant;
@@ -15,6 +15,7 @@ const variants: Record<BadgeVariant, string> = {
   teal: 'bg-teal-lt text-teal',
   purple: 'bg-nc-purple-lt text-nc-purple',
   dark: 'bg-teal/[0.08] text-slate',
+  slate: 'bg-muted text-nc-muted',
 };
 
 export default function NcBadge({ variant, children, className }: NcBadgeProps) {

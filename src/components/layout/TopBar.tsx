@@ -1,4 +1,5 @@
 import { pageNames } from "@/data/mockData";
+import { useNavigate } from "react-router-dom";
 
 interface TopBarProps {
   activePage: string;
@@ -7,6 +8,8 @@ interface TopBarProps {
 
 export default function TopBar({ activePage, onEnroll }: TopBarProps) {
   const title = pageNames[activePage] || activePage;
+  const navigate = useNavigate();
+  const isMurabbiPanel = window.location.pathname.includes('/murabbi');
 
   return (
     <div className="bg-card border-b border-border px-8 h-16 flex items-center justify-between sticky top-0 z-50">
@@ -17,6 +20,22 @@ export default function TopBar({ activePage, onEnroll }: TopBarProps) {
         </div>
       </div>
       <div className="flex items-center gap-3">
+        {!isMurabbiPanel && (
+          <button 
+            className="text-xs font-medium text-primary hover:underline mr-4"
+            onClick={() => navigate('/murabbi')}
+          >
+            Switch to Murabbi Panel →
+          </button>
+        )}
+        {isMurabbiPanel && (
+          <button 
+            className="text-xs font-medium text-nc-muted hover:underline mr-4"
+            onClick={() => navigate('/')}
+          >
+            ← Back to Admin
+          </button>
+        )}
         <div className="flex items-center gap-2.5 bg-muted border border-border rounded-sm px-3.5 w-[280px]">
           <span className="text-nc-muted text-sm">⌕</span>
           <input
