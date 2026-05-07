@@ -1,285 +1,204 @@
-// import { FormEvent, useEffect, useState, useCallback } from "react";
-// import { Link, useNavigate } from "react-router-dom";
-// import AuthShell from "@/components/auth/AuthShell";
-// import { Button } from "@/components/ui/button";
-// import { Input } from "@/components/ui/input";
-// import { authService } from "@/services/auth.service";
-// import { useToast } from "@/hooks/use-toast";
+import { FormEvent, useEffect, useState, useCallback } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import AuthShell from "@/components/auth/AuthShell";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { authService } from "@/services/auth.service";
+import { useToast } from "@/hooks/use-toast";
 
-// function getApiErrorMessage(error: unknown) {
-//   const message = (error as { response?: { data?: { message?: unknown } } })
-//     ?.response?.data?.message;
-//   return typeof message === "string" && message.length > 0 ? message : null;
-// }
-
-// const OTP_TIMER_SECONDS = 120; // 2 minute
-
-// const VerifyOtpPage = () => {
-//   const navigate = useNavigate();
-//   const { toast } = useToast();
-
-//   const [otp, setOtp] = useState("");
-//   const [isSubmitting, setIsSubmitting] = useState(false);
-//   const [isResending, setIsResending] = useState(false);
-
-//   // ── Timer state ──────────────────────────────────────────────
-//   const [timeLeft, setTimeLeft] = useState(OTP_TIMER_SECONDS);
-//   const [timerActive, setTimerActive] = useState(true);
-
-//   // ── Timer logic ──────────────────────────────────────────────
-//   useEffect(() => {
-//     if (!timerActive) return;
-//     if (timeLeft <= 0) {
-//       setTimerActive(false);
-//       return;
-//     }
-
-//     const interval = setInterval(() => {
-//       setTimeLeft((prev) => prev - 1);
-//     }, 1000);
-
-//     return () => clearInterval(interval); // cleanup
-//   }, [timeLeft, timerActive]);
-
-//   // ── Timer format: 1:45 ───────────────────────────────────────
-//   const formatTime = (seconds: number) => {
-//     const m = Math.floor(seconds / 60);
-//     const s = seconds % 60;
-//     return `${m}:${s.toString().padStart(2, '0')}`;
-//   };
-
-//   // ── OTP Submit ───────────────────────────────────────────────
-//   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-//     event.preventDefault();
-//     setIsSubmitting(true);
-//     try {
-//       const res = await authService.verifyOtp(otp);
-//       localStorage.setItem("resetToken", res.data.resetToken);
-//       navigate("/reset-password");
-//     } catch (e: unknown) {
-//       toast({
-//         variant: "destructive",
-//         title: "OTP verify nahi hua",
-//         description: getApiErrorMessage(e) || "Code check karo aur dobara try karo.",
-//       });
-//     } finally {
-//       setIsSubmitting(false);
-//     }
-//   };
-
-//   // ── Resend OTP ───────────────────────────────────────────────
-//   const handleResend = useCallback(async () => {
-//     setIsResending(true);
-//     try {
-//       await authService.resendOtp();
-
-//       // Timer reset karo
-//       setTimeLeft(OTP_TIMER_SECONDS);
-//       setTimerActive(true);
-//       setOtp(""); // field clear karo
-
-//       toast({
-//         title: "OTP dobara bhej diya!",
-//         description: "Email check karo — naya code aa gaya hoga.",
-//       });
-//     } catch (e: unknown) {
-//       toast({
-//         variant: "destructive",
-//         title: "Resend nahi hua",
-//         description: getApiErrorMessage(e) || "Dobara koshish karo.",
-//       });
-//     } finally {
-//       setIsResending(false);
-//     }
-//   }, [toast]);
-
-//   return (
-//     <AuthShell
-//       title="Verify OTP"
-//       subtitle="Tumhare email pe 6 digit code bheja hai. Neeche enter karo."
-//     >
-//       <p className="text-sm text-muted-foreground">
-//         Inbox check karo aur OTP enter karo.
-//       </p>
-
-//       <form onSubmit={handleSubmit} className="space-y-4">
-
-//         {/* Sirf OTP field */}
-//         <div className="space-y-2">
-//           <label htmlFor="otp" className="text-sm font-medium text-nc-dark">
-//             OTP Code
-//           </label>
-//           <Input
-//             id="otp"
-//             type="text"
-//             inputMode="numeric"
-//             placeholder="• • • • • •"
-//             maxLength={6}
-//             required
-//             value={otp}
-//             onChange={(e) => {
-//               // Sirf numbers allow karo
-//               const val = e.target.value.replace(/\D/g, '');
-//               setOtp(val);
-//             }}
-//             disabled={isSubmitting}
-//             className="text-center text-xl tracking-widest"
-//           />
-//         </div>
-
-//         {/* Timer */}
-//         <div className="text-center">
-//           {timerActive ? (
-//             <p className="text-sm text-muted-foreground">
-//               Code expire hoga:{" "}
-//               <span className={`font-semibold ${timeLeft <= 30 ? "text-red-500" : "text-teal"}`}>
-//                 {formatTime(timeLeft)}
-//               </span>
-//             </p>
-//           ) : (
-//             <p className="text-sm text-red-500 font-medium">
-//               Code expire ho gaya — resend karo
-//             </p>
-//           )}
-//         </div>
-
-//         {/* Submit Button */}
-//         <Button
-//           type="submit"
-//           className="h-11 w-full bg-teal text-white hover:bg-teal-dk"
-//           disabled={isSubmitting || otp.length !== 6}
-//         >
-//           {isSubmitting ? "Verify ho raha hai..." : "Verify OTP"}
-//         </Button>
-
-//         {/* Resend Button — timer khatam hone pe active hoga */}
-//         <Button
-//           type="button"
-//           variant="outline"
-//           className="h-11 w-full"
-//           onClick={handleResend}
-//           disabled={timerActive || isResending}
-//         >
-//           {isResending
-//             ? "Bhej raha hai..."
-//             : timerActive
-//             ? `Resend OTP (${formatTime(timeLeft)})`
-//             : "Resend OTP"}
-//         </Button>
-
-//       </form>
-
-//       <p className="text-center text-sm text-muted-foreground">
-//         Email yaad aa gaya?{" "}
-//         <Link to="/forgot-password" className="font-semibold text-teal hover:text-teal-dk">
-//           Back
-//         </Link>
-//       </p>
-//     </AuthShell>
-//   );
-// };
-
-// export default VerifyOtpPage;
-
-
-
-import { FormEvent, useEffect, useState, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import AuthShell from '@/components/auth/AuthShell';
-import { Button } from '@/components/ui/button';
-import { Input }  from '@/components/ui/input';
-import { authService, getErrorMessage } from '@/services/auth.service';
-import { useToast } from '@/hooks/use-toast';
+function getApiError(error: unknown) {
+  const msg = (error as any)?.response?.data?.message;
+  return typeof msg === "string" && msg.length > 0 ? msg : null;
+}
 
 const OTP_SECONDS = 120;
 
 const VerifyOtpPage = () => {
-  const navigate      = useNavigate();
-  const { toast }     = useToast();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { toast } = useToast();
 
-  const [otp,         setOtp]         = useState('');
-  const [submitting,  setSubmitting]  = useState(false);
-  const [resending,   setResending]   = useState(false);
-  const [timeLeft,    setTimeLeft]    = useState(OTP_SECONDS);
+  // flow: "signup" (email verification) or "reset" (forgot password)
+  const flow = (searchParams.get("flow") as "signup" | "reset") || "reset";
+  const emailFromStorage =
+    flow === "signup"
+      ? localStorage.getItem("pendingEmail") || ""
+      : localStorage.getItem("resetEmail") || "";
+
+  const [otp, setOtp] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isResending, setIsResending] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(OTP_SECONDS);
   const [timerActive, setTimerActive] = useState(true);
 
-  const email = localStorage.getItem('resetEmail') || '';
-
+  // countdown
   useEffect(() => {
     if (!timerActive || timeLeft <= 0) { setTimerActive(false); return; }
-    const t = setInterval(() => setTimeLeft((p) => p - 1), 1000);
-    return () => clearInterval(t);
+    const id = setInterval(() => setTimeLeft((t) => t - 1), 1000);
+    return () => clearInterval(id);
   }, [timeLeft, timerActive]);
 
-  const formatTime = (s: number) =>
-    `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+  const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 
-  const handleSubmit = async (e: FormEvent) => {
+  // ── Submit ─────────────────────────────────────────────
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setSubmitting(true);
+
+    if (flow === "reset") {
+      if (newPassword !== confirmPassword) {
+        toast({ variant: "destructive", title: "Passwords do not match" });
+        return;
+      }
+    }
+
+    setIsSubmitting(true);
     try {
-      const { data } = await authService.verifyOtp({ email, otp });
-      localStorage.setItem('resetToken', data.resetToken);
-      navigate('/reset-password');
-    } catch (err) {
-      toast({ variant: 'destructive', title: 'Verification failed', description: getErrorMessage(err) });
+      if (flow === "signup") {
+        // Signup OTP verify → account activated → tokens returned
+        const res = await authService.verifyEmail({ email: emailFromStorage, otp });
+        localStorage.setItem("accessToken", res.data.accessToken);
+        localStorage.setItem("refreshToken", res.data.refreshToken);
+        localStorage.setItem("user", JSON.stringify(res.data.data?.user || {}));
+        localStorage.removeItem("pendingEmail");
+        toast({ title: "Email verified! Welcome to Noor Circle 🌙" });
+        // Redirect based on role
+        const role = res.data.data?.user?.role;
+        navigate(role === "admin" ? "/" : "/murabbi");
+      } else {
+        // Reset OTP + new password in one call
+        await authService.verifyOtpAndReset({
+          email: emailFromStorage,
+          otp,
+          newPassword,
+        });
+        localStorage.removeItem("resetEmail");
+        toast({ title: "Password updated!", description: "Please sign in with your new password." });
+        navigate("/signin");
+      }
+    } catch (e: unknown) {
+      toast({
+        variant: "destructive",
+        title: flow === "signup" ? "Verification failed" : "Reset failed",
+        description: getApiError(e) || "Please check the code and try again.",
+      });
     } finally {
-      setSubmitting(false);
+      setIsSubmitting(false);
     }
   };
 
+  // ── Resend ─────────────────────────────────────────────
   const handleResend = useCallback(async () => {
-    setResending(true);
+    setIsResending(true);
     try {
-      await authService.resendOtp(email, 'reset');
-      setOtp('');
+      await authService.resendOtp(emailFromStorage, flow);
       setTimeLeft(OTP_SECONDS);
       setTimerActive(true);
-      toast({ title: 'OTP Resent', description: 'A new code has been sent to your email.' });
-    } catch (err) {
-      toast({ variant: 'destructive', title: 'Resend failed', description: getErrorMessage(err) });
+      setOtp("");
+      toast({ title: "New OTP sent!", description: "Check your email — expires in 2 minutes." });
+    } catch (e: unknown) {
+      toast({ variant: "destructive", title: "Resend failed", description: getApiError(e) || "Try again." });
     } finally {
-      setResending(false);
+      setIsResending(false);
     }
-  }, [email, toast]);
+  }, [emailFromStorage, flow, toast]);
+
+  const isSignup = flow === "signup";
 
   return (
-    <AuthShell title="Verify OTP" subtitle="Enter the 6-digit code sent to your email to reset your password.">
+    <AuthShell
+      title={isSignup ? "Verify Your Email" : "Reset Password"}
+      subtitle={
+        isSignup
+          ? "Enter the 6-digit code we sent to your email to activate your account."
+          : "Enter the 6-digit code from your email along with your new password."
+      }
+    >
       <p className="text-sm text-muted-foreground">
-        Code sent to <strong>{email || 'your email'}</strong>
+        Code sent to: <strong>{emailFromStorage || "your email"}</strong>
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-4">
+        {/* OTP input */}
         <div className="space-y-2">
-          <label className="text-sm font-medium text-nc-dark">OTP Code</label>
+          <label htmlFor="otp" className="text-sm font-medium text-nc-dark">
+            6-Digit Code
+          </label>
           <Input
-            type="text" inputMode="numeric" placeholder="• • • • • •"
-            maxLength={6} required value={otp}
-            onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-            disabled={submitting}
+            id="otp"
+            type="text"
+            inputMode="numeric"
+            placeholder="• • • • • •"
+            maxLength={6}
+            required
+            value={otp}
+            onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
+            disabled={isSubmitting}
             className="text-center text-xl tracking-widest"
           />
         </div>
 
-        <div className="text-center text-sm">
-          {timerActive
-            ? <span className="text-muted-foreground">Expires in <span className={`font-semibold ${timeLeft <= 30 ? 'text-red-500' : 'text-teal'}`}>{formatTime(timeLeft)}</span></span>
-            : <span className="text-red-500 font-medium">OTP expired — please resend</span>}
+        {/* New password fields — only for reset flow */}
+        {!isSignup && (
+          <>
+            <div className="space-y-2">
+              <label htmlFor="newPassword" className="text-sm font-medium text-nc-dark">New Password</label>
+              <Input id="newPassword" type="password" placeholder="Minimum 8 characters" required
+                value={newPassword} onChange={(e) => setNewPassword(e.target.value)} disabled={isSubmitting} />
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="confirmPassword" className="text-sm font-medium text-nc-dark">Confirm Password</label>
+              <Input id="confirmPassword" type="password" placeholder="Repeat new password" required
+                value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} disabled={isSubmitting} />
+            </div>
+          </>
+        )}
+
+        {/* Timer */}
+        <div className="text-center">
+          {timerActive ? (
+            <p className="text-sm text-muted-foreground">
+              Code expires in:{" "}
+              <span className={`font-semibold ${timeLeft <= 30 ? "text-red-500" : "text-teal"}`}>
+                {fmt(timeLeft)}
+              </span>
+            </p>
+          ) : (
+            <p className="text-sm text-red-500 font-medium">Code expired — please resend</p>
+          )}
         </div>
 
-        <Button type="submit" className="h-11 w-full bg-teal text-white hover:bg-teal-dk"
-          disabled={submitting || otp.length !== 6}>
-          {submitting ? 'Verifying...' : 'Verify OTP'}
+        <Button
+          type="submit"
+          className="h-11 w-full bg-teal text-white hover:bg-teal-dk"
+          disabled={isSubmitting || otp.length !== 6}
+        >
+          {isSubmitting
+            ? "Verifying..."
+            : isSignup
+            ? "Verify & Activate"
+            : "Verify & Reset Password"}
         </Button>
 
-        <Button type="button" variant="outline" className="h-11 w-full"
-          onClick={handleResend} disabled={timerActive || resending}>
-          {resending ? 'Sending...' : timerActive ? `Resend OTP (${formatTime(timeLeft)})` : 'Resend OTP'}
+        <Button
+          type="button"
+          variant="outline"
+          className="h-11 w-full"
+          onClick={handleResend}
+          disabled={timerActive || isResending}
+        >
+          {isResending ? "Sending..." : timerActive ? `Resend OTP (${fmt(timeLeft)})` : "Resend OTP"}
         </Button>
       </form>
 
       <p className="text-center text-sm text-muted-foreground">
-        <Link to="/forgot-password" className="font-semibold text-teal hover:text-teal-dk">← Back</Link>
+        <Link
+          to={isSignup ? "/sign-up" : "/forgot-password"}
+          className="font-semibold text-teal hover:text-teal-dk"
+        >
+          ← Back
+        </Link>
       </p>
     </AuthShell>
   );

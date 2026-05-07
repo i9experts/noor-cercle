@@ -48,5 +48,3 @@ const MurabbiIndex = () => {
     </>
   );
 };
-
-export default MurabbiIndex;
