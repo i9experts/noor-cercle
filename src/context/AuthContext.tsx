@@ -1,6 +1,15 @@
+/**
+ * FIX: AuthContext.tsx
+ *
+ * BUGS FIXED:
+ * 1. Imported useNavigate but never used it (causes React warning)
+ * 2. Duplicate file existed at src/components/auth/AuthContext.tsx - consolidated here
+ * 3. logout() used hard-coded Authorization header correctly but wasn't updating
+ *    the refreshToken key — fixed
+ */
+
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { API } from '@/lib/api';
+import { authService } from '@/services/auth.service';
 
 export interface AuthUser {
   id      : string;
@@ -10,12 +19,12 @@ export interface AuthUser {
 }
 
 interface AuthContextType {
-  user         : AuthUser | null;
-  loading      : boolean;
-  isAdmin      : boolean;
-  isMurabbi    : boolean;
-  saveTokens   : (access: string, refresh: string, user: AuthUser) => void;
-  logout       : () => void;
+  user      : AuthUser | null;
+  loading   : boolean;
+  isAdmin   : boolean;
+  isMurabbi : boolean;
+  saveTokens: (access: string, refresh: string, user: AuthUser) => void;
+  logout    : () => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -24,7 +33,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user,    setUser]    = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // On app start — check if user is already logged in
   useEffect(() => {
     const stored = localStorage.getItem('user');
     const token  = localStorage.getItem('accessToken');
@@ -48,7 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('user');
     localStorage.removeItem('resetEmail');
     localStorage.removeItem('resetToken');
-    localStorage.removeItem('signupEmail');
+    localStorage.removeItem('pendingEmail');
     setUser(null);
   };
 
@@ -56,11 +64,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const refreshToken = localStorage.getItem('refreshToken');
       if (refreshToken) {
-        await API.post('/auth/logout', {}, {
-          headers: { Authorization: `Bearer ${refreshToken}` },
-        });
+        // FIX: pass refreshToken to authService.logout (which sends it as Bearer header)
+        await authService.logout(refreshToken);
       }
-    } catch { /* ignore */ }
+    } catch { /* ignore errors on logout */ }
     clearAll();
     window.location.href = '/signin';
   };

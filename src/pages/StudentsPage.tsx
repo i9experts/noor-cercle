@@ -2,45 +2,81 @@ import { useEffect, useState } from "react";
 import StatCard from "@/components/shared/StatCard";
 import NcCard, { CardHeader, CardTitle } from "@/components/shared/NcCard";
 import NcBadge from "@/components/shared/NcBadge";
-import ProgressBar from "@/components/shared/ProgressBar";
-import { studentsService } from "@/services/api.service";
+import { adminService, studentsService } from "@/services/api.service";
 import { useToast } from "@/hooks/use-toast";
 
 function getInitials(name: string) {
   return name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
 }
 
-export default function StudentsPage({ onEnroll }: { onEnroll: () => void }) {
+export default function StudentsPage({
+  onEnroll,
+  refreshKey,
+}: {
+  onEnroll: () => void;
+  refreshKey?: number;
+}) {
   const { toast } = useToast();
   const [students, setStudents] = useState<any[]>([]);
-  const [stats, setStats] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
+  const [stats, setStats]       = useState<any>(null);
+  const [loading, setLoading]   = useState(true);
+  const [search, setSearch]     = useState("");
 
-  useEffect(() => {
-    Promise.all([studentsService.getAll(), studentsService.getStats()])
-      .then(([sRes, stRes]) => {
+  function load() {
+    setLoading(true);
+    Promise.all([studentsService.getAll(), adminService.getDashboard()])
+      .then(([sRes, dRes]) => {
         setStudents(sRes.data.data || []);
-        setStats(stRes.data.data || null);
+        setStats(dRes.data.data || null);
       })
       .catch(() => toast({ variant: "destructive", title: "Failed to load students" }))
       .finally(() => setLoading(false));
-  }, []);
+  }
+
+  useEffect(() => { load(); }, [refreshKey]);
+
+  async function toggleStatus(s: any) {
+    try {
+      if (s.isActive) {
+        await studentsService.deactivate(s._id);
+        toast({ title: `${s.fullName} deactivated.` });
+      } else {
+        await studentsService.activate(s._id);
+        toast({ title: `${s.fullName} activated.` });
+      }
+      load();
+    } catch {
+      toast({ variant: "destructive", title: "Action failed." });
+    }
+  }
+
+  async function handleDelete(s: any) {
+    if (!confirm(`Delete ${s.fullName}? This cannot be undone.`)) return;
+    try {
+      await studentsService.remove(s._id);
+      toast({ title: "Student deleted." });
+      load();
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || "Delete failed.";
+      toast({ variant: "destructive", title: msg });
+    }
+  }
 
   const filtered = students.filter(
     (s) =>
       !search ||
       s.fullName?.toLowerCase().includes(search.toLowerCase()) ||
-      s.neighbourhood?.name?.toLowerCase().includes(search.toLowerCase())
+      s.neighbourhood?.name?.toLowerCase().includes(search.toLowerCase()) ||
+      s.circle?.name?.toLowerCase().includes(search.toLowerCase()),
   );
 
   return (
     <div className="page-animate">
       <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4 mb-7">
-        <StatCard label="Total Enrolled" value={stats?.total ?? students.length} meta="All circles" color="teal" />
-        <StatCard label="Seedlings (6–9)" value={stats?.seedlings ?? "—"} meta="Noor Seedling" color="gold" />
-        <StatCard label="Growers (10–13)" value={stats?.growers ?? "—"} meta="Noor Grower" color="green" />
-        <StatCard label="Active Students" value={stats?.active ?? "—"} meta="Currently active" color="purple" />
+        <StatCard label="Total Enrolled" value={stats?.totalStudents ?? students.length} meta="All circles"       color="teal"   />
+        <StatCard label="Active Students" value={stats?.activeStudents ?? "—"}            meta="Currently active"  color="green"  />
+        <StatCard label="Total Circles"   value={stats?.totalCircles  ?? "—"}             meta="Across all areas"  color="gold"   />
+        <StatCard label="Murabbis"        value={stats?.totalMurabbis ?? "—"}             meta="Registered"        color="purple" />
       </div>
 
       <NcCard>
@@ -69,8 +105,13 @@ export default function StudentsPage({ onEnroll }: { onEnroll: () => void }) {
             <table className="w-full border-collapse text-[13.5px]">
               <thead>
                 <tr>
-                  {["Student", "Age Group", "Circle", "Neighbourhood", "Noor Points", "Character", "Status", "Actions"].map((h) => (
-                    <th key={h} className="bg-muted px-3.5 py-2.5 text-left text-xs font-semibold text-nc-muted uppercase tracking-wide border-b border-border">{h}</th>
+                  {["Student", "Father", "Phone", "Circle", "Neighbourhood", "Enrolled", "Status", "Actions"].map((h) => (
+                    <th
+                      key={h}
+                      className="bg-muted px-3.5 py-2.5 text-left text-xs font-semibold text-nc-muted uppercase tracking-wide border-b border-border"
+                    >
+                      {h}
+                    </th>
                   ))}
                 </tr>
               </thead>
@@ -84,27 +125,34 @@ export default function StudentsPage({ onEnroll }: { onEnroll: () => void }) {
                         </div>
                         <div>
                           <div className="font-semibold text-[13.5px]">{s.fullName}</div>
-                          <div className="text-[11px] text-nc-muted">Age {s.age}</div>
+                          <div className="text-[11px] text-nc-muted">{s.email || "—"}</div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-3.5 py-3 border-b border-border">
-                      <NcBadge variant={s.ageGroup === "Noor Grower" ? "teal" : "purple"}>{s.ageGroup}</NcBadge>
-                    </td>
+                    <td className="px-3.5 py-3 border-b border-border text-[13px] text-slate">{s.fatherName || "—"}</td>
+                    <td className="px-3.5 py-3 border-b border-border text-[13px] text-slate">{s.phone || "—"}</td>
                     <td className="px-3.5 py-3 border-b border-border text-[13px] text-slate">{s.circle?.name || "—"}</td>
                     <td className="px-3.5 py-3 border-b border-border text-[13px] text-slate">{s.neighbourhood?.name || "—"}</td>
-                    <td className="px-3.5 py-3 border-b border-border text-center font-semibold text-gold-dim">{s.noorPoints ?? 0}</td>
+                    <td className="px-3.5 py-3 border-b border-border text-[13px] text-slate">
+                      {s.enrollmentDate ? new Date(s.enrollmentDate).toLocaleDateString() : "—"}
+                    </td>
                     <td className="px-3.5 py-3 border-b border-border">
-                      <div className="flex items-center gap-2">
-                        <ProgressBar value={s.characterScore ?? 0} color="gold" className="w-[60px]" />
-                        <span className="text-xs font-semibold text-gold-dim">{s.characterScore ?? 0}</span>
+                      <NcBadge variant={s.isActive ? "green" : "amber"}>
+                        {s.isActive ? "Active" : "Inactive"}
+                      </NcBadge>
+                    </td>
+                    <td className="px-3.5 py-3 border-b border-border">
+                      <div className="flex gap-1.5">
+                        <button className="btn-ghost text-xs" onClick={() => toggleStatus(s)}>
+                          {s.isActive ? "Deactivate" : "Activate"}
+                        </button>
+                        <button
+                          className="btn-ghost text-xs text-red-500 hover:text-red-600"
+                          onClick={() => handleDelete(s)}
+                        >
+                          Delete
+                        </button>
                       </div>
-                    </td>
-                    <td className="px-3.5 py-3 border-b border-border">
-                      <NcBadge variant={s.status === "active" ? "green" : "amber"}>{s.status}</NcBadge>
-                    </td>
-                    <td className="px-3.5 py-3 border-b border-border">
-                      <button className="btn-ghost text-xs">View</button>
                     </td>
                   </tr>
                 ))}

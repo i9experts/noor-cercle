@@ -1,14 +1,26 @@
-import { FormEvent, useEffect, useState, useCallback } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import AuthShell from "@/components/auth/AuthShell";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { authService } from "@/services/auth.service";
-import { useToast } from "@/hooks/use-toast";
+/**
+ * FIX: VerifyOtpPage.tsx
+ *
+ * BUGS FIXED:
+ * 1. signup flow: was calling authService.verifyEmail → now authService.signupVerifyOtp
+ * 2. signup flow: response data shape was wrong (data?.user?.role vs data.user.role)
+ * 3. reset flow: was one-shot verifyOtpAndReset call → now two calls:
+ *    a) authService.verifyResetOtp(email, otp) → gets resetToken
+ *    b) authService.resetPassword(resetToken, newPassword) → resets password
+ * 4. Token storage after signup OTP verify was broken due to wrong shape
+ */
 
-function getApiError(error: unknown) {
+import { FormEvent, useEffect, useState, useCallback } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import AuthShell  from '@/components/auth/AuthShell';
+import { Button } from '@/components/ui/button';
+import { Input }  from '@/components/ui/input';
+import { authService } from '@/services/auth.service';
+import { useToast } from '@/hooks/use-toast';
+
+function getApiError(error: unknown): string | null {
   const msg = (error as any)?.response?.data?.message;
-  return typeof msg === "string" && msg.length > 0 ? msg : null;
+  return typeof msg === 'string' && msg.length > 0 ? msg : null;
 }
 
 const OTP_SECONDS = 120;
@@ -18,128 +30,126 @@ const VerifyOtpPage = () => {
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
 
-  // flow: "signup" (email verification) or "reset" (forgot password)
-  const flow = (searchParams.get("flow") as "signup" | "reset") || "reset";
+  const flow = (searchParams.get('flow') as 'signup' | 'reset') || 'reset';
   const emailFromStorage =
-    flow === "signup"
-      ? localStorage.getItem("pendingEmail") || ""
-      : localStorage.getItem("resetEmail") || "";
+    flow === 'signup'
+      ? localStorage.getItem('pendingEmail') || ''
+      : localStorage.getItem('resetEmail')   || '';
 
-  const [otp, setOtp] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isResending, setIsResending] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(OTP_SECONDS);
-  const [timerActive, setTimerActive] = useState(true);
+  const [otp,             setOtp]             = useState('');
+  const [newPassword,     setNewPassword]     = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isSubmitting,    setIsSubmitting]    = useState(false);
+  const [isResending,     setIsResending]     = useState(false);
+  const [timeLeft,        setTimeLeft]        = useState(OTP_SECONDS);
+  const [timerActive,     setTimerActive]     = useState(true);
 
-  // countdown
   useEffect(() => {
     if (!timerActive || timeLeft <= 0) { setTimerActive(false); return; }
     const id = setInterval(() => setTimeLeft((t) => t - 1), 1000);
     return () => clearInterval(id);
   }, [timeLeft, timerActive]);
 
-  const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+  const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 
-  // ── Submit ─────────────────────────────────────────────
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (flow === "reset") {
+    if (flow === 'reset') {
       if (newPassword !== confirmPassword) {
-        toast({ variant: "destructive", title: "Passwords do not match" });
+        toast({ variant: 'destructive', title: 'Passwords do not match' });
         return;
       }
     }
 
     setIsSubmitting(true);
     try {
-      if (flow === "signup") {
-        // Signup OTP verify → account activated → tokens returned
-        const res = await authService.verifyEmail({ email: emailFromStorage, otp });
-        localStorage.setItem("accessToken", res.data.accessToken);
-        localStorage.setItem("refreshToken", res.data.refreshToken);
-        localStorage.setItem("user", JSON.stringify(res.data.data?.user || {}));
-        localStorage.removeItem("pendingEmail");
-        toast({ title: "Email verified! Welcome to Noor Circle 🌙" });
-        // Redirect based on role
-        const role = res.data.data?.user?.role;
-        navigate(role === "admin" ? "/" : "/murabbi");
+      if (flow === 'signup') {
+        // FIX: renamed from verifyEmail → signupVerifyOtp
+        const res = await authService.signupVerifyOtp({ email: emailFromStorage, otp });
+
+        // FIX: backend wraps → { success, message, data: { accessToken, refreshToken, user } }
+        const responseData = res.data?.data || res.data;
+        const { accessToken, refreshToken, user } = responseData;
+
+        localStorage.setItem('accessToken',  accessToken);
+        localStorage.setItem('refreshToken', refreshToken);
+        localStorage.setItem('user',         JSON.stringify(user));
+        localStorage.removeItem('pendingEmail');
+
+        toast({ title: 'Email verified! Welcome to Noor Circle 🌙' });
+        navigate(user?.role === 'admin' ? '/' : '/murabbi');
+
       } else {
-        // Reset OTP + new password in one call
-        await authService.verifyOtpAndReset({
-          email: emailFromStorage,
-          otp,
-          newPassword,
+        // FIX: Split into 2 calls instead of one combined call
+        // Step 1: Verify OTP → get resetToken
+        const verifyRes = await authService.verifyResetOtp({ email: emailFromStorage, otp });
+        const verifyData = verifyRes.data?.data || verifyRes.data;
+        const { resetToken } = verifyData;
+
+        // Step 2: Use resetToken to reset password
+        await authService.resetPassword(resetToken, newPassword);
+
+        localStorage.removeItem('resetEmail');
+        toast({
+          title      : 'Password updated!',
+          description: 'Please sign in with your new password.',
         });
-        localStorage.removeItem("resetEmail");
-        toast({ title: "Password updated!", description: "Please sign in with your new password." });
-        navigate("/signin");
+        navigate('/signin');
       }
     } catch (e: unknown) {
       toast({
-        variant: "destructive",
-        title: flow === "signup" ? "Verification failed" : "Reset failed",
-        description: getApiError(e) || "Please check the code and try again.",
+        variant    : 'destructive',
+        title      : flow === 'signup' ? 'Verification failed' : 'Reset failed',
+        description: getApiError(e) || 'Please check the code and try again.',
       });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // ── Resend ─────────────────────────────────────────────
   const handleResend = useCallback(async () => {
     setIsResending(true);
     try {
       await authService.resendOtp(emailFromStorage, flow);
       setTimeLeft(OTP_SECONDS);
       setTimerActive(true);
-      setOtp("");
-      toast({ title: "New OTP sent!", description: "Check your email — expires in 2 minutes." });
+      setOtp('');
+      toast({ title: 'New OTP sent!', description: 'Check your email — expires in 2 minutes.' });
     } catch (e: unknown) {
-      toast({ variant: "destructive", title: "Resend failed", description: getApiError(e) || "Try again." });
+      toast({ variant: 'destructive', title: 'Resend failed', description: getApiError(e) || 'Try again.' });
     } finally {
       setIsResending(false);
     }
   }, [emailFromStorage, flow, toast]);
 
-  const isSignup = flow === "signup";
+  const isSignup = flow === 'signup';
 
   return (
     <AuthShell
-      title={isSignup ? "Verify Your Email" : "Reset Password"}
+      title={isSignup ? 'Verify Your Email' : 'Reset Password'}
       subtitle={
         isSignup
-          ? "Enter the 6-digit code we sent to your email to activate your account."
-          : "Enter the 6-digit code from your email along with your new password."
+          ? 'Enter the 6-digit code we sent to your email to activate your account.'
+          : 'Enter the 6-digit code from your email along with your new password.'
       }
     >
       <p className="text-sm text-muted-foreground">
-        Code sent to: <strong>{emailFromStorage || "your email"}</strong>
+        Code sent to: <strong>{emailFromStorage || 'your email'}</strong>
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* OTP input */}
         <div className="space-y-2">
-          <label htmlFor="otp" className="text-sm font-medium text-nc-dark">
-            6-Digit Code
-          </label>
+          <label htmlFor="otp" className="text-sm font-medium text-nc-dark">6-Digit Code</label>
           <Input
-            id="otp"
-            type="text"
-            inputMode="numeric"
-            placeholder="• • • • • •"
-            maxLength={6}
-            required
-            value={otp}
-            onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
+            id="otp" type="text" inputMode="numeric" placeholder="• • • • • •"
+            maxLength={6} required value={otp}
+            onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
             disabled={isSubmitting}
             className="text-center text-xl tracking-widest"
           />
         </div>
 
-        {/* New password fields — only for reset flow */}
         {!isSignup && (
           <>
             <div className="space-y-2">
@@ -155,12 +165,11 @@ const VerifyOtpPage = () => {
           </>
         )}
 
-        {/* Timer */}
         <div className="text-center">
           {timerActive ? (
             <p className="text-sm text-muted-foreground">
-              Code expires in:{" "}
-              <span className={`font-semibold ${timeLeft <= 30 ? "text-red-500" : "text-teal"}`}>
+              Code expires in:{' '}
+              <span className={`font-semibold ${timeLeft <= 30 ? 'text-red-500' : 'text-teal'}`}>
                 {fmt(timeLeft)}
               </span>
             </p>
@@ -175,26 +184,24 @@ const VerifyOtpPage = () => {
           disabled={isSubmitting || otp.length !== 6}
         >
           {isSubmitting
-            ? "Verifying..."
+            ? 'Verifying...'
             : isSignup
-            ? "Verify & Activate"
-            : "Verify & Reset Password"}
+            ? 'Verify & Activate'
+            : 'Verify & Reset Password'}
         </Button>
 
         <Button
-          type="button"
-          variant="outline"
-          className="h-11 w-full"
+          type="button" variant="outline" className="h-11 w-full"
           onClick={handleResend}
           disabled={timerActive || isResending}
         >
-          {isResending ? "Sending..." : timerActive ? `Resend OTP (${fmt(timeLeft)})` : "Resend OTP"}
+          {isResending ? 'Sending...' : timerActive ? `Resend OTP (${fmt(timeLeft)})` : 'Resend OTP'}
         </Button>
       </form>
 
       <p className="text-center text-sm text-muted-foreground">
         <Link
-          to={isSignup ? "/sign-up" : "/forgot-password"}
+          to={isSignup ? '/sign-up' : '/forgot-password'}
           className="font-semibold text-teal hover:text-teal-dk"
         >
           ← Back

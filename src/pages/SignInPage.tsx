@@ -1,21 +1,31 @@
-import { FormEvent, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import AuthShell from "@/components/auth/AuthShell";
-import { authService } from "@/services/auth.service";
-import { useToast } from "@/hooks/use-toast";
+/**
+ * FIX: SignInPage.tsx
+ *
+ * BUGS FIXED:
+ * 1. Was destructuring { accessToken, refreshToken, data } from res.data
+ *    → backend now returns { success, message, data: { accessToken, refreshToken, user } }
+ * 2. Was checking status 403 for "not verified" → backend returns 401
+ * 3. Was saving data?.user?.role but it's now at data.user.role directly
+ */
 
-function getApiError(error: unknown) {
+import { FormEvent, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Input }  from '@/components/ui/input';
+import AuthShell  from '@/components/auth/AuthShell';
+import { authService } from '@/services/auth.service';
+import { useToast } from '@/hooks/use-toast';
+
+function getApiError(error: unknown): string | null {
   const msg = (error as any)?.response?.data?.message;
-  return typeof msg === "string" && msg.length > 0 ? msg : null;
+  return typeof msg === 'string' && msg.length > 0 ? msg : null;
 }
 
 const SignInPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email,       setEmail]       = useState('');
+  const [password,    setPassword]    = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -23,27 +33,37 @@ const SignInPage = () => {
     setIsSubmitting(true);
     try {
       const res = await authService.signin({ email, password });
-      const { accessToken, refreshToken, data } = res.data;
 
-      localStorage.setItem("accessToken", accessToken);
-      localStorage.setItem("refreshToken", refreshToken);
-      localStorage.setItem("user", JSON.stringify(data?.user || {}));
+      // FIX: Backend wraps response → { success, message, data: { accessToken, refreshToken, user } }
+      const responseData = res.data?.data || res.data;
+      const { accessToken, refreshToken, user } = responseData;
 
-      toast({ title: "Welcome back!", description: "Signed in successfully." });
+      localStorage.setItem('accessToken',  accessToken);
+      localStorage.setItem('refreshToken', refreshToken);
+      localStorage.setItem('user',         JSON.stringify(user));
 
-      // Route based on role
-      const role = data?.user?.role;
-      navigate(role === "admin" ? "/" : "/murabbi");
+      toast({ title: 'Welcome back!', description: 'Signed in successfully.' });
+
+      navigate(user?.role === 'admin' ? '/' : '/murabbi');
     } catch (e: unknown) {
       const errMsg = getApiError(e);
-      // If email not verified → go to verify page
-      if ((e as any)?.response?.status === 403 && errMsg?.includes("not verified")) {
-        localStorage.setItem("pendingEmail", email);
-        toast({ title: "Email not verified", description: "A new OTP has been sent to your email." });
-        navigate("/verify-otp?flow=signup");
+
+      // FIX: Backend returns 401 for unverified email (not 403)
+      if (errMsg?.toLowerCase().includes('not verified')) {
+        localStorage.setItem('pendingEmail', email);
+        toast({
+          title      : 'Email not verified',
+          description: 'Please verify your email first.',
+        });
+        navigate('/verify-otp?flow=signup');
         return;
       }
-      toast({ variant: "destructive", title: "Sign in failed", description: errMsg || "Check your credentials." });
+
+      toast({
+        variant    : 'destructive',
+        title      : 'Sign in failed',
+        description: errMsg || 'Invalid email or password.',
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -71,11 +91,11 @@ const SignInPage = () => {
           </Link>
         </div>
         <Button type="submit" className="h-11 w-full bg-teal text-white hover:bg-teal-dk" disabled={isSubmitting}>
-          {isSubmitting ? "Signing In..." : "Sign In"}
+          {isSubmitting ? 'Signing In...' : 'Sign In'}
         </Button>
       </form>
       <p className="text-center text-sm text-muted-foreground">
-        New here?{" "}
+        New here?{' '}
         <Link to="/sign-up" className="font-semibold text-teal hover:text-teal-dk">Create account</Link>
       </p>
     </AuthShell>

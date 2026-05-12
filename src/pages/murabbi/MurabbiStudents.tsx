@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import NcCard, { CardHeader, CardTitle } from "@/components/shared/NcCard";
+import NcCard from "@/components/shared/NcCard";
 import NcBadge from "@/components/shared/NcBadge";
 import SectionTitle from "@/components/shared/SectionTitle";
 import { Search, Phone, MessageSquare, MoreVertical } from "lucide-react";
@@ -41,7 +41,7 @@ export default function MurabbiStudents() {
             <table className="w-full text-left">
               <thead>
                 <tr className="border-b border-border">
-                  {["Student", "Circle", "Noor Points", "Status", "Actions"].map((h) => (
+                  {["Student", "Circle", "Neighbourhood", "Phone", "Status", "Actions"].map((h) => (
                     <th key={h} className="px-4 py-4 text-[13px] font-semibold text-nc-muted">{h}</th>
                   ))}
                 </tr>
@@ -56,17 +56,17 @@ export default function MurabbiStudents() {
                         </div>
                         <div>
                           <div className="text-sm font-medium">{s.fullName}</div>
-                          <div className="text-[11px] text-nc-muted">Age: {s.age} · {s.parentName}</div>
+                          <div className="text-[11px] text-nc-muted">Father: {s.fatherName || "—"}</div>
                         </div>
                       </div>
                     </td>
                     <td className="px-4 py-4 text-sm">{s.circle?.name || "—"}</td>
+                    <td className="px-4 py-4 text-sm text-nc-muted">{s.neighbourhood?.name || "—"}</td>
+                    <td className="px-4 py-4 text-sm">{s.phone || "—"}</td>
                     <td className="px-4 py-4">
-                      <span className="text-gold-dim font-bold text-sm">{s.noorPoints ?? 0}</span>
-                      <span className="text-[10px] text-nc-muted ml-1">pts</span>
-                    </td>
-                    <td className="px-4 py-4">
-                      <NcBadge variant={s.status === "active" ? "green" : "amber"}>{s.status}</NcBadge>
+                      <NcBadge variant={s.isActive ? "green" : "amber"}>
+                        {s.isActive ? "Active" : "Inactive"}
+                      </NcBadge>
                     </td>
                     <td className="px-4 py-4">
                       <div className="flex items-center gap-2">

@@ -1,41 +1,97 @@
-import axios from "axios";
+/**
+ * FIX: api.ts
+ *
+ * BUGS FOUND & FIXED:
+ * 1. Token refresh call sent refreshToken in request BODY → backend expects it
+ *    as Authorization: Bearer header (JwtRefreshGuard reads from header)
+ * 2. After refresh, new tokens weren't being stored if data shape was wrong
+ * 3. Added proper response shape handling { success, message, data }
+ */
+
+import axios from 'axios';
 
 export const API = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1",
-  headers: { "Content-Type": "application/json" },
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1',
+  headers: { 'Content-Type': 'application/json' },
 });
 
-// ── Attach access token to every request ──────────────────
+// ── Attach access token to every request ──────────────────────────────────────
 API.interceptors.request.use((config) => {
-  const token = localStorage.getItem("accessToken");
+  const token = localStorage.getItem('accessToken');
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
 
-// ── Auto-refresh on 401 ───────────────────────────────────
+// ── Auto-refresh on 401 ───────────────────────────────────────────────────────
+let isRefreshing = false;
+let failedQueue: Array<{ resolve: (v: unknown) => void; reject: (r: unknown) => void }> = [];
+
+function processQueue(error: unknown, token: string | null = null) {
+  failedQueue.forEach((prom) => {
+    if (error) prom.reject(error);
+    else prom.resolve(token);
+  });
+  failedQueue = [];
+}
+
 API.interceptors.response.use(
   (res) => res,
   async (error) => {
     const original = error.config;
+
     if (error.response?.status === 401 && !original._retry) {
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then((token) => {
+            original.headers.Authorization = `Bearer ${token}`;
+            return API(original);
+          })
+          .catch((err) => Promise.reject(err));
+      }
+
       original._retry = true;
-      try {
-        const rt = localStorage.getItem("refreshToken");
-        if (!rt) throw new Error("no refresh token");
-        const { data } = await axios.post(
-          `${import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1"}/auth/refresh`,
-          { refreshToken: rt }
-        );
-        localStorage.setItem("accessToken", data.accessToken);
-        localStorage.setItem("refreshToken", data.refreshToken);
-        original.headers.Authorization = `Bearer ${data.accessToken}`;
-        return API(original);
-      } catch {
+      isRefreshing = true;
+
+      const rt = localStorage.getItem('refreshToken');
+      if (!rt) {
+        isRefreshing = false;
         localStorage.clear();
-        window.location.href = "/signin";
+        window.location.href = '/signin';
         return Promise.reject(error);
       }
+
+      try {
+        // FIX: Send refreshToken as Authorization header, NOT in body
+        const { data } = await axios.post(
+          `${import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1'}/auth/refresh`,
+          {},
+          { headers: { Authorization: `Bearer ${rt}` } },
+        );
+
+        // FIX: Handle wrapped response { success, message, data: { accessToken, refreshToken } }
+        const newAccess  = data.data?.accessToken  || data.accessToken;
+        const newRefresh = data.data?.refreshToken || data.refreshToken;
+
+        localStorage.setItem('accessToken',  newAccess);
+        localStorage.setItem('refreshToken', newRefresh);
+
+        API.defaults.headers.common['Authorization'] = `Bearer ${newAccess}`;
+        original.headers.Authorization = `Bearer ${newAccess}`;
+
+        processQueue(null, newAccess);
+        return API(original);
+      } catch (err) {
+        processQueue(err, null);
+        localStorage.clear();
+        window.location.href = '/signin';
+        return Promise.reject(err);
+      } finally {
+        isRefreshing = false;
+      }
     }
+
     return Promise.reject(error);
-  }
+  },
 );

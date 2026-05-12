@@ -41,16 +41,36 @@ export function FormGroup({ label, required, children }: { label: string; requir
   );
 }
 
-export function FormInput({ placeholder, type = 'text', value }: { placeholder?: string; type?: string; value?: string }) {
-  return <input className="w-full px-3.5 py-2.5 border border-border rounded-sm text-sm text-foreground bg-card focus:border-teal focus:shadow-[0_0_0_3px_rgba(14,107,114,0.08)] outline-none transition-colors" placeholder={placeholder} type={type} defaultValue={value} />;
+export function FormInput(props: React.ComponentPropsWithoutRef<'input'>) {
+  const { className, ...rest } = props;
+  return (
+    <input
+      {...rest}
+      className={`w-full px-3.5 py-2.5 border border-border rounded-sm text-sm text-foreground bg-card focus:border-teal focus:shadow-[0_0_0_3px_rgba(14,107,114,0.08)] outline-none transition-colors ${className ?? ''}`}
+    />
+  );
 }
 
-export function FormSelect({ children }: { children: React.ReactNode }) {
-  return <select className="w-full px-3.5 py-2.5 border border-border rounded-sm text-sm text-foreground bg-card focus:border-teal focus:shadow-[0_0_0_3px_rgba(14,107,114,0.08)] outline-none transition-colors">{children}</select>;
+export function FormSelect(props: React.ComponentPropsWithoutRef<'select'>) {
+  const { className, children, ...rest } = props;
+  return (
+    <select
+      {...rest}
+      className={`w-full px-3.5 py-2.5 border border-border rounded-sm text-sm text-foreground bg-card focus:border-teal focus:shadow-[0_0_0_3px_rgba(14,107,114,0.08)] outline-none transition-colors ${className ?? ''}`}
+    >
+      {children}
+    </select>
+  );
 }
 
-export function FormTextarea({ placeholder }: { placeholder?: string }) {
-  return <textarea className="w-full px-3.5 py-2.5 border border-border rounded-sm text-sm text-foreground bg-card focus:border-teal focus:shadow-[0_0_0_3px_rgba(14,107,114,0.08)] outline-none transition-colors resize-y min-h-[80px]" placeholder={placeholder} />;
+export function FormTextarea(props: React.ComponentPropsWithoutRef<'textarea'>) {
+  const { className, ...rest } = props;
+  return (
+    <textarea
+      {...rest}
+      className={`w-full px-3.5 py-2.5 border border-border rounded-sm text-sm text-foreground bg-card focus:border-teal focus:shadow-[0_0_0_3px_rgba(14,107,114,0.08)] outline-none transition-colors resize-y min-h-[80px] ${className ?? ''}`}
+    />
+  );
 }
 
 export function FormRow({ children }: { children: React.ReactNode }) {
