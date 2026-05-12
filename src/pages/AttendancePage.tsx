@@ -2,23 +2,23 @@ import { useEffect, useState } from "react";
 import NcCard, { CardHeader, CardTitle } from "@/components/shared/NcCard";
 import { attendanceService, circlesService } from "@/services/api.service";
 import { useToast } from "@/hooks/use-toast";
-import NcBadge from "@/components/shared/NcBadge";
+import { AdminAttendanceModal } from "@/components/modals/AllModals";
 
 export default function AttendancePage() {
   const { toast } = useToast();
-  const [records, setRecords] = useState<any[]>([]);
-  const [circles, setCircles] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [records, setRecords]         = useState<any[]>([]);
+  const [loading, setLoading]         = useState(true);
+  const [attendanceOpen, setAttendanceOpen] = useState(false);
 
-  useEffect(() => {
+  function load() {
+    setLoading(true);
     Promise.all([attendanceService.getAll(), circlesService.getAll()])
-      .then(([aRes, cRes]) => {
-        setRecords(aRes.data.data || []);
-        setCircles(cRes.data.data || []);
-      })
+      .then(([aRes]) => { setRecords(aRes.data.data || []); })
       .catch(() => toast({ variant: "destructive", title: "Failed to load attendance" }))
       .finally(() => setLoading(false));
-  }, []);
+  }
+
+  useEffect(() => { load(); }, []);
 
   const presentRate = (rec: any) => {
     if (!rec.records?.length) return 0;
@@ -29,10 +29,11 @@ export default function AttendancePage() {
   return (
     <div className="page-animate">
       <div className="flex items-center justify-between mb-5">
-        <div className="text-lg font-semibold text-foreground">Attendance Management</div>
-        <div className="flex gap-2.5">
-          <span className="text-sm text-nc-muted self-center">{records.length} sessions recorded</span>
+        <div>
+          <div className="text-lg font-semibold text-foreground">Attendance Management</div>
+          <div className="text-xs text-nc-muted mt-0.5">{records.length} sessions recorded</div>
         </div>
+        <button className="btn-gold" onClick={() => setAttendanceOpen(true)}>+ Mark Attendance</button>
       </div>
 
       {loading ? (
@@ -40,9 +41,7 @@ export default function AttendancePage() {
       ) : (
         <div className="grid grid-cols-1 gap-5">
           <NcCard>
-            <CardHeader>
-              <CardTitle>All Attendance Records</CardTitle>
-            </CardHeader>
+            <CardHeader><CardTitle>All Attendance Records</CardTitle></CardHeader>
             {records.length === 0 ? (
               <div className="text-center py-10 text-nc-muted text-sm">No attendance submitted yet.</div>
             ) : (
@@ -50,7 +49,7 @@ export default function AttendancePage() {
                 <table className="w-full border-collapse text-[13.5px]">
                   <thead>
                     <tr>
-                      {["Circle", "Session #", "Date", "Topic", "Students", "Present %", "Murabbi"].map((h) => (
+                      {["Circle", "Session #", "Date", "Topic", "Students", "Present %", "Submitted By"].map((h) => (
                         <th key={h} className="bg-muted px-3.5 py-2.5 text-left text-xs font-semibold text-nc-muted uppercase tracking-wide border-b border-border">{h}</th>
                       ))}
                     </tr>
@@ -76,7 +75,9 @@ export default function AttendancePage() {
                             </span>
                           </div>
                         </td>
-                        <td className="px-3.5 py-3 border-b border-border text-nc-muted text-xs">{rec.murabbi?.fullName || "—"}</td>
+                        <td className="px-3.5 py-3 border-b border-border text-nc-muted text-xs">
+                          {rec.submittedBy?.fullName || "—"}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -86,6 +87,12 @@ export default function AttendancePage() {
           </NcCard>
         </div>
       )}
+
+      <AdminAttendanceModal
+        open={attendanceOpen}
+        onClose={() => setAttendanceOpen(false)}
+        onSuccess={load}
+      />
     </div>
   );
 }

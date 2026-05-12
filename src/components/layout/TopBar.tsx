@@ -14,9 +14,10 @@ import { LogOut, User, Settings, LayoutDashboard } from "lucide-react";
 interface TopBarProps {
   activePage: string;
   onEnroll: () => void;
+  onMurabbiNav?: (page: string) => void;
 }
 
-export default function TopBar({ activePage, onEnroll }: TopBarProps) {
+export default function TopBar({ activePage, onEnroll, onMurabbiNav }: TopBarProps) {
   const title = pageNames[activePage] || activePage;
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -90,24 +91,43 @@ export default function TopBar({ activePage, onEnroll }: TopBarProps) {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <Link to={isMurabbiPanel ? "/murabbi/settings" : "/settings"} className="cursor-pointer">
-                <User className="mr-2 h-4 w-4" />
-                <span>Profile</span>
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link to={isMurabbiPanel ? "/murabbi" : "/"} className="cursor-pointer">
-                <LayoutDashboard className="mr-2 h-4 w-4" />
-                <span>Dashboard</span>
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link to={isMurabbiPanel ? "/murabbi/settings" : "/settings"} className="cursor-pointer">
-                <Settings className="mr-2 h-4 w-4" />
-                <span>Settings</span>
-              </Link>
-            </DropdownMenuItem>
+            {isMurabbiPanel ? (
+              <>
+                <DropdownMenuItem className="cursor-pointer" onClick={() => onMurabbiNav?.('murabbi-profile')}>
+                  <User className="mr-2 h-4 w-4" />
+                  <span>Profile</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem className="cursor-pointer" onClick={() => onMurabbiNav?.('murabbi-dashboard')}>
+                  <LayoutDashboard className="mr-2 h-4 w-4" />
+                  <span>Dashboard</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem className="cursor-pointer" onClick={() => onMurabbiNav?.('settings')}>
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Settings</span>
+                </DropdownMenuItem>
+              </>
+            ) : (
+              <>
+                <DropdownMenuItem asChild>
+                  <Link to="/settings" className="cursor-pointer">
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Profile</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/" className="cursor-pointer">
+                    <LayoutDashboard className="mr-2 h-4 w-4" />
+                    <span>Dashboard</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/settings" className="cursor-pointer">
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Settings</span>
+                  </Link>
+                </DropdownMenuItem>
+              </>
+            )}
             <DropdownMenuSeparator />
             <DropdownMenuItem 
               className="text-red-600 focus:text-red-600 cursor-pointer" 

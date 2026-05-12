@@ -1,5 +1,5 @@
-import { useEffect } from "react";
-import { X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { X, Eye, EyeOff } from "lucide-react";
 
 interface ModalProps {
   open: boolean;
@@ -70,6 +70,28 @@ export function FormTextarea(props: React.ComponentPropsWithoutRef<'textarea'>) 
       {...rest}
       className={`w-full px-3.5 py-2.5 border border-border rounded-sm text-sm text-foreground bg-card focus:border-teal focus:shadow-[0_0_0_3px_rgba(14,107,114,0.08)] outline-none transition-colors resize-y min-h-[80px] ${className ?? ''}`}
     />
+  );
+}
+
+export function FormPasswordInput(props: React.ComponentPropsWithoutRef<'input'>) {
+  const [show, setShow] = useState(false);
+  const { className, ...rest } = props;
+  return (
+    <div className="relative">
+      <input
+        {...rest}
+        type={show ? "text" : "password"}
+        className={`w-full px-3.5 py-2.5 pr-10 border border-border rounded-sm text-sm text-foreground bg-card focus:border-teal focus:shadow-[0_0_0_3px_rgba(14,107,114,0.08)] outline-none transition-colors ${className ?? ''}`}
+      />
+      <button
+        type="button"
+        tabIndex={-1}
+        onClick={() => setShow((s) => !s)}
+        className="absolute right-3 top-1/2 -translate-y-1/2 text-nc-muted hover:text-foreground transition-colors"
+      >
+        {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+      </button>
+    </div>
   );
 }
 

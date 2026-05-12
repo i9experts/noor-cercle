@@ -12,9 +12,10 @@
 
 import { FormEvent, useEffect, useState, useCallback } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import AuthShell  from '@/components/auth/AuthShell';
-import { Button } from '@/components/ui/button';
-import { Input }  from '@/components/ui/input';
+import AuthShell     from '@/components/auth/AuthShell';
+import { Button }    from '@/components/ui/button';
+import { Input }     from '@/components/ui/input';
+import PasswordInput from '@/components/shared/PasswordInput';
 import { authService } from '@/services/auth.service';
 import { useToast } from '@/hooks/use-toast';
 
@@ -154,12 +155,12 @@ const VerifyOtpPage = () => {
           <>
             <div className="space-y-2">
               <label htmlFor="newPassword" className="text-sm font-medium text-nc-dark">New Password</label>
-              <Input id="newPassword" type="password" placeholder="Minimum 8 characters" required
+              <PasswordInput id="newPassword" placeholder="Minimum 8 characters" required
                 value={newPassword} onChange={(e) => setNewPassword(e.target.value)} disabled={isSubmitting} />
             </div>
             <div className="space-y-2">
               <label htmlFor="confirmPassword" className="text-sm font-medium text-nc-dark">Confirm Password</label>
-              <Input id="confirmPassword" type="password" placeholder="Repeat new password" required
+              <PasswordInput id="confirmPassword" placeholder="Repeat new password" required
                 value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} disabled={isSubmitting} />
             </div>
           </>

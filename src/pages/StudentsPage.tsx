@@ -1,26 +1,79 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import StatCard from "@/components/shared/StatCard";
 import NcCard, { CardHeader, CardTitle } from "@/components/shared/NcCard";
 import NcBadge from "@/components/shared/NcBadge";
 import { adminService, studentsService } from "@/services/api.service";
 import { useToast } from "@/hooks/use-toast";
+import { MoreVertical, Pencil, UserCheck, UserX, Trash2 } from "lucide-react";
+import { EditStudentModal } from "@/components/modals/AllModals";
 
 function getInitials(name: string) {
   return name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
 }
 
-export default function StudentsPage({
-  onEnroll,
-  refreshKey,
-}: {
-  onEnroll: () => void;
-  refreshKey?: number;
+function ActionMenu({ student, onEdit, onToggle, onDelete }: {
+  student: any;
+  onEdit: () => void;
+  onToggle: () => void;
+  onDelete: () => void;
 }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        className="p-1.5 hover:bg-muted rounded-md text-nc-muted"
+        onClick={() => setOpen((s) => !s)}
+      >
+        <MoreVertical className="h-4 w-4" />
+      </button>
+      {open && (
+        <div className="absolute right-0 top-8 w-44 bg-card border border-border rounded-lg shadow-lg z-50 py-1 text-[13px]">
+          <button
+            className="w-full flex items-center gap-2.5 px-3.5 py-2 hover:bg-muted text-left"
+            onClick={() => { setOpen(false); onEdit(); }}
+          >
+            <Pencil className="h-3.5 w-3.5 text-nc-muted" /> Edit
+          </button>
+          <button
+            className="w-full flex items-center gap-2.5 px-3.5 py-2 hover:bg-muted text-left"
+            onClick={() => { setOpen(false); onToggle(); }}
+          >
+            {student.isActive
+              ? <><UserX className="h-3.5 w-3.5 text-amber-500" /> Deactivate</>
+              : <><UserCheck className="h-3.5 w-3.5 text-green-600" /> Activate</>}
+          </button>
+          <div className="border-t border-border my-1" />
+          <button
+            className="w-full flex items-center gap-2.5 px-3.5 py-2 hover:bg-red-50 text-red-600 text-left"
+            onClick={() => { setOpen(false); onDelete(); }}
+          >
+            <Trash2 className="h-3.5 w-3.5" /> Delete
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function StudentsPage({
+  onEnroll, refreshKey,
+}: { onEnroll: () => void; refreshKey?: number }) {
   const { toast } = useToast();
-  const [students, setStudents] = useState<any[]>([]);
-  const [stats, setStats]       = useState<any>(null);
-  const [loading, setLoading]   = useState(true);
-  const [search, setSearch]     = useState("");
+  const [students, setStudents]       = useState<any[]>([]);
+  const [stats, setStats]             = useState<any>(null);
+  const [loading, setLoading]         = useState(true);
+  const [search, setSearch]           = useState("");
+  const [editStudent, setEditStudent] = useState<any>(null);
 
   function load() {
     setLoading(true);
@@ -37,17 +90,10 @@ export default function StudentsPage({
 
   async function toggleStatus(s: any) {
     try {
-      if (s.isActive) {
-        await studentsService.deactivate(s._id);
-        toast({ title: `${s.fullName} deactivated.` });
-      } else {
-        await studentsService.activate(s._id);
-        toast({ title: `${s.fullName} activated.` });
-      }
+      if (s.isActive) { await studentsService.deactivate(s._id); toast({ title: `${s.fullName} deactivated.` }); }
+      else             { await studentsService.activate(s._id);   toast({ title: `${s.fullName} activated.` }); }
       load();
-    } catch {
-      toast({ variant: "destructive", title: "Action failed." });
-    }
+    } catch { toast({ variant: "destructive", title: "Action failed." }); }
   }
 
   async function handleDelete(s: any) {
@@ -57,26 +103,24 @@ export default function StudentsPage({
       toast({ title: "Student deleted." });
       load();
     } catch (err: any) {
-      const msg = err?.response?.data?.message || "Delete failed.";
-      toast({ variant: "destructive", title: msg });
+      toast({ variant: "destructive", title: err?.response?.data?.message || "Delete failed." });
     }
   }
 
-  const filtered = students.filter(
-    (s) =>
-      !search ||
-      s.fullName?.toLowerCase().includes(search.toLowerCase()) ||
-      s.neighbourhood?.name?.toLowerCase().includes(search.toLowerCase()) ||
-      s.circle?.name?.toLowerCase().includes(search.toLowerCase()),
+  const filtered = students.filter((s) =>
+    !search ||
+    s.fullName?.toLowerCase().includes(search.toLowerCase()) ||
+    s.neighbourhood?.name?.toLowerCase().includes(search.toLowerCase()) ||
+    s.circle?.name?.toLowerCase().includes(search.toLowerCase()),
   );
 
   return (
     <div className="page-animate">
       <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4 mb-7">
-        <StatCard label="Total Enrolled" value={stats?.totalStudents ?? students.length} meta="All circles"       color="teal"   />
-        <StatCard label="Active Students" value={stats?.activeStudents ?? "—"}            meta="Currently active"  color="green"  />
-        <StatCard label="Total Circles"   value={stats?.totalCircles  ?? "—"}             meta="Across all areas"  color="gold"   />
-        <StatCard label="Murabbis"        value={stats?.totalMurabbis ?? "—"}             meta="Registered"        color="purple" />
+        <StatCard label="Total Enrolled"  value={stats?.totalStudents ?? students.length} meta="All circles"      color="teal"   />
+        <StatCard label="Active Students" value={stats?.activeStudents ?? "—"}             meta="Currently active" color="green"  />
+        <StatCard label="Total Circles"   value={stats?.totalCircles  ?? "—"}              meta="Across all areas" color="gold"   />
+        <StatCard label="Murabbis"        value={stats?.totalMurabbis ?? "—"}              meta="Registered"       color="purple" />
       </div>
 
       <NcCard>
@@ -105,13 +149,8 @@ export default function StudentsPage({
             <table className="w-full border-collapse text-[13.5px]">
               <thead>
                 <tr>
-                  {["Student", "Father", "Phone", "Circle", "Neighbourhood", "Enrolled", "Status", "Actions"].map((h) => (
-                    <th
-                      key={h}
-                      className="bg-muted px-3.5 py-2.5 text-left text-xs font-semibold text-nc-muted uppercase tracking-wide border-b border-border"
-                    >
-                      {h}
-                    </th>
+                  {["Student", "Father", "Phone", "Circle", "Neighbourhood", "Enrolled", "Status", ""].map((h) => (
+                    <th key={h} className="bg-muted px-3.5 py-2.5 text-left text-xs font-semibold text-nc-muted uppercase tracking-wide border-b border-border">{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -142,17 +181,12 @@ export default function StudentsPage({
                       </NcBadge>
                     </td>
                     <td className="px-3.5 py-3 border-b border-border">
-                      <div className="flex gap-1.5">
-                        <button className="btn-ghost text-xs" onClick={() => toggleStatus(s)}>
-                          {s.isActive ? "Deactivate" : "Activate"}
-                        </button>
-                        <button
-                          className="btn-ghost text-xs text-red-500 hover:text-red-600"
-                          onClick={() => handleDelete(s)}
-                        >
-                          Delete
-                        </button>
-                      </div>
+                      <ActionMenu
+                        student={s}
+                        onEdit={() => setEditStudent(s)}
+                        onToggle={() => toggleStatus(s)}
+                        onDelete={() => handleDelete(s)}
+                      />
                     </td>
                   </tr>
                 ))}
@@ -161,6 +195,13 @@ export default function StudentsPage({
           </div>
         )}
       </NcCard>
+
+      <EditStudentModal
+        open={!!editStudent}
+        student={editStudent}
+        onClose={() => setEditStudent(null)}
+        onSuccess={() => { setEditStudent(null); load(); }}
+      />
     </div>
   );
 }

@@ -17,6 +17,7 @@ export const adminService = {
   getMurabbis      : ()                                           => API.get('/admin/murabbis'),
   createMurabbi    : (data: { fullName: string; email: string; password: string }) =>
                        API.post('/admin/murabbis', data),
+  updateMurabbi    : (id: string, data: { fullName?: string })    => API.patch(`/admin/murabbis/${id}`, data),
   activateMurabbi  : (id: string)                                 => API.patch(`/admin/murabbis/${id}/activate`),
   deactivateMurabbi: (id: string)                                 => API.patch(`/admin/murabbis/${id}/deactivate`),
   deleteMurabbi    : (id: string)                                 => API.delete(`/admin/murabbis/${id}`),
@@ -112,9 +113,27 @@ export const murabbisService = {
     data: { ...r.data, data: r.data?.data?.find((m: any) => m._id === id) },
   })),
   // Murabbi's own portal data
-  getDashboard : ()           => API.get('/murabbi/dashboard'),
-  getMyCircles : ()           => API.get('/murabbi/my-circles'),
-  getMyStudents: ()           => API.get('/murabbi/my-students'),
+  getDashboard  : ()           => API.get('/murabbi/dashboard'),
+  getMyCircles  : ()           => API.get('/murabbi/my-circles'),
+  getMyStudents : ()           => API.get('/murabbi/my-students'),
+  updateStudent : (id: string, data: {
+    fullName?   : string;
+    fatherName? : string;
+    phone?      : string;
+    email?      : string;
+    dateOfBirth?: string;
+    address?    : string;
+  })                           => API.patch(`/murabbi/students/${id}`, data),
+  enrollStudent : (data: {
+    fullName       : string;
+    fatherName     : string;
+    phone          : string;
+    email?         : string;
+    dateOfBirth?   : string;
+    address?       : string;
+    circleId       : string;
+    neighbourhoodId: string;
+  })                           => API.post('/murabbi/enroll-student', data),
 };
 
 // ─────────────────────────────────────────────────────────────

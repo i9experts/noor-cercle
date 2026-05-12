@@ -9,9 +9,10 @@
 
 import { FormEvent, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Input }  from '@/components/ui/input';
-import AuthShell  from '@/components/auth/AuthShell';
+import { Button }    from '@/components/ui/button';
+import { Input }     from '@/components/ui/input';
+import AuthShell     from '@/components/auth/AuthShell';
+import PasswordInput from '@/components/shared/PasswordInput';
 import { authService } from '@/services/auth.service';
 import { useToast } from '@/hooks/use-toast';
 
@@ -77,7 +78,7 @@ const SignUpPage = () => {
         </div>
         <div className="space-y-2">
           <label htmlFor="password" className="text-sm font-medium text-nc-dark">Password</label>
-          <Input id="password" type="password" placeholder="Min 8 chars, 1 uppercase, 1 number" required
+          <PasswordInput id="password" placeholder="Min 8 chars, 1 uppercase, 1 number" required
             value={password} onChange={(e) => setPassword(e.target.value)} disabled={isSubmitting} />
         </div>
 

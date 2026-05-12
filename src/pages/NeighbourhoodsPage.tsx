@@ -2,19 +2,20 @@ import { useEffect, useState } from "react";
 import NcBadge from "@/components/shared/NcBadge";
 import { neighbourhoodsService } from "@/services/api.service";
 import { useToast } from "@/hooks/use-toast";
-import { AddNeighbourhoodModal } from "@/components/modals/AllModals";
+import { Pencil, Trash2 } from "lucide-react";
+import { AddNeighbourhoodModal, EditNeighbourhoodModal } from "@/components/modals/AllModals";
 
 export default function NeighbourhoodsPage() {
-  const { toast }               = useToast();
-  const [nbhs, setNbhs]         = useState<any[]>([]);
-  const [loading, setLoading]   = useState(true);
-  const [showAdd, setShowAdd]   = useState(false);
-  const [deleting, setDeleting] = useState<string | null>(null);
+  const { toast }                             = useToast();
+  const [nbhs, setNbhs]                       = useState<any[]>([]);
+  const [loading, setLoading]                 = useState(true);
+  const [showAdd, setShowAdd]                 = useState(false);
+  const [editNbh, setEditNbh]                 = useState<any>(null);
+  const [deleting, setDeleting]               = useState<string | null>(null);
 
   function load() {
     setLoading(true);
-    neighbourhoodsService
-      .getAll()
+    neighbourhoodsService.getAll()
       .then((res) => setNbhs(res.data.data || []))
       .catch(() => toast({ variant: "destructive", title: "Failed to load neighbourhoods" }))
       .finally(() => setLoading(false));
@@ -30,11 +31,8 @@ export default function NeighbourhoodsPage() {
       toast({ title: `"${n.name}" deleted.` });
       load();
     } catch (err: any) {
-      const msg = err?.response?.data?.message || "Delete failed.";
-      toast({ variant: "destructive", title: msg });
-    } finally {
-      setDeleting(null);
-    }
+      toast({ variant: "destructive", title: err?.response?.data?.message || "Delete failed." });
+    } finally { setDeleting(null); }
   }
 
   return (
@@ -70,22 +68,33 @@ export default function NeighbourhoodsPage() {
               <div className="text-xs text-nc-muted mt-2">
                 Created: {new Date(n.createdAt).toLocaleDateString()}
               </div>
-              <button
-                className="btn-ghost text-xs text-red-500 hover:text-red-600 mt-3 w-full"
-                onClick={() => handleDelete(n)}
-                disabled={deleting === n._id}
-              >
-                {deleting === n._id ? "Deleting…" : "Delete"}
-              </button>
+              <div className="flex gap-2 mt-3">
+                <button
+                  className="flex-1 flex items-center justify-center gap-1.5 btn-ghost text-xs"
+                  onClick={() => setEditNbh(n)}
+                >
+                  <Pencil className="h-3.5 w-3.5" /> Edit
+                </button>
+                <button
+                  className="flex-1 flex items-center justify-center gap-1.5 btn-ghost text-xs text-red-500 hover:text-red-600"
+                  onClick={() => handleDelete(n)}
+                  disabled={deleting === n._id}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  {deleting === n._id ? "Deleting…" : "Delete"}
+                </button>
+              </div>
             </div>
           ))}
         </div>
       )}
 
-      <AddNeighbourhoodModal
-        open={showAdd}
-        onClose={() => setShowAdd(false)}
-        onSuccess={load}
+      <AddNeighbourhoodModal open={showAdd} onClose={() => setShowAdd(false)} onSuccess={load} />
+      <EditNeighbourhoodModal
+        open={!!editNbh}
+        neighbourhood={editNbh}
+        onClose={() => setEditNbh(null)}
+        onSuccess={() => { setEditNbh(null); load(); }}
       />
     </div>
   );

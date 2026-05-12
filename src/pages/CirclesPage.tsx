@@ -2,23 +2,21 @@ import { useEffect, useState } from "react";
 import NcBadge from "@/components/shared/NcBadge";
 import { circlesService } from "@/services/api.service";
 import { useToast } from "@/hooks/use-toast";
+import { Pencil, Trash2 } from "lucide-react";
+import { EditCircleModal } from "@/components/modals/AllModals";
 
 export default function CirclesPage({
-  onNewCircle,
-  refreshKey,
-}: {
-  onNewCircle: () => void;
-  refreshKey?: number;
-}) {
+  onNewCircle, refreshKey,
+}: { onNewCircle: () => void; refreshKey?: number }) {
   const { toast }                   = useToast();
   const [circles, setCircles]       = useState<any[]>([]);
   const [loading, setLoading]       = useState(true);
   const [deleting, setDeleting]     = useState<string | null>(null);
+  const [editCircle, setEditCircle] = useState<any>(null);
 
   function load() {
     setLoading(true);
-    circlesService
-      .getAll()
+    circlesService.getAll()
       .then((res) => setCircles(res.data.data || []))
       .catch(() => toast({ variant: "destructive", title: "Failed to load circles" }))
       .finally(() => setLoading(false));
@@ -34,11 +32,8 @@ export default function CirclesPage({
       toast({ title: `Circle "${c.name}" deleted.` });
       load();
     } catch (err: any) {
-      const msg = err?.response?.data?.message || "Delete failed.";
-      toast({ variant: "destructive", title: msg });
-    } finally {
-      setDeleting(null);
-    }
+      toast({ variant: "destructive", title: err?.response?.data?.message || "Delete failed." });
+    } finally { setDeleting(null); }
   }
 
   return (
@@ -87,17 +82,33 @@ export default function CirclesPage({
                   <div className="text-[10px] text-nc-muted uppercase tracking-wide mt-0.5">Status</div>
                 </div>
               </div>
-              <button
-                className="btn-ghost text-xs text-red-500 hover:text-red-600 mt-3 w-full"
-                onClick={() => handleDelete(c)}
-                disabled={deleting === c._id}
-              >
-                {deleting === c._id ? "Deleting…" : "Delete Circle"}
-              </button>
+              <div className="flex gap-2 mt-3">
+                <button
+                  className="flex-1 flex items-center justify-center gap-1.5 btn-ghost text-xs"
+                  onClick={() => setEditCircle(c)}
+                >
+                  <Pencil className="h-3.5 w-3.5" /> Edit
+                </button>
+                <button
+                  className="flex-1 flex items-center justify-center gap-1.5 btn-ghost text-xs text-red-500 hover:text-red-600"
+                  onClick={() => handleDelete(c)}
+                  disabled={deleting === c._id}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  {deleting === c._id ? "Deleting…" : "Delete"}
+                </button>
+              </div>
             </div>
           ))}
         </div>
       )}
+
+      <EditCircleModal
+        open={!!editCircle}
+        circle={editCircle}
+        onClose={() => setEditCircle(null)}
+        onSuccess={() => { setEditCircle(null); load(); }}
+      />
     </div>
   );
 }
