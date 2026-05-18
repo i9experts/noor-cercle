@@ -12,7 +12,8 @@ export const usersService = {
 //  ADMIN — murabbis + stats
 // ─────────────────────────────────────────────────────────────
 export const adminService = {
-  getDashboard     : ()                                           => API.get('/admin/stats'),
+  getDashboard         : ()                                           => API.get('/admin/stats'),
+  getDashboardExtended : ()                                           => API.get('/admin/dashboard/extended'),
   getAllUsers       : ()                                           => API.get('/admin/users'),
   getMurabbis      : ()                                           => API.get('/admin/murabbis'),
   createMurabbi    : (data: { fullName: string; email: string; password: string }) =>
@@ -66,14 +67,14 @@ export const studentsService = {
   getAll      : ()             => API.get('/admin/students'),
   getOne      : (id: string)   => API.get(`/admin/students/${id}`),
   enroll      : (data: {
-    fullName       : string;
-    fatherName     : string;
-    phone          : string;
-    email?         : string;
-    dateOfBirth?   : string;
-    address?       : string;
-    circleId       : string;
-    neighbourhoodId: string;
+    fullName        : string;
+    fatherName      : string;
+    phone           : string;
+    email?          : string;
+    enrollmentDate? : string;
+    address?        : string;
+    circleId        : string;
+    neighbourhoodId : string;
   })                           => API.post('/admin/students/enroll', data),
   update      : (id: string, data: object) => API.patch(`/admin/students/${id}`, data),
   assignCircle: (id: string, circleId: string) =>
@@ -97,10 +98,23 @@ export const attendanceService = {
 //  INCENTIVES  (placeholder)
 // ─────────────────────────────────────────────────────────────
 export const incentivesService = {
-  award        : (data: object) => API.post('/incentives', data),
+  award        : (data: { studentId: string; awardType: string; note?: string }) =>
+                   API.post('/incentives', data),
   getAll       : ()             => API.get('/incentives'),
   getLeaderboard: ()            => API.get('/incentives/leaderboard'),
   getByStudent : (id: string)   => API.get(`/incentives/student/${id}`),
+};
+
+// ─────────────────────────────────────────────────────────────
+//  NOTIFICATIONS
+// ─────────────────────────────────────────────────────────────
+export const notificationsService = {
+  getAll        : ()           => API.get('/notifications'),
+  getUnreadCount: ()           => API.get('/notifications/unread-count'),
+  markRead      : (id: string) => API.patch(`/notifications/${id}/read`),
+  markAllRead   : ()           => API.patch('/notifications/read-all'),
+  accept        : (id: string) => API.patch(`/notifications/${id}/accept`),
+  reject        : (id: string) => API.patch(`/notifications/${id}/reject`),
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -124,15 +138,16 @@ export const murabbisService = {
     dateOfBirth?: string;
     address?    : string;
   })                           => API.patch(`/murabbi/students/${id}`, data),
+  requestDeleteStudent: (id: string) => API.post(`/murabbi/request-delete/student/${id}`),
   enrollStudent : (data: {
-    fullName       : string;
-    fatherName     : string;
-    phone          : string;
-    email?         : string;
-    dateOfBirth?   : string;
-    address?       : string;
-    circleId       : string;
-    neighbourhoodId: string;
+    fullName        : string;
+    fatherName      : string;
+    phone           : string;
+    email?          : string;
+    enrollmentDate? : string;
+    address?        : string;
+    circleId        : string;
+    neighbourhoodId : string;
   })                           => API.post('/murabbi/enroll-student', data),
 };
 
@@ -142,6 +157,8 @@ export const murabbisService = {
 export const sessionsService = {
   getAll       : () => API.get('/sessions'),
   getCurriculum: () => API.get('/sessions/curriculum'),
+  getStats     : () => API.get('/sessions/stats'),
+  getList      : () => API.get('/sessions/list'),
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -171,16 +188,66 @@ export const lessonsService = {
 //  PERFORMANCE  (placeholder)
 // ─────────────────────────────────────────────────────────────
 export const performanceService = {
-  submitReview : (data: object) => API.post('/performance/reviews', data),
-  getReviews   : ()             => API.get('/performance/reviews'),
-  getIndicators: ()             => API.get('/performance/indicators'),
+  submitReview   : (data: object)                                          => API.post('/performance/reviews', data),
+  getReviews     : (params?: { circleId?: string; murabbiId?: string })   => API.get('/performance/reviews', { params }),
+  getMyReviews   : ()                                                       => API.get('/performance/my-reviews'),
+  getIndicators  : ()                                                       => API.get('/performance/indicators'),
+  getSummary     : ()                                                       => API.get('/performance/summary'),
+  deleteReview   : (id: string)                                            => API.delete(`/performance/reviews/${id}`),
+  resolveFollowUp: (id: string)                                            => API.patch(`/performance/reviews/${id}/resolve`),
+};
+
+// ─────────────────────────────────────────────────────────────
+//  PARENTS
+// ─────────────────────────────────────────────────────────────
+export const parentsService = {
+  getAll      : ()                       => API.get('/parents'),
+  getOne      : (id: string)             => API.get(`/parents/${id}`),
+  getStats    : ()                       => API.get('/parents/stats'),
+  register    : (data: {
+    fullName      : string;
+    phone         : string;
+    email?        : string;
+    whatsappNumber?: string;
+    studentIds    : string[];
+    notes?        : string;
+  })                                     => API.post('/parents', data),
+  update      : (id: string, data: object) => API.patch(`/parents/${id}`, data),
+  remove      : (id: string)             => API.delete(`/parents/${id}`),
+  addFeedback : (id: string, data: {
+    message      : string;
+    stars        : number;
+    sessionNumber: number;
+  })                                     => API.post(`/parents/${id}/feedback`, data),
+};
+
+// ─────────────────────────────────────────────────────────────
+//  ANNOUNCEMENTS
+// ─────────────────────────────────────────────────────────────
+export const announcementsService = {
+  getAll : ()                                             => API.get('/announcements'),
+  create : (data: { title: string; body: string; icon?: string }) => API.post('/announcements', data),
+  remove : (id: string)                                   => API.delete(`/announcements/${id}`),
 };
 
 // ─────────────────────────────────────────────────────────────
 //  REPORTS  (placeholder)
 // ─────────────────────────────────────────────────────────────
 export const reportsService = {
-  getAdminReport    : () => API.get('/reports/admin'),
-  getMurabbiReport  : () => API.get('/reports/murabbi'),
-  getAttendanceTrend: () => API.get('/reports/attendance-trend'),
+  getAdminReport         : ()                  => API.get('/reports/admin'),
+  getMurabbiReport       : ()                  => API.get('/reports/murabbi'),
+  getAttendanceTrend     : (circleId?: string) => API.get(`/reports/attendance-trend${circleId ? `?circleId=${circleId}` : ''}`),
+  getAttendancePerCircle : ()                  => API.get('/reports/attendance-circles'),
+  getCircleReportDetail  : (circleId: string)  => API.get(`/reports/circle/${circleId}/detail`),
+};
+
+// ─────────────────────────────────────────────────────────────
+//  LIVE SESSIONS (Zoom meetings)
+// ─────────────────────────────────────────────────────────────
+export const liveSessionsService = {
+  getAll     : ()                         => API.get('/live-sessions'),
+  getUpcoming: ()                         => API.get('/live-sessions/upcoming'),
+  create     : (data: object)             => API.post('/live-sessions', data),
+  update     : (id: string, data: object) => API.patch(`/live-sessions/${id}`, data),
+  remove     : (id: string)               => API.delete(`/live-sessions/${id}`),
 };

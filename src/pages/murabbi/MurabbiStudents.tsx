@@ -3,7 +3,7 @@ import NcCard from "@/components/shared/NcCard";
 import NcBadge from "@/components/shared/NcBadge";
 import SectionTitle from "@/components/shared/SectionTitle";
 import Modal, { FormGroup, FormInput, FormRow } from "@/components/shared/Modal";
-import { Search, Phone, MessageSquare, MoreVertical, Pencil } from "lucide-react";
+import { Search, Phone, MessageSquare, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { murabbisService } from "@/services/api.service";
 import { useToast } from "@/hooks/use-toast";
 
@@ -87,7 +87,7 @@ function EditStudentModal({
   );
 }
 
-function ActionMenu({ student, onEdit }: { student: any; onEdit: () => void }) {
+function ActionMenu({ student, onEdit, onRequestDelete }: { student: any; onEdit: () => void; onRequestDelete: () => void }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -108,12 +108,18 @@ function ActionMenu({ student, onEdit }: { student: any; onEdit: () => void }) {
         <MoreVertical className="h-4 w-4" />
       </button>
       {open && (
-        <div className="absolute right-0 top-8 w-36 bg-card border border-border rounded-lg shadow-lg z-50 py-1 text-[13px]">
+        <div className="absolute right-0 top-8 w-44 bg-card border border-border rounded-lg shadow-lg z-50 py-1 text-[13px]">
           <button
             className="w-full flex items-center gap-2.5 px-3.5 py-2 hover:bg-muted text-left"
             onClick={() => { setOpen(false); onEdit(); }}
           >
             <Pencil className="h-3.5 w-3.5 text-nc-muted" /> Edit
+          </button>
+          <button
+            className="w-full flex items-center gap-2.5 px-3.5 py-2 hover:bg-red-50 text-red-600 text-left"
+            onClick={() => { setOpen(false); onRequestDelete(); }}
+          >
+            <Trash2 className="h-3.5 w-3.5" /> Request Delete
           </button>
         </div>
       )}
@@ -127,6 +133,16 @@ export default function MurabbiStudents() {
   const [loading, setLoading]         = useState(true);
   const [search, setSearch]           = useState("");
   const [editStudent, setEditStudent] = useState<any>(null);
+
+  async function handleRequestDelete(student: any) {
+    if (!confirm(`Send delete request for "${student.fullName}" to admin for approval?`)) return;
+    try {
+      await murabbisService.requestDeleteStudent(student._id);
+      toast({ title: "Delete request sent to admin for approval." });
+    } catch (err: any) {
+      toast({ variant: "destructive", title: err?.response?.data?.message || "Failed to send request." });
+    }
+  }
 
   function load() {
     setLoading(true);
@@ -202,7 +218,7 @@ export default function MurabbiStudents() {
                         <button className="p-1.5 hover:bg-muted rounded-md text-nc-muted" title="Call Parent">
                           <Phone className="h-4 w-4" />
                         </button>
-                        <ActionMenu student={s} onEdit={() => setEditStudent(s)} />
+                        <ActionMenu student={s} onEdit={() => setEditStudent(s)} onRequestDelete={() => handleRequestDelete(s)} />
                       </div>
                     </td>
                   </tr>

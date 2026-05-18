@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import StatCard from "@/components/shared/StatCard";
 import NcCard, { CardHeader, CardTitle } from "@/components/shared/NcCard";
 import NcBadge from "@/components/shared/NcBadge";
-import { adminService, studentsService } from "@/services/api.service";
+import { adminService, circlesService, studentsService } from "@/services/api.service";
 import { useToast } from "@/hooks/use-toast";
 import { MoreVertical, Pencil, UserCheck, UserX, Trash2 } from "lucide-react";
 import { EditStudentModal } from "@/components/modals/AllModals";
@@ -70,17 +70,20 @@ export default function StudentsPage({
 }: { onEnroll: () => void; refreshKey?: number }) {
   const { toast } = useToast();
   const [students, setStudents]       = useState<any[]>([]);
+  const [circles, setCircles]         = useState<any[]>([]);
   const [stats, setStats]             = useState<any>(null);
   const [loading, setLoading]         = useState(true);
   const [search, setSearch]           = useState("");
+  const [circleFilter, setCircleFilter] = useState("");
   const [editStudent, setEditStudent] = useState<any>(null);
 
   function load() {
     setLoading(true);
-    Promise.all([studentsService.getAll(), adminService.getDashboard()])
-      .then(([sRes, dRes]) => {
+    Promise.all([studentsService.getAll(), adminService.getDashboard(), circlesService.getAll()])
+      .then(([sRes, dRes, cRes]) => {
         setStudents(sRes.data.data || []);
         setStats(dRes.data.data || null);
+        setCircles(cRes.data.data || []);
       })
       .catch(() => toast({ variant: "destructive", title: "Failed to load students" }))
       .finally(() => setLoading(false));
@@ -107,12 +110,14 @@ export default function StudentsPage({
     }
   }
 
-  const filtered = students.filter((s) =>
-    !search ||
-    s.fullName?.toLowerCase().includes(search.toLowerCase()) ||
-    s.neighbourhood?.name?.toLowerCase().includes(search.toLowerCase()) ||
-    s.circle?.name?.toLowerCase().includes(search.toLowerCase()),
-  );
+  const filtered = students.filter((s) => {
+    const matchSearch = !search ||
+      s.fullName?.toLowerCase().includes(search.toLowerCase()) ||
+      s.neighbourhood?.name?.toLowerCase().includes(search.toLowerCase()) ||
+      s.circle?.name?.toLowerCase().includes(search.toLowerCase());
+    const matchCircle = !circleFilter || (s.circle?._id || s.circle) === circleFilter;
+    return matchSearch && matchCircle;
+  });
 
   return (
     <div className="page-animate">
@@ -136,6 +141,16 @@ export default function StudentsPage({
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
+            <select
+              className="border border-border bg-muted rounded-sm px-3 py-[9px] text-[13.5px] text-foreground outline-none cursor-pointer"
+              value={circleFilter}
+              onChange={(e) => setCircleFilter(e.target.value)}
+            >
+              <option value="">All Circles</option>
+              {circles.map((c) => (
+                <option key={c._id} value={c._id}>{c.name}</option>
+              ))}
+            </select>
             <button className="btn-gold" onClick={onEnroll}>+ Enroll Student</button>
           </div>
         </CardHeader>

@@ -1,21 +1,38 @@
 import { useEffect, useState } from "react";
+import { Star, AlertTriangle, Video } from "lucide-react";
 import StatCard from "@/components/shared/StatCard";
 import QuranBox from "@/components/shared/QuranBox";
 import NcCard, { CardHeader, CardTitle } from "@/components/shared/NcCard";
 import NcBadge from "@/components/shared/NcBadge";
 import SectionTitle from "@/components/shared/SectionTitle";
-import { murabbisService } from "@/services/api.service";
+import { murabbisService, performanceService, liveSessionsService } from "@/services/api.service";
+
+function rateColor(v: number) {
+  return v >= 80 ? "text-teal" : v >= 60 ? "text-gold" : "text-nc-red";
+}
 
 export default function MurabbiDashboard() {
-  const [data, setData]     = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [data, setData]             = useState<any>(null);
+  const [loading, setLoading]       = useState(true);
+  const [reviews, setReviews]       = useState<any[]>([]);
+  const [nextMeeting, setNextMeeting] = useState<any>(null);
   const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+  const DAY_NAMES = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 
   useEffect(() => {
     murabbisService.getDashboard()
       .then((res) => setData(res.data.data))
       .catch(console.error)
       .finally(() => setLoading(false));
+
+    performanceService.getMyReviews()
+      .then((res) => setReviews(res.data.data || []))
+      .catch(() => {});
+
+    liveSessionsService.getUpcoming()
+      .then((res) => setNextMeeting((res.data.data || [])[0] ?? null))
+      .catch(() => {});
   }, []);
 
   if (loading) return (
@@ -39,6 +56,60 @@ export default function MurabbiDashboard() {
         translation='"Read in the name of your Lord who created."'
         reference="SURAH AL-ALAQ · 96:1"
       />
+
+      {/* Upcoming meeting widget */}
+      {nextMeeting && (() => {
+        const timeLabel = nextMeeting.isRecurring && nextMeeting.recurringDay != null && nextMeeting.recurringTime
+          ? `Every ${DAY_NAMES[nextMeeting.recurringDay]} at ${nextMeeting.recurringTime}`
+          : nextMeeting.scheduledAt
+            ? new Date(nextMeeting.scheduledAt).toLocaleString("en-PK", {
+                weekday: "short", day: "numeric", month: "short",
+                year: "numeric", hour: "2-digit", minute: "2-digit",
+              })
+            : "—";
+        return (
+          <div className="rounded-xl bg-gradient-to-r from-teal to-primary p-5 text-white mb-6 flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
+              <Video className="h-6 w-6 text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-white/70 mb-0.5">
+                Upcoming Live Session
+              </p>
+              <p className="font-bold text-[15px] leading-snug truncate">{nextMeeting.title}</p>
+              <p className="text-[12px] text-white/80 mt-0.5">{timeLabel}</p>
+              <span className="inline-block mt-1 text-[11px] bg-white/20 px-2 py-0.5 rounded-full">
+                {nextMeeting.durationMinutes} mins
+              </span>
+            </div>
+            <div className="flex-shrink-0 flex flex-col items-end gap-2">
+              {nextMeeting.isLive && (
+                <span className="flex items-center gap-1 text-[11px] font-bold bg-green-400 text-white px-2 py-0.5 rounded-full">
+                  <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse inline-block" />
+                  LIVE NOW
+                </span>
+              )}
+              {nextMeeting.isLive ? (
+                <a
+                  href={nextMeeting.zoomLink}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-4 py-1.5 bg-white text-primary text-xs font-bold rounded-lg hover:bg-white/90 transition-colors"
+                >
+                  Join Now
+                </a>
+              ) : (
+                <button
+                  disabled
+                  className="px-4 py-1.5 bg-white/20 text-white/60 text-xs font-bold rounded-lg cursor-not-allowed"
+                >
+                  Join Meeting
+                </button>
+              )}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Stats row */}
       <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4 mb-7">
@@ -97,6 +168,62 @@ export default function MurabbiDashboard() {
                 </NcBadge>
               </div>
             ))}
+          </div>
+        </NcCard>
+      )}
+
+      {/* Recent performance reviews */}
+      {reviews.length > 0 && (
+        <NcCard className="mt-6">
+          <CardHeader>
+            <CardTitle sub="Your latest performance reviews from admin">Recent Reviews</CardTitle>
+          </CardHeader>
+          <div className="flex flex-col gap-3 mt-2">
+            {reviews.map((r: any) => {
+              const scores = [
+                r.honestyScore, r.gratitudeScore, r.empathyScore,
+                r.identityScore, r.familyScore, r.consistencyScore,
+              ].filter((s) => s !== undefined);
+              const overall = scores.length
+                ? Math.round(scores.reduce((a: number, b: number) => a + b, 0) / scores.length)
+                : 0;
+              return (
+                <div key={r._id} className="p-3.5 bg-muted/50 rounded-lg border border-border/50">
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <div>
+                      <span className="text-[11px] font-semibold uppercase tracking-wide text-nc-muted">
+                        Session #{r.sessionNumber}
+                      </span>
+                      <span className="mx-1.5 text-nc-muted">·</span>
+                      <span className="text-[11px] text-nc-muted">{(r.circle as any)?.name ?? "—"}</span>
+                    </div>
+                    <div className="flex items-center gap-0.5">
+                      {[1, 2, 3, 4, 5].map((s) => (
+                        <Star key={s} size={12}
+                          className={s <= (r.stars ?? 0) ? "fill-gold text-gold" : "text-border"} />
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <span className={`text-xl font-bold leading-none ${rateColor(overall)}`}>{overall}%</span>
+                    <span className="text-[11px] text-nc-muted">
+                      {new Date(r.createdAt).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" })}
+                    </span>
+                  </div>
+
+                  {r.reviewText && (
+                    <p className="mt-2 text-[12px] text-nc-muted leading-relaxed line-clamp-2">{r.reviewText}</p>
+                  )}
+
+                  {r.requiresFollowUp && (
+                    <div className="mt-2 flex items-center gap-1.5 text-[11px] text-nc-amber font-medium">
+                      <AlertTriangle size={12} /> Follow-up required
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </NcCard>
       )}

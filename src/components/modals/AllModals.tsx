@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import Modal, { FormGroup, FormInput, FormPasswordInput, FormSelect, FormTextarea, FormRow } from "@/components/shared/Modal";
-import { adminService, attendanceService, circlesService, murabbisService, neighbourhoodsService, studentsService as studentsApi } from "@/services/api.service";
+import { adminService, attendanceService, circlesService, incentivesService, murabbisService, neighbourhoodsService, parentsService, studentsService as studentsApi } from "@/services/api.service";
 import { useToast } from "@/hooks/use-toast";
 import { Check, X } from "lucide-react";
 
@@ -17,7 +17,7 @@ export function EnrollModal({
   const [murabbis, setMurabbis]             = useState<any[]>([]);
   const [filteredCircles, setFilteredCircles] = useState<any[]>([]);
 
-  const emptyForm = { fullName: "", fatherName: "", phone: "", email: "", dateOfBirth: "", address: "", murabbiId: "", circleId: "", neighbourhoodId: "" };
+  const emptyForm = { fullName: "", fatherName: "", phone: "", email: "", enrollmentDate: "", address: "", murabbiId: "", circleId: "", neighbourhoodId: "" };
   const [form, setForm] = useState(emptyForm);
 
   useEffect(() => {
@@ -83,7 +83,7 @@ export function EnrollModal({
     try {
       const payload = {
         fullName: form.fullName, fatherName: form.fatherName, phone: form.phone,
-        email: form.email || undefined, dateOfBirth: form.dateOfBirth || undefined,
+        email: form.email || undefined, enrollmentDate: form.enrollmentDate || undefined,
         address: form.address || undefined, circleId: form.circleId, neighbourhoodId: form.neighbourhoodId,
       };
       if (murabbiMode) {
@@ -107,7 +107,7 @@ export function EnrollModal({
       </FormRow>
       <FormRow>
         <FormGroup label="Phone" required><FormInput placeholder="+92 300 0000000" value={form.phone} onChange={(e) => set("phone", e.target.value)} /></FormGroup>
-        <FormGroup label="Date of Birth"><FormInput type="date" value={form.dateOfBirth} onChange={(e) => set("dateOfBirth", e.target.value)} /></FormGroup>
+        <FormGroup label="Enrollment Date"><FormInput type="date" value={form.enrollmentDate} onChange={(e) => set("enrollmentDate", e.target.value)} /></FormGroup>
       </FormRow>
       {!murabbiMode && (
         <FormGroup label="Assign Teacher (Murabbi)">
@@ -695,27 +695,238 @@ export function AdminAttendanceModal({
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+//  Register Parent Modal
+// ─────────────────────────────────────────────────────────────────────────────
+export function RegisterParentModal({
+  open, onClose, onSuccess,
+}: { open: boolean; onClose: () => void; onSuccess?: () => void }) {
+  const { toast } = useToast();
+  const [loading, setLoading]         = useState(false);
+  const [students, setStudents]       = useState<any[]>([]);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [studentSearch, setStudentSearch] = useState("");
+  const [form, setForm] = useState({ fullName: "", phone: "", email: "", whatsappNumber: "", notes: "" });
+
+  useEffect(() => {
+    if (!open) return;
+    setForm({ fullName: "", phone: "", email: "", whatsappNumber: "", notes: "" });
+    setSelectedIds([]);
+    setStudentSearch("");
+    studentsApi.getAll()
+      .then((r) => setStudents(r.data.data || []))
+      .catch(() => toast({ variant: "destructive", title: "Failed to load students" }));
+  }, [open]);
+
+  function set(field: string, value: string) { setForm((f) => ({ ...f, [field]: value })); }
+
+  function toggleStudent(id: string) {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  }
+
+  async function handleSubmit() {
+    if (!form.fullName || !form.phone || selectedIds.length === 0) {
+      toast({ variant: "destructive", title: "Full name, phone, and at least one student are required." }); return;
+    }
+    setLoading(true);
+    try {
+      await parentsService.register({
+        fullName      : form.fullName,
+        phone         : form.phone,
+        email         : form.email || undefined,
+        whatsappNumber: form.whatsappNumber || undefined,
+        studentIds    : selectedIds,
+        notes         : form.notes || undefined,
+      });
+      toast({ title: "Parent registered successfully!" });
+      onClose(); onSuccess?.();
+    } catch (err: any) {
+      toast({ variant: "destructive", title: err?.response?.data?.message || "Failed to register parent." });
+    } finally { setLoading(false); }
+  }
+
+  return (
+    <Modal open={open} onClose={onClose} title="Register Parent" subtitle="Link a parent to their child's account">
+      <FormRow>
+        <FormGroup label="Parent Full Name" required><FormInput placeholder="Parent's full name" value={form.fullName} onChange={(e) => set("fullName", e.target.value)} /></FormGroup>
+        <FormGroup label="Phone" required><FormInput placeholder="+92 300 0000000" value={form.phone} onChange={(e) => set("phone", e.target.value)} /></FormGroup>
+      </FormRow>
+      <FormRow>
+        <FormGroup label="Email"><FormInput type="email" placeholder="parent@example.com (optional)" value={form.email} onChange={(e) => set("email", e.target.value)} /></FormGroup>
+        <FormGroup label="WhatsApp Number"><FormInput placeholder="+92 300 0000000 (optional)" value={form.whatsappNumber} onChange={(e) => set("whatsappNumber", e.target.value)} /></FormGroup>
+      </FormRow>
+      <FormGroup label={`Children (Students)${selectedIds.length > 0 ? ` — ${selectedIds.length} selected` : ""}`} required>
+        <FormInput
+          placeholder="Search students…"
+          value={studentSearch}
+          onChange={(e) => setStudentSearch(e.target.value)}
+          className="mb-1.5"
+        />
+        <div className="border border-border rounded-md max-h-44 overflow-y-auto divide-y divide-border">
+          {students.length === 0 ? (
+            <div className="text-center py-4 text-nc-muted text-sm">Loading students…</div>
+          ) : students.filter((s) => s.fullName?.toLowerCase().includes(studentSearch.toLowerCase())).length === 0 ? (
+            <div className="text-center py-4 text-nc-muted text-sm">No students match "{studentSearch}"</div>
+          ) : students.filter((s) => s.fullName?.toLowerCase().includes(studentSearch.toLowerCase())).map((s) => {
+            const checked = selectedIds.includes(s._id);
+            return (
+              <label
+                key={s._id}
+                className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-colors ${checked ? "bg-gold/10" : "hover:bg-muted"}`}
+              >
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  onChange={() => toggleStudent(s._id)}
+                  className="accent-gold w-4 h-4 flex-shrink-0"
+                />
+                <div className="min-w-0">
+                  <div className="text-sm font-medium text-foreground truncate">{s.fullName}</div>
+                  <div className="text-xs text-nc-muted">{s.circle?.name || "No circle"}</div>
+                </div>
+              </label>
+            );
+          })}
+        </div>
+      </FormGroup>
+      <FormGroup label="Notes"><FormTextarea placeholder="Any notes about this parent (optional)" value={form.notes} onChange={(e) => set("notes", e.target.value)} /></FormGroup>
+      <div className="flex gap-2.5 mt-2">
+        <button className="btn-gold flex-1" onClick={handleSubmit} disabled={loading}>{loading ? "Registering…" : "Register Parent"}</button>
+        <button className="btn-outline" onClick={onClose} disabled={loading}>Cancel</button>
+      </div>
+    </Modal>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Add Parent Feedback Modal
+// ─────────────────────────────────────────────────────────────────────────────
+export function AddParentFeedbackModal({
+  open, onClose, onSuccess, parentId, parentName,
+}: { open: boolean; onClose: () => void; onSuccess?: () => void; parentId: string; parentName?: string }) {
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
+  const [form, setForm] = useState({ message: "", stars: "5", sessionNumber: "1" });
+
+  useEffect(() => {
+    if (open) setForm({ message: "", stars: "5", sessionNumber: "1" });
+  }, [open]);
+
+  function set(field: string, value: string) { setForm((f) => ({ ...f, [field]: value })); }
+
+  async function handleSubmit() {
+    if (!form.message.trim()) {
+      toast({ variant: "destructive", title: "Please enter a feedback message." }); return;
+    }
+    setLoading(true);
+    try {
+      await parentsService.addFeedback(parentId, {
+        message      : form.message.trim(),
+        stars        : Number(form.stars),
+        sessionNumber: Number(form.sessionNumber),
+      });
+      toast({ title: "Feedback added successfully!" });
+      onClose(); onSuccess?.();
+    } catch (err: any) {
+      toast({ variant: "destructive", title: err?.response?.data?.message || "Failed to add feedback." });
+    } finally { setLoading(false); }
+  }
+
+  return (
+    <Modal open={open} onClose={onClose} title="Add Parent Feedback" subtitle={parentName ? `Feedback from: ${parentName}` : "Record parent feedback"}>
+      <FormGroup label="Feedback Message" required>
+        <FormTextarea placeholder="What did the parent share about their child's progress?" value={form.message} onChange={(e) => set("message", e.target.value)} />
+      </FormGroup>
+      <FormRow>
+        <FormGroup label="Rating (Stars)">
+          <FormSelect value={form.stars} onChange={(e) => set("stars", e.target.value)}>
+            <option value="5">★★★★★ — 5 Stars</option>
+            <option value="4">★★★★☆ — 4 Stars</option>
+            <option value="3">★★★☆☆ — 3 Stars</option>
+            <option value="2">★★☆☆☆ — 2 Stars</option>
+            <option value="1">★☆☆☆☆ — 1 Star</option>
+          </FormSelect>
+        </FormGroup>
+        <FormGroup label="Session Number">
+          <FormInput type="number" min="1" value={form.sessionNumber} onChange={(e) => set("sessionNumber", e.target.value)} placeholder="e.g. 15" />
+        </FormGroup>
+      </FormRow>
+      <div className="flex gap-2.5 mt-2">
+        <button className="btn-gold flex-1" onClick={handleSubmit} disabled={loading}>{loading ? "Saving…" : "Save Feedback"}</button>
+        <button className="btn-outline" onClick={onClose} disabled={loading}>Cancel</button>
+      </div>
+    </Modal>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 //  Award Points Modal
 // ─────────────────────────────────────────────────────────────────────────────
-export function AwardPointsModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+const AWARD_OPTIONS = [
+  { value: "noor-star",        label: "Noor Star — 50 pts",         desc: "Exemplary character, courage, or service" },
+  { value: "circle-champion",  label: "Circle Champion — 100 pts",  desc: "100% attendance for one full month" },
+  { value: "sadaqah-hero",     label: "Sadaqah Hero — 75 pts",      desc: "Community service beyond requirements" },
+  { value: "knowledge-seeker", label: "Knowledge Seeker — 25 pts",  desc: "Exceptional curiosity and love of learning" },
+  { value: "kindness-award",   label: "Kindness Award — 30 pts",    desc: "Outstanding kindness to peers or family" },
+  { value: "courage-award",    label: "Courage Award — 40 pts",     desc: "Displayed courage in standing for truth" },
+];
+
+export function AwardPointsModal({ open, onClose, onSuccess }: { open: boolean; onClose: () => void; onSuccess?: () => void }) {
+  const { toast } = useToast();
+  const [loading, setLoading]   = useState(false);
+  const [students, setStudents] = useState<any[]>([]);
+  const [form, setForm]         = useState({ studentId: "", awardType: "", note: "" });
+
+  useEffect(() => {
+    if (!open) return;
+    setForm({ studentId: "", awardType: "", note: "" });
+    studentsApi.getAll()
+      .then((r) => setStudents(r.data.data || []))
+      .catch(() => toast({ variant: "destructive", title: "Failed to load students" }));
+  }, [open]);
+
+  function set(field: string, value: string) { setForm((f) => ({ ...f, [field]: value })); }
+
+  async function handleSubmit() {
+    if (!form.studentId || !form.awardType) {
+      toast({ variant: "destructive", title: "Please select a student and award type." }); return;
+    }
+    setLoading(true);
+    try {
+      await incentivesService.award({ studentId: form.studentId, awardType: form.awardType, note: form.note || undefined });
+      toast({ title: "Points awarded successfully!" });
+      onClose(); onSuccess?.();
+    } catch (err: any) {
+      toast({ variant: "destructive", title: err?.response?.data?.message || "Failed to award points." });
+    } finally { setLoading(false); }
+  }
+
   return (
     <Modal open={open} onClose={onClose} title="Award Noor Points" subtitle="Recognise character, service, or consistency">
-      <FormGroup label="Award Type" required>
-        <FormSelect>
-          <option>Noor Star (50 pts) — Exemplary character</option>
-          <option>Circle Champion (100 pts) — 100% attendance</option>
-          <option>Sadaqah Hero (75 pts) — Community service</option>
-          <option>Knowledge Seeker (25 pts) — Outstanding question</option>
-          <option>Kindness Award (30 pts) — Act of generosity</option>
-          <option>Courage Award (40 pts) — Moral courage shown</option>
+      <FormGroup label="Student" required>
+        <FormSelect value={form.studentId} onChange={(e) => set("studentId", e.target.value)}>
+          <option value="">Select student…</option>
+          {students.map((s) => <option key={s._id} value={s._id}>{s.fullName} — {s.circle?.name || "No circle"}</option>)}
         </FormSelect>
       </FormGroup>
-      <FormGroup label="Reason (shown to student)" required>
-        <FormTextarea placeholder="Describe the specific act that earned this award…" />
+      <FormGroup label="Award Type" required>
+        <FormSelect value={form.awardType} onChange={(e) => set("awardType", e.target.value)}>
+          <option value="">Select award…</option>
+          {AWARD_OPTIONS.map((a) => <option key={a.value} value={a.value}>{a.label}</option>)}
+        </FormSelect>
+        {form.awardType && (
+          <p className="text-[11px] text-nc-muted mt-1">
+            {AWARD_OPTIONS.find((a) => a.value === form.awardType)?.desc}
+          </p>
+        )}
+      </FormGroup>
+      <FormGroup label="Reason (optional)">
+        <FormTextarea placeholder="Describe the specific act that earned this award…" value={form.note} onChange={(e) => set("note", e.target.value)} />
       </FormGroup>
       <div className="flex gap-2.5 mt-2">
-        <button className="btn-gold flex-1">Award Points</button>
-        <button className="btn-outline" onClick={onClose}>Cancel</button>
+        <button className="btn-gold flex-1" onClick={handleSubmit} disabled={loading}>{loading ? "Awarding…" : "Award Points"}</button>
+        <button className="btn-outline" onClick={onClose} disabled={loading}>Cancel</button>
       </div>
     </Modal>
   );

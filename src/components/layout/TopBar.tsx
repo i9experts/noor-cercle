@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { LogOut, User, Settings, LayoutDashboard } from "lucide-react";
+import NotificationBell from "@/components/shared/NotificationBell";
 
 interface TopBarProps {
   activePage: string;
@@ -71,7 +72,9 @@ export default function TopBar({ activePage, onEnroll, onMurabbiNav }: TopBarPro
           />
         </div>
         <button className="btn-gold" onClick={onEnroll}>+ Enroll Student</button>
-        
+
+        <NotificationBell />
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <div className="w-9 h-9 rounded-full bg-teal-lt flex items-center justify-center text-sm font-semibold text-teal cursor-pointer hover:bg-teal-lt/80 transition-colors" title={user?.fullName}>
