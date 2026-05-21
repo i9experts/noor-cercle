@@ -1,18 +1,9 @@
-/**
- * FIX: App.tsx
- *
- * BUGS FIXED:
- * 1. AuthProvider was not wrapping the app — tokens/user state wasn't shared
- * 2. ResetPasswordPage was imported in routes in original but missing import statement
- */
-
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Route, Routes, Navigate } from 'react-router-dom';
 import { Toaster as Sonner } from '@/components/ui/sonner';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
-// FIX: Import and use AuthProvider
 import { AuthProvider } from '@/context/AuthContext';
 
 import Index              from './pages/Index.tsx';
@@ -56,7 +47,6 @@ function PublicRoute({ children }: { children: JSX.Element }) {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    {/* FIX: Wrap entire app in AuthProvider so useAuth() works everywhere */}
     <AuthProvider>
       <TooltipProvider>
         <Toaster />

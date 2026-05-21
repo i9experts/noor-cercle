@@ -50,7 +50,7 @@ export default function NeighbourhoodsPage() {
       ) : nbhs.length === 0 ? (
         <div className="text-center py-20 text-nc-muted text-sm">No neighbourhoods yet. Add one to get started.</div>
       ) : (
-        <div className="grid grid-cols-2 gap-[18px] mb-5">
+        <div className="scroll-hover max-h-[560px] grid grid-cols-2 gap-[18px] mb-5">
           {nbhs.map((n) => (
             <div
               key={n._id}

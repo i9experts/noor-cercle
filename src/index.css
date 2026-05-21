@@ -4,6 +4,18 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Hidden scrollbar — visible only on hover */
+.scroll-hover {
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+.scroll-hover::-webkit-scrollbar       { width: 5px; }
+.scroll-hover::-webkit-scrollbar-track { background: transparent; }
+.scroll-hover::-webkit-scrollbar-thumb { background: transparent; border-radius: 10px; transition: background 0.2s; }
+.scroll-hover:hover                    { scrollbar-color: hsl(var(--border)) transparent; }
+.scroll-hover:hover::-webkit-scrollbar-thumb { background: hsl(var(--border)); }
+
 @layer base {
   :root {
     --background: 200 14% 96%;

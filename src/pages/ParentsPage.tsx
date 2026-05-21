@@ -116,7 +116,7 @@ export default function ParentsPage() {
           ) : filtered.length === 0 ? (
             <div className="text-center py-8 text-nc-muted text-sm">No parents registered yet.</div>
           ) : (
-            <div className="flex flex-col gap-2 max-h-[480px] overflow-y-auto pr-1">
+            <div className="scroll-hover flex flex-col gap-2 max-h-[340px] overflow-y-auto pr-1">
               {filtered.map((p) => (
                 <div key={p._id} className="p-3 bg-muted rounded-sm">
                   <div className="flex justify-between items-start">
@@ -174,7 +174,7 @@ export default function ParentsPage() {
           {allFeedback.length === 0 ? (
             <div className="text-center py-8 text-nc-muted text-sm">No feedback recorded yet.</div>
           ) : (
-            <div className="flex flex-col gap-3 max-h-[480px] overflow-y-auto pr-1">
+            <div className="scroll-hover flex flex-col gap-3 max-h-[320px] overflow-y-auto pr-1">
               {allFeedback.map((f: any, i: number) => (
                 <div key={i} className="p-3 bg-muted rounded-sm">
                   <div className="flex justify-between mb-1">

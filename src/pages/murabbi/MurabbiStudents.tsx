@@ -179,7 +179,7 @@ export default function MurabbiStudents() {
         ) : filtered.length === 0 ? (
           <div className="text-center py-10 text-nc-muted text-sm">No students found.</div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="scroll-hover overflow-x-auto max-h-[320px]">
             <table className="w-full text-left">
               <thead>
                 <tr className="border-b border-border">

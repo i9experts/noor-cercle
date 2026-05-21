@@ -1,13 +1,3 @@
-/**
- * FIX: SignInPage.tsx
- *
- * BUGS FIXED:
- * 1. Was destructuring { accessToken, refreshToken, data } from res.data
- *    → backend now returns { success, message, data: { accessToken, refreshToken, user } }
- * 2. Was checking status 403 for "not verified" → backend returns 401
- * 3. Was saving data?.user?.role but it's now at data.user.role directly
- */
-
 import { FormEvent, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button }        from '@/components/ui/button';
@@ -35,7 +25,6 @@ const SignInPage = () => {
     try {
       const res = await authService.signin({ email, password });
 
-      // FIX: Backend wraps response → { success, message, data: { accessToken, refreshToken, user } }
       const responseData = res.data?.data || res.data;
       const { accessToken, refreshToken, user } = responseData;
 
@@ -49,7 +38,6 @@ const SignInPage = () => {
     } catch (e: unknown) {
       const errMsg = getApiError(e);
 
-      // FIX: Backend returns 401 for unverified email (not 403)
       if (errMsg?.toLowerCase().includes('not verified')) {
         localStorage.setItem('pendingEmail', email);
         toast({

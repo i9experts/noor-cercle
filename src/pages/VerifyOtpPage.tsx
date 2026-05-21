@@ -1,21 +1,10 @@
-/**
- * FIX: VerifyOtpPage.tsx
- *
- * BUGS FIXED:
- * 1. signup flow: was calling authService.verifyEmail → now authService.signupVerifyOtp
- * 2. signup flow: response data shape was wrong (data?.user?.role vs data.user.role)
- * 3. reset flow: was one-shot verifyOtpAndReset call → now two calls:
- *    a) authService.verifyResetOtp(email, otp) → gets resetToken
- *    b) authService.resetPassword(resetToken, newPassword) → resets password
- * 4. Token storage after signup OTP verify was broken due to wrong shape
- */
-
 import { FormEvent, useEffect, useState, useCallback } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import AuthShell     from '@/components/auth/AuthShell';
 import { Button }    from '@/components/ui/button';
 import { Input }     from '@/components/ui/input';
 import PasswordInput from '@/components/shared/PasswordInput';
+import { PasswordRules, isPasswordValid } from '@/components/shared/PasswordRules';
 import { authService } from '@/services/auth.service';
 import { useToast } from '@/hooks/use-toast';
 
@@ -40,6 +29,7 @@ const VerifyOtpPage = () => {
   const [otp,             setOtp]             = useState('');
   const [newPassword,     setNewPassword]     = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [pwTouched,       setPwTouched]       = useState(false);
   const [isSubmitting,    setIsSubmitting]    = useState(false);
   const [isResending,     setIsResending]     = useState(false);
   const [timeLeft,        setTimeLeft]        = useState(OTP_SECONDS);
@@ -57,6 +47,11 @@ const VerifyOtpPage = () => {
     e.preventDefault();
 
     if (flow === 'reset') {
+      setPwTouched(true);
+      if (!isPasswordValid(newPassword)) {
+        toast({ variant: 'destructive', title: 'Password too weak', description: 'Please meet all password requirements.' });
+        return;
+      }
       if (newPassword !== confirmPassword) {
         toast({ variant: 'destructive', title: 'Passwords do not match' });
         return;
@@ -66,10 +61,7 @@ const VerifyOtpPage = () => {
     setIsSubmitting(true);
     try {
       if (flow === 'signup') {
-        // FIX: renamed from verifyEmail → signupVerifyOtp
         const res = await authService.signupVerifyOtp({ email: emailFromStorage, otp });
-
-        // FIX: backend wraps → { success, message, data: { accessToken, refreshToken, user } }
         const responseData = res.data?.data || res.data;
         const { accessToken, refreshToken, user } = responseData;
 
@@ -82,7 +74,6 @@ const VerifyOtpPage = () => {
         navigate(user?.role === 'admin' ? '/' : '/murabbi');
 
       } else {
-        // FIX: Split into 2 calls instead of one combined call
         // Step 1: Verify OTP → get resetToken
         const verifyRes = await authService.verifyResetOtp({ email: emailFromStorage, otp });
         const verifyData = verifyRes.data?.data || verifyRes.data;
@@ -155,13 +146,19 @@ const VerifyOtpPage = () => {
           <>
             <div className="space-y-2">
               <label htmlFor="newPassword" className="text-sm font-medium text-nc-dark">New Password</label>
-              <PasswordInput id="newPassword" placeholder="Minimum 8 characters" required
-                value={newPassword} onChange={(e) => setNewPassword(e.target.value)} disabled={isSubmitting} />
+              <PasswordInput id="newPassword" placeholder="Min 8 chars, 1 uppercase, 1 number" required
+                value={newPassword}
+                onChange={(e) => { setNewPassword(e.target.value); setPwTouched(true); }}
+                disabled={isSubmitting} />
+              {pwTouched && <PasswordRules password={newPassword} />}
             </div>
             <div className="space-y-2">
               <label htmlFor="confirmPassword" className="text-sm font-medium text-nc-dark">Confirm Password</label>
               <PasswordInput id="confirmPassword" placeholder="Repeat new password" required
                 value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} disabled={isSubmitting} />
+              {confirmPassword && newPassword !== confirmPassword && (
+                <p className="text-[12px] font-medium text-red-500 mt-1">Passwords do not match</p>
+              )}
             </div>
           </>
         )}

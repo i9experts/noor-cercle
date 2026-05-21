@@ -124,7 +124,8 @@ export default function MurabbisPage({
         ) : murabbis.length === 0 ? (
           <div className="text-center py-10 text-nc-muted text-sm">No murabbis found. Add one to get started.</div>
         ) : (
-          murabbis.map((m) => (
+          <div className="scroll-hover max-h-[224px]">
+          {murabbis.map((m) => (
             <div key={m._id} className="flex items-center gap-3 py-3 border-b border-border last:border-b-0">
               <div className="w-[38px] h-[38px] rounded-xl bg-teal-lt flex items-center justify-center text-sm font-bold text-teal flex-shrink-0">
                 {getInitials(m.fullName)}
@@ -145,7 +146,8 @@ export default function MurabbisPage({
                 />
               </div>
             </div>
-          ))
+          ))}
+          </div>
         )}
       </NcCard>
 

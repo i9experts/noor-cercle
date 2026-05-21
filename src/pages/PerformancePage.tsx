@@ -19,11 +19,6 @@ type Review = {
   honestyScore: number; gratitudeScore: number; empathyScore: number;
   identityScore: number; familyScore: number; consistencyScore: number;
 };
-type MurabbiBreakdown = {
-  murabbiId: string; murabbiName: string; reviewCount: number; followUps: number;
-  avgStars: number; honestyScore: number; gratitudeScore: number; empathyScore: number;
-  identityScore: number; familyScore: number; consistencyScore: number;
-};
 
 const INDICATORS = [
   { key: "honestyScore",     label: "Honesty & Trust",             color: "teal"   as const },
@@ -325,57 +320,6 @@ function ReviewItem({ review, onDelete, onResolve }: {
   );
 }
 
-// ── Murabbi Breakdown Card ────────────────────────────────────────────────────
-function MurabbiBreakdownCard({ data }: { data: MurabbiBreakdown }) {
-  const overall = overallScore(data);
-  return (
-    <div className="bg-card border border-border rounded-lg p-4 shadow-nc">
-      <div className="flex items-start justify-between mb-3">
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-foreground truncate">{data.murabbiName}</p>
-          <p className="text-xs text-nc-muted mt-0.5">{data.reviewCount} review{data.reviewCount !== 1 ? "s" : ""}</p>
-        </div>
-        <div className="text-right shrink-0 ml-2">
-          <p className={`text-xl font-bold leading-none ${rateColor(overall)}`}>{overall}%</p>
-          <div className="flex items-center gap-0.5 mt-1 justify-end">
-            {[1, 2, 3, 4, 5].map((s) => (
-              <Star key={s} size={9} className={s <= Math.round(data.avgStars) ? "fill-gold text-gold" : "text-border"} />
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {data.followUps > 0 && (
-        <div className="mb-3">
-          <NcBadge variant="amber"><AlertTriangle size={9} /> {data.followUps} follow-up{data.followUps !== 1 ? "s" : ""}</NcBadge>
-        </div>
-      )}
-
-      {/* Overall bar */}
-      <div className="mb-3">
-        <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-          <div
-            className={`h-full rounded-full transition-all ${overall >= 80 ? "bg-teal" : overall >= 60 ? "bg-gold" : "bg-nc-red"}`}
-            style={{ width: `${overall}%` }}
-          />
-        </div>
-      </div>
-
-      {/* 6 indicator mini-scores */}
-      <div className="grid grid-cols-3 gap-1.5 pt-1 border-t border-border">
-        {INDICATORS.map(({ key, label }) => {
-          const val = data[key as keyof MurabbiBreakdown] as number;
-          return (
-            <div key={key} className="text-center">
-              <p className={`text-[11px] font-bold leading-none ${rateColor(val)}`}>{val}%</p>
-              <p className="text-[9px] text-nc-muted mt-0.5 leading-tight">{label.split(" ")[0]}</p>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function PerformancePage() {
@@ -458,7 +402,6 @@ export default function PerformancePage() {
     );
   }
 
-  const breakdown: MurabbiBreakdown[] = summary?.murabbiBreakdown ?? [];
 
   return (
     <div className="page-animate">
@@ -581,7 +524,7 @@ export default function PerformancePage() {
               </p>
             </div>
           ) : (
-            <div className="space-y-3 max-h-[520px] overflow-y-auto pr-1">
+            <div className="scroll-hover space-y-3 max-h-[400px] overflow-y-auto pr-1">
               {filtered.map((r) => (
                 <ReviewItem key={r._id} review={r} onDelete={handleDelete} onResolve={handleResolve} />
               ))}
@@ -590,21 +533,6 @@ export default function PerformancePage() {
         </NcCard>
       </div>
 
-      {/* ── Murabbi Breakdown ───────────────────────────────────────── */}
-      {breakdown.length > 0 && (
-        <div className="mt-6">
-          <div className="flex items-center justify-between mb-3">
-            <div>
-              <h2 className="text-[14px] font-semibold text-foreground">Murabbi Performance Breakdown</h2>
-              <p className="text-xs text-nc-muted">Individual scores averaged across all submitted reviews</p>
-            </div>
-            <NcBadge variant="slate"><Users size={10} /> {breakdown.length} murabbis</NcBadge>
-          </div>
-          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {breakdown.map((d) => <MurabbiBreakdownCard key={d.murabbiId} data={d} />)}
-          </div>
-        </div>
-      )}
 
       {/* ── Submit Modal ─────────────────────────────────────────────── */}
       <SubmitReviewModal

@@ -51,7 +51,7 @@ export default function CirclesPage({
       ) : circles.length === 0 ? (
         <div className="text-center py-20 text-nc-muted text-sm">No circles yet. Create one to get started.</div>
       ) : (
-        <div className="grid grid-cols-3 gap-[18px]">
+        <div className="scroll-hover max-h-[680px] grid grid-cols-3 gap-[18px]">
           {circles.map((c) => (
             <div
               key={c._id}

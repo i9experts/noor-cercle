@@ -160,7 +160,7 @@ export default function StudentsPage({
         ) : filtered.length === 0 ? (
           <div className="text-center py-10 text-nc-muted text-sm">No students found.</div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="scroll-hover overflow-x-auto max-h-[280px]">
             <table className="w-full border-collapse text-[13.5px]">
               <thead>
                 <tr>

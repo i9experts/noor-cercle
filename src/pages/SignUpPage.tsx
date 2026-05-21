@@ -1,18 +1,10 @@
-/**
- * FIX: SignUpPage.tsx
- *
- * BUGS FIXED:
- * 1. Was calling authService.signup() → renamed to authService.signupRequestOtp()
- * 2. navigate('/verify-otp') → now passes ?flow=signup
- * 3. Stores email as 'pendingEmail' (consistent with VerifyOtpPage)
- */
-
 import { FormEvent, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button }    from '@/components/ui/button';
 import { Input }     from '@/components/ui/input';
 import AuthShell     from '@/components/auth/AuthShell';
 import PasswordInput from '@/components/shared/PasswordInput';
+import { PasswordRules, isPasswordValid } from '@/components/shared/PasswordRules';
 import { authService } from '@/services/auth.service';
 import { useToast } from '@/hooks/use-toast';
 
@@ -25,27 +17,33 @@ const SignUpPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const [fullName,     setFullName]    = useState('');
-  const [email,        setEmail]       = useState('');
-  const [password,     setPassword]    = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [fullName,      setFullName]      = useState('');
+  const [email,         setEmail]         = useState('');
+  const [password,      setPassword]      = useState('');
+  const [pwTouched,     setPwTouched]     = useState(false);
+  const [isSubmitting,  setIsSubmitting]  = useState(false);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setPwTouched(true);
+
+    if (!isPasswordValid(password)) {
+      toast({
+        variant    : 'destructive',
+        title      : 'Password too weak',
+        description: 'Please meet all password requirements before continuing.',
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      // FIX: renamed from authService.signup → authService.signupRequestOtp
       await authService.signupRequestOtp({ fullName, email, password });
-
-      // FIX: consistent key 'pendingEmail' used throughout
       localStorage.setItem('pendingEmail', email);
-
       toast({
         title      : 'OTP Sent!',
         description: 'Check your email for a 6-digit verification code. Expires in 2 minutes.',
       });
-
-      // FIX: pass ?flow=signup so VerifyOtpPage knows the context
       navigate('/verify-otp?flow=signup');
     } catch (e: unknown) {
       toast({
@@ -71,18 +69,31 @@ const SignUpPage = () => {
           <Input id="fullName" type="text" placeholder="Your full name" required
             value={fullName} onChange={(e) => setFullName(e.target.value)} disabled={isSubmitting} />
         </div>
+
         <div className="space-y-2">
           <label htmlFor="email" className="text-sm font-medium text-nc-dark">Email</label>
           <Input id="email" type="email" placeholder="you@example.com" required
             value={email} onChange={(e) => setEmail(e.target.value)} disabled={isSubmitting} />
         </div>
+
         <div className="space-y-2">
           <label htmlFor="password" className="text-sm font-medium text-nc-dark">Password</label>
-          <PasswordInput id="password" placeholder="Min 8 chars, 1 uppercase, 1 number" required
-            value={password} onChange={(e) => setPassword(e.target.value)} disabled={isSubmitting} />
+          <PasswordInput
+            id="password"
+            placeholder="Min 8 chars, 1 uppercase, 1 number"
+            required
+            value={password}
+            onChange={(e) => { setPassword(e.target.value); setPwTouched(true); }}
+            disabled={isSubmitting}
+          />
+          {pwTouched && <PasswordRules password={password} />}
         </div>
 
-        <Button type="submit" className="h-11 w-full bg-gold text-white hover:bg-gold-dim" disabled={isSubmitting}>
+        <Button
+          type="submit"
+          className="h-11 w-full bg-gold text-white hover:bg-gold-dim"
+          disabled={isSubmitting}
+        >
           {isSubmitting ? 'Sending OTP...' : 'Create Account'}
         </Button>
       </form>

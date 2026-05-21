@@ -98,7 +98,7 @@ export default function MurabbiAttendance() {
               {circleStudents.length === 0 ? (
                 <div className="text-center py-8 text-nc-muted text-sm">No students in this circle.</div>
               ) : (
-                <div className="mt-2 space-y-2">
+                <div className="scroll-hover max-h-[296px] mt-2 space-y-2">
                   {circleStudents.map((s) => (
                     <div key={s._id}
                       className={`flex justify-between items-center p-3.5 rounded-lg border cursor-pointer transition-all ${getStatus(s._id) === "present" ? "bg-green-50/30 border-green-200" : "bg-red-50/30 border-red-200"}`}

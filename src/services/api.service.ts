@@ -4,8 +4,9 @@ import { API } from '@/lib/api';
 //  USERS (own profile)
 // ─────────────────────────────────────────────────────────────
 export const usersService = {
-  getMe    : ()                            => API.get('/auth/me'),
-  updateMe : (data: { fullName?: string }) => API.patch('/users/profile', data),
+  getMe           : ()                                                           => API.get('/auth/me'),
+  updateMe        : (data: { fullName?: string; phone?: string; bio?: string }) => API.patch('/users/profile', data),
+  changePassword  : (data: { currentPassword: string; newPassword: string })    => API.post('/users/change-password', data),
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -85,17 +86,22 @@ export const studentsService = {
 };
 
 // ─────────────────────────────────────────────────────────────
-//  ATTENDANCE  (backend not yet implemented — placeholder)
+//  ATTENDANCE
 // ─────────────────────────────────────────────────────────────
 export const attendanceService = {
-  submit         : (data: object)    => API.post('/attendance', data),
-  getAll         : ()                => API.get('/attendance'),
-  getByCircle    : (id: string)      => API.get(`/attendance/circle/${id}`),
-  getStudentRate : (id: string)      => API.get(`/attendance/student/${id}/rate`),
+  submit        : (data: object)       => API.post('/attendance', data),
+  getAll        : ()                   => API.get('/attendance'),
+  getById       : (id: string)         => API.get(`/attendance/${id}`),
+  getByCircle   : (id: string)         => API.get(`/attendance/circle/${id}`),
+  getByMurabbi  : (id: string)         => API.get(`/attendance/by-murabbi/${id}`),
+  getByStudent  : (id: string)         => API.get(`/attendance/by-student/${id}`),
+  getStudentRate: (id: string)         => API.get(`/attendance/student/${id}/rate`),
+  update        : (id: string, data: object) => API.patch(`/attendance/${id}`, data),
+  remove        : (id: string)         => API.delete(`/attendance/${id}`),
 };
 
 // ─────────────────────────────────────────────────────────────
-//  INCENTIVES  (placeholder)
+//  INCENTIVES
 // ─────────────────────────────────────────────────────────────
 export const incentivesService = {
   award        : (data: { studentId: string; awardType: string; note?: string }) =>
@@ -152,7 +158,7 @@ export const murabbisService = {
 };
 
 // ─────────────────────────────────────────────────────────────
-//  SESSIONS & CURRICULUM  (placeholder)
+//  SESSIONS & CURRICULUM
 // ─────────────────────────────────────────────────────────────
 export const sessionsService = {
   getAll       : () => API.get('/sessions'),
@@ -162,7 +168,7 @@ export const sessionsService = {
 };
 
 // ─────────────────────────────────────────────────────────────
-//  TRAINING  (placeholder)
+//  TRAINING
 // ─────────────────────────────────────────────────────────────
 export const trainingService = {
   getModules        : ()                                              => API.get('/training/modules'),
@@ -174,7 +180,7 @@ export const trainingService = {
 };
 
 // ─────────────────────────────────────────────────────────────
-//  LESSON PLANS  (placeholder)
+//  LESSON PLANS
 // ─────────────────────────────────────────────────────────────
 export const lessonsService = {
   getAll: ()                          => API.get('/lessons'),
@@ -185,7 +191,7 @@ export const lessonsService = {
 };
 
 // ─────────────────────────────────────────────────────────────
-//  PERFORMANCE  (placeholder)
+//  PERFORMANCE
 // ─────────────────────────────────────────────────────────────
 export const performanceService = {
   submitReview   : (data: object)                                          => API.post('/performance/reviews', data),
@@ -231,7 +237,7 @@ export const announcementsService = {
 };
 
 // ─────────────────────────────────────────────────────────────
-//  REPORTS  (placeholder)
+//  REPORTS
 // ─────────────────────────────────────────────────────────────
 export const reportsService = {
   getAdminReport         : ()                  => API.get('/reports/admin'),

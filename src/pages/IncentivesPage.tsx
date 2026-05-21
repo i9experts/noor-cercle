@@ -53,7 +53,8 @@ export default function IncentivesPage({ onAwardPoints }: { onAwardPoints: () =>
           ) : leaderboard.length === 0 ? (
             <div className="text-center py-8 text-nc-muted text-sm">No data yet. Award some points!</div>
           ) : (
-            leaderboard.map((s, i) => (
+            <div className="scroll-hover max-h-[200px]">
+            {leaderboard.map((s, i) => (
               <div key={s._id} className="flex items-center gap-2.5 py-[9px] border-b border-border last:border-b-0">
                 <span className="w-6 text-center flex items-center justify-center">
                   {i === 0 && <Trophy className="h-4 w-4 text-gold" />}
@@ -73,13 +74,14 @@ export default function IncentivesPage({ onAwardPoints }: { onAwardPoints: () =>
                   <div className="text-[10px] text-nc-muted">pts</div>
                 </div>
               </div>
-            ))
+            ))}
+            </div>
           )}
         </NcCard>
 
         <NcCard>
           <CardHeader><CardTitle>All Award Types</CardTitle></CardHeader>
-          <div className="flex flex-col gap-2.5">
+          <div className="scroll-hover max-h-[240px] flex flex-col gap-2.5">
             {awardCards.map((a) => (
               <div key={a.title} className="flex justify-between items-center p-2.5 bg-muted rounded-sm">
                 <div className="flex items-center gap-2">

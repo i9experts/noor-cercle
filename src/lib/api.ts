@@ -1,13 +1,3 @@
-/**
- * FIX: api.ts
- *
- * BUGS FOUND & FIXED:
- * 1. Token refresh call sent refreshToken in request BODY → backend expects it
- *    as Authorization: Bearer header (JwtRefreshGuard reads from header)
- * 2. After refresh, new tokens weren't being stored if data shape was wrong
- * 3. Added proper response shape handling { success, message, data }
- */
-
 import axios from 'axios';
 
 export const API = axios.create({
@@ -63,14 +53,12 @@ API.interceptors.response.use(
       }
 
       try {
-        // FIX: Send refreshToken as Authorization header, NOT in body
         const { data } = await axios.post(
           `${import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1'}/auth/refresh`,
           {},
           { headers: { Authorization: `Bearer ${rt}` } },
         );
 
-        // FIX: Handle wrapped response { success, message, data: { accessToken, refreshToken } }
         const newAccess  = data.data?.accessToken  || data.accessToken;
         const newRefresh = data.data?.refreshToken || data.refreshToken;
 

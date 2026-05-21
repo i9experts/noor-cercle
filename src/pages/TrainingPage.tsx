@@ -236,7 +236,7 @@ export default function TrainingPage() {
         <StatCard label="Overall Progress" value={summary?.overallPercent ? `${summary.overallPercent}%` : "—"} meta="Completion rate" color="purple" />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="scroll-hover max-h-[600px] grid grid-cols-2 gap-4">
         {loading ? (
           <div className="col-span-2 text-center py-20 text-nc-muted text-sm animate-pulse">Loading training modules...</div>
         ) : modules.length === 0 ? (
@@ -311,7 +311,7 @@ export default function TrainingPage() {
             No meetings scheduled yet. Click <strong>Schedule Meeting</strong> to add one.
           </div>
         ) : (
-          <div className="flex flex-col gap-3">
+          <div className="scroll-hover max-h-[400px] flex flex-col gap-3">
             {liveSessions.map((s) => (
               <div key={s._id} className="border border-border rounded-lg bg-card p-4 flex items-start gap-4">
                 <div className="w-10 h-10 rounded-xl bg-teal/10 flex items-center justify-center flex-shrink-0 mt-0.5">

@@ -66,7 +66,7 @@ export default function ReportsPage() {
           ) : incentiveBreakdown.length === 0 ? (
             <div className="text-center py-8 text-nc-muted text-sm">No awards given yet.</div>
           ) : (
-            <div className="flex flex-col gap-2.5">
+            <div className="scroll-hover max-h-[220px] flex flex-col gap-2.5">
               {incentiveBreakdown.map((b: any) => (
                 <div key={b._id} className="flex justify-between items-center p-2.5 bg-muted rounded-sm">
                   <div>

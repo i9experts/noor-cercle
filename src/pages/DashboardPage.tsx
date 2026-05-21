@@ -93,59 +93,7 @@ type CircleTrend = {
   sessions: TrendPoint[]; avgRate: number; sessionCount: number; bestRate: number;
 };
 
-// ── Rate colour helper (JSX) ──────────────────────────────────────────────────
-function RateTag({ rate }: { rate: number }) {
-  const cls = rate >= 80 ? "text-teal" : rate >= 60 ? "text-gold" : "text-nc-red";
-  return <span className={`font-bold text-lg leading-none ${cls}`}>{rate}%</span>;
-}
 
-// ── Circle sparkline card ─────────────────────────────────────────────────────
-function CircleSparkCard({ circle, selected, onClick }: { circle: CircleTrend; selected: boolean; onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`w-full text-left p-3 rounded-lg border transition-all ${
-        selected
-          ? "border-teal bg-teal-lt shadow-nc"
-          : "border-border bg-card hover:border-teal/40 hover:shadow-nc"
-      }`}
-    >
-      <div className="flex items-start justify-between mb-2 gap-2">
-        <div className="min-w-0">
-          <p className="text-xs font-semibold text-foreground truncate">{circle.circleName}</p>
-          {circle.murabbiName && (
-            <p className="text-[10px] text-nc-muted truncate">{circle.murabbiName}</p>
-          )}
-        </div>
-        <div className="shrink-0 text-right">
-          <RateTag rate={circle.avgRate} />
-          <p className="text-[9px] text-nc-muted mt-0.5">{circle.sessionCount} sessions</p>
-        </div>
-      </div>
-
-      {circle.sessions.length > 0 ? (
-        <ResponsiveContainer width="100%" height={44}>
-          <BarChart data={circle.sessions} margin={{ top: 0, right: 0, left: 0, bottom: 0 }} barCategoryGap="20%">
-            <Bar dataKey="attendanceRate" radius={[2, 2, 0, 0]} maxBarSize={14} isAnimationActive={false}>
-              {circle.sessions.map((s, i) => (
-                <Cell key={i} fill={selected ? barFill(s.attendanceRate) : CLR.tealLt} />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
-      ) : (
-        <div className="h-11 flex items-center justify-center">
-          <span className="text-[10px] text-nc-muted">No sessions yet</span>
-        </div>
-      )}
-
-      <div className="flex items-center justify-between mt-1.5">
-        <span className="text-[9px] text-nc-muted">Avg rate</span>
-        <span className="text-[9px] text-nc-muted">Best: {circle.bestRate}%</span>
-      </div>
-    </button>
-  );
-}
 
 // ── Main Component ────────────────────────────────────────────────────────────
 export default function DashboardPage() {
@@ -388,28 +336,6 @@ export default function DashboardPage() {
         )}
       </NcCard>
 
-      {/* ── Per-Circle Performance Grid ──────────────────────────────────── */}
-      {circleCharts.length > 0 && (
-        <div className="mt-5">
-          <div className="flex items-center justify-between mb-3">
-            <div>
-              <h2 className="text-[14px] font-semibold text-foreground">Circle Performance</h2>
-              <p className="text-xs text-nc-muted">Click a circle to view its trend above</p>
-            </div>
-            <NcBadge variant="slate">{circleCharts.length} circles</NcBadge>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-            {circleCharts.map((c) => (
-              <CircleSparkCard
-                key={c.circleId}
-                circle={c}
-                selected={activeCircle === c.circleId}
-                onClick={() => handleCircleTab(c.circleId)}
-              />
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* ── Bottom Three Panels ──────────────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mt-5">
@@ -422,6 +348,7 @@ export default function DashboardPage() {
           {circles.length === 0 ? (
             <p className="text-nc-muted text-sm py-6 text-center">No active circles yet.</p>
           ) : (
+            <div className="scroll-hover max-h-[288px]">
             <ul className="divide-y divide-border">
               {circles.map((c: any) => {
                 const pct      = c.capacity > 0 ? Math.round((c.enrolledCount / c.capacity) * 100) : 0;
@@ -445,6 +372,7 @@ export default function DashboardPage() {
                 );
               })}
             </ul>
+            </div>
           )}
         </NcCard>
 
@@ -507,6 +435,7 @@ export default function DashboardPage() {
               <p className="text-sm text-nc-muted">No announcements yet.</p>
             </div>
           ) : (
+            <div className="scroll-hover max-h-[320px]">
             <ul className="space-y-4">
               {announcements.map((a: any) => (
                 <li key={a._id} className="flex gap-3 group">
@@ -527,6 +456,7 @@ export default function DashboardPage() {
                 </li>
               ))}
             </ul>
+            </div>
           )}
         </NcCard>
 
@@ -543,6 +473,7 @@ export default function DashboardPage() {
               <p className="text-sm text-nc-muted">No recent activity.</p>
             </div>
           ) : (
+            <div className="scroll-hover max-h-[320px]">
             <ul className="space-y-4">
               {activity.map((n: any) => (
                 <li key={n._id} className="flex gap-3">
@@ -562,6 +493,7 @@ export default function DashboardPage() {
                 </li>
               ))}
             </ul>
+            </div>
           )}
         </NcCard>
 

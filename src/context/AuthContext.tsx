@@ -1,13 +1,3 @@
-/**
- * FIX: AuthContext.tsx
- *
- * BUGS FIXED:
- * 1. Imported useNavigate but never used it (causes React warning)
- * 2. Duplicate file existed at src/components/auth/AuthContext.tsx - consolidated here
- * 3. logout() used hard-coded Authorization header correctly but wasn't updating
- *    the refreshToken key — fixed
- */
-
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { authService } from '@/services/auth.service';
 
@@ -64,7 +54,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const refreshToken = localStorage.getItem('refreshToken');
       if (refreshToken) {
-        // FIX: pass refreshToken to authService.logout (which sends it as Bearer header)
         await authService.logout(refreshToken);
       }
     } catch { /* ignore errors on logout */ }

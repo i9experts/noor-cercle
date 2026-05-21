@@ -1,21 +1,41 @@
 import { useEffect, useState } from "react";
-import { Star, AlertTriangle, Video } from "lucide-react";
+import { Star, AlertTriangle, Video, Bell, Calendar, GraduationCap, Heart, Info } from "lucide-react";
 import StatCard from "@/components/shared/StatCard";
 import QuranBox from "@/components/shared/QuranBox";
 import NcCard, { CardHeader, CardTitle } from "@/components/shared/NcCard";
 import NcBadge from "@/components/shared/NcBadge";
 import SectionTitle from "@/components/shared/SectionTitle";
-import { murabbisService, performanceService, liveSessionsService } from "@/services/api.service";
+import { murabbisService, performanceService, liveSessionsService, announcementsService } from "@/services/api.service";
+
+const ICON_MAP: Record<string, { Icon: React.ElementType; bg: string; text: string }> = {
+  session  : { Icon: Calendar,      bg: "bg-teal/10",     text: "text-teal"     },
+  training : { Icon: GraduationCap, bg: "bg-gold/10",     text: "text-gold"     },
+  donor    : { Icon: Heart,         bg: "bg-nc-green/10", text: "text-nc-green" },
+  info     : { Icon: Info,          bg: "bg-nc-muted/10", text: "text-nc-muted" },
+};
+
+function timeAgo(date: string) {
+  const diff  = Date.now() - new Date(date).getTime();
+  const mins  = Math.floor(diff / 60_000);
+  const hours = Math.floor(diff / 3_600_000);
+  const days  = Math.floor(diff / 86_400_000);
+  if (mins  <  1) return "just now";
+  if (mins  < 60) return `${mins}m ago`;
+  if (hours < 24) return `${hours}h ago`;
+  if (days  <  7) return `${days}d ago`;
+  return new Date(date).toLocaleDateString("en-PK", { day: "numeric", month: "short" });
+}
 
 function rateColor(v: number) {
   return v >= 80 ? "text-teal" : v >= 60 ? "text-gold" : "text-nc-red";
 }
 
 export default function MurabbiDashboard() {
-  const [data, setData]             = useState<any>(null);
-  const [loading, setLoading]       = useState(true);
-  const [reviews, setReviews]       = useState<any[]>([]);
+  const [data, setData]               = useState<any>(null);
+  const [loading, setLoading]         = useState(true);
+  const [reviews, setReviews]         = useState<any[]>([]);
   const [nextMeeting, setNextMeeting] = useState<any>(null);
+  const [announcements, setAnnouncements] = useState<any[]>([]);
   const user = JSON.parse(localStorage.getItem("user") || "{}");
 
   const DAY_NAMES = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
@@ -32,6 +52,10 @@ export default function MurabbiDashboard() {
 
     liveSessionsService.getUpcoming()
       .then((res) => setNextMeeting((res.data.data || [])[0] ?? null))
+      .catch(() => {});
+
+    announcementsService.getAll()
+      .then((res) => setAnnouncements((res.data.data || []).slice(0, 3)))
       .catch(() => {});
   }, []);
 
@@ -125,7 +149,7 @@ export default function MurabbiDashboard() {
           <CardHeader>
             <CardTitle sub={`${circles.length} circle(s) assigned to you`}>My Circles</CardTitle>
           </CardHeader>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
+          <div className="scroll-hover max-h-[340px] grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
             {circles.map((c: any) => (
               <div key={c._id} className="flex items-center justify-between p-3.5 bg-muted/50 rounded-lg border border-border/50">
                 <div>
@@ -149,7 +173,7 @@ export default function MurabbiDashboard() {
           <CardHeader>
             <CardTitle sub="Recently enrolled students">My Students</CardTitle>
           </CardHeader>
-          <div className="flex flex-col gap-3 mt-2">
+          <div className="scroll-hover max-h-[360px] flex flex-col gap-3 mt-2">
             {topStudents.map((s: any) => (
               <div key={s._id} className="flex justify-between items-center p-3 bg-muted/50 rounded-lg border border-border/50">
                 <div className="flex items-center gap-3">
@@ -178,7 +202,7 @@ export default function MurabbiDashboard() {
           <CardHeader>
             <CardTitle sub="Your latest performance reviews from admin">Recent Reviews</CardTitle>
           </CardHeader>
-          <div className="flex flex-col gap-3 mt-2">
+          <div className="scroll-hover max-h-[400px] flex flex-col gap-3 mt-2">
             {reviews.map((r: any) => {
               const scores = [
                 r.honestyScore, r.gratitudeScore, r.empathyScore,
@@ -221,6 +245,36 @@ export default function MurabbiDashboard() {
                       <AlertTriangle size={12} /> Follow-up required
                     </div>
                   )}
+                </div>
+              );
+            })}
+          </div>
+        </NcCard>
+      )}
+
+      {/* Latest Announcements */}
+      {announcements.length > 0 && (
+        <NcCard className="mt-6">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle sub="Latest updates from admin">Announcements</CardTitle>
+              <Bell className="h-4 w-4 text-nc-muted" />
+            </div>
+          </CardHeader>
+          <div className="scroll-hover max-h-[360px] flex flex-col gap-3 mt-2">
+            {announcements.map((a: any) => {
+              const cfg = ICON_MAP[a.icon] || ICON_MAP.INFO;
+              const IconComp = cfg.Icon;
+              return (
+                <div key={a._id} className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg border border-border/50">
+                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${cfg.bg}`}>
+                    <IconComp className={`h-4 w-4 ${cfg.text}`} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px] font-semibold text-foreground leading-snug">{a.title}</p>
+                    <p className="text-[12px] text-nc-muted mt-0.5 line-clamp-2">{a.body}</p>
+                    <p className="text-[11px] text-nc-muted mt-1">{timeAgo(a.createdAt)}</p>
+                  </div>
                 </div>
               );
             })}

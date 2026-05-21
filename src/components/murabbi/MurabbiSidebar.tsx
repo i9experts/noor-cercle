@@ -39,8 +39,9 @@ const navGroups: NavGroup[] = [
   {
     label: 'Support',
     items: [
-      { icon: '◎', label: 'Training Materials', page: 'murabbi-training' },
-      { icon: '◉', label: 'Reports',            page: 'murabbi-reports'  },
+      { icon: '◎', label: 'Training Materials', page: 'murabbi-training'       },
+      { icon: '◉', label: 'Reports',            page: 'murabbi-reports'        },
+      { icon: '◆', label: 'Announcements',      page: 'murabbi-announcements'  },
     ],
   },
   {
