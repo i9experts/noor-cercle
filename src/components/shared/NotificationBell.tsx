@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { Bell, Check, X, Info, UserPlus, Trash2, Eye, Star, Award, AlertTriangle } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Bell, Check, X, Info, UserPlus, Trash2, Eye, Star, Award, AlertTriangle, BookOpen } from "lucide-react";
 import { notificationsService } from "@/services/api.service";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -18,10 +18,11 @@ function timeAgo(date: string) {
 }
 
 function notifIcon(type: string) {
-  if (type === "delete_request")      return <Trash2  className="h-4 w-4 text-red-500"    />;
-  if (type === "student_assigned")    return <UserPlus className="h-4 w-4 text-teal"      />;
-  if (type === "circle_assigned")     return <UserPlus className="h-4 w-4 text-nc-purple" />;
-  if (type === "performance_review")  return <Award   className="h-4 w-4 text-gold"       />;
+  if (type === "delete_request")      return <Trash2   className="h-4 w-4 text-red-500"    />;
+  if (type === "student_assigned")    return <UserPlus className="h-4 w-4 text-teal"       />;
+  if (type === "circle_assigned")     return <UserPlus className="h-4 w-4 text-nc-purple"  />;
+  if (type === "performance_review")  return <Award    className="h-4 w-4 text-gold"        />;
+  if (type === "material_request")    return <BookOpen className="h-4 w-4 text-nc-green"   />;
   return <Info className="h-4 w-4 text-nc-muted" />;
 }
 
@@ -240,7 +241,9 @@ export default function NotificationBell() {
     setLoading(true);
     try {
       const r = await notificationsService.getAll();
-      setNotifs(r.data.data || []);
+      const all = r.data.data || [];
+      // only show unread and pending — read ones never appear again
+      setNotifs(all.filter((n: any) => n.status === "unread" || n.status === "pending"));
       fetchCount();
     } catch {
       toast({ variant: "destructive", title: "Failed to load notifications" });
@@ -252,15 +255,45 @@ export default function NotificationBell() {
   async function handleMarkRead(id: string) {
     try {
       await notificationsService.markRead(id);
-      setNotifs((prev) => prev.map((n) => n._id === id ? { ...n, status: "read" } : n));
+      setNotifs((prev) => prev.filter((n) => n._id !== id));
       setCount((c) => Math.max(0, c - 1));
     } catch {}
   }
 
+  async function handleMarkReadGroup(ids: string[]) {
+    try {
+      await Promise.all(ids.map((id) => notificationsService.markRead(id)));
+      setNotifs((prev) => prev.filter((n) => !ids.includes(n._id)));
+      setCount((c) => Math.max(0, c - ids.length));
+    } catch {}
+  }
+
+  // Group same-type notifications from the same sender into one row.
+  // delete_request and performance_review are never grouped — they need individual actions.
+  const grouped = useMemo(() => {
+    const map = new Map<string, any>();
+    for (const n of notifications) {
+      if (n.type === "delete_request" || n.type === "performance_review") {
+        map.set(n._id, { ...n, ids: [n._id], count: 1 });
+        continue;
+      }
+      const key = `${n.type}__${n.sender?._id ?? "unknown"}`;
+      if (map.has(key)) {
+        const g = map.get(key)!;
+        g.ids.push(n._id);
+        g.count += 1;
+        if (new Date(n.createdAt) > new Date(g.createdAt)) g.createdAt = n.createdAt;
+      } else {
+        map.set(key, { ...n, ids: [n._id], count: 1 });
+      }
+    }
+    return Array.from(map.values());
+  }, [notifications]);
+
   async function handleMarkAllRead() {
     try {
       await notificationsService.markAllRead();
-      setNotifs((prev) => prev.map((n) => n.status === "unread" ? { ...n, status: "read" } : n));
+      setNotifs([]);
       setCount(0);
     } catch {}
   }
@@ -336,16 +369,33 @@ export default function NotificationBell() {
               {loading ? (
                 <div className="text-center py-10 text-nc-muted text-sm animate-pulse">Loading…</div>
               ) : notifications.length === 0 ? (
-                <div className="text-center py-10 text-nc-muted text-sm">No notifications yet.</div>
-              ) : notifications.map((n) => {
+                <div className="flex flex-col items-center py-10 gap-2">
+                  <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                    <Bell className="h-5 w-5 text-nc-muted/40" />
+                  </div>
+                  <p className="text-sm text-nc-muted">You're all caught up!</p>
+                  <p className="text-xs text-nc-muted/60">No new notifications.</p>
+                </div>
+              ) : grouped.map((n) => {
                 const isUnread      = n.status === "unread";
                 const isPending     = n.status === "pending";
                 const isDeleteReq   = n.type === "delete_request";
                 const isPerfReview  = n.type === "performance_review";
+                const isGrouped     = n.count > 1;
+
+                // Build display message — for grouped rows summarise the count
+                const displayMessage = isGrouped
+                  ? (() => {
+                      if (n.type === "student_assigned")  return `${n.sender?.fullName ?? "Murabbi"} assigned ${n.count} students`;
+                      if (n.type === "circle_assigned")   return `${n.sender?.fullName ?? "Murabbi"} was assigned to ${n.count} circles`;
+                      if (n.type === "material_request")  return `${n.sender?.fullName ?? "Murabbi"} sent ${n.count} material requests`;
+                      return `${n.count} similar notifications from ${n.sender?.fullName ?? "Murabbi"}`;
+                    })()
+                  : n.message;
 
                 return (
                   <div
-                    key={n._id}
+                    key={isGrouped ? `${n.type}__${n.sender?._id}` : n._id}
                     className={`px-4 py-3 transition-colors ${isUnread || isPending ? "bg-muted/40" : ""}`}
                   >
                     <div className="flex gap-3">
@@ -357,19 +407,26 @@ export default function NotificationBell() {
                       {/* Content */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-1">
-                          <p className={`text-[13px] leading-snug ${isUnread || isPending ? "font-semibold text-foreground" : "font-medium text-nc-muted"}`}>
-                            {n.title}
-                          </p>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <p className={`text-[13px] leading-snug ${isUnread || isPending ? "font-semibold text-foreground" : "font-medium text-nc-muted"}`}>
+                              {n.title}
+                            </p>
+                            {isGrouped && (
+                              <span className="text-[10px] font-bold bg-teal/10 text-teal px-1.5 py-0.5 rounded-full leading-none">
+                                ×{n.count}
+                              </span>
+                            )}
+                          </div>
                           <span className="text-[11px] text-nc-muted whitespace-nowrap flex-shrink-0">
                             {timeAgo(n.createdAt)}
                           </span>
                         </div>
 
                         <p className="text-[12px] text-nc-muted mt-0.5 leading-relaxed line-clamp-2">
-                          {n.message}
+                          {displayMessage}
                         </p>
 
-                        {n.sender?.fullName && (
+                        {!isGrouped && n.sender?.fullName && (
                           <p className="text-[11px] text-nc-muted mt-0.5">
                             From: <span className="text-foreground">{n.sender.fullName}</span>
                           </p>
@@ -389,19 +446,23 @@ export default function NotificationBell() {
                         {isPerfReview && (
                           <button
                             className="mt-2 flex items-center gap-1.5 text-xs font-semibold bg-nc-amber-lt hover:bg-gold/10 text-gold border border-gold/30 px-2.5 py-1 rounded-md transition-colors"
-                            onClick={() => { setOpen(false); setViewReview(n); if (isUnread) handleMarkRead(n._id); }}
+                            onClick={() => {
+                              setOpen(false);
+                              setViewReview(n);
+                              if (isUnread) handleMarkRead(n._id);
+                            }}
                           >
                             <Eye className="h-3.5 w-3.5" /> View Review
                           </button>
                         )}
 
-                        {/* Mark read for plain unread notifications */}
-                        {isUnread && !isPending && !isPerfReview && (
+                        {/* Mark read — handles both single and grouped */}
+                        {(isUnread || isGrouped) && !isPending && !isPerfReview && (
                           <button
                             className="text-[11px] text-nc-muted hover:text-foreground mt-1 transition-colors"
-                            onClick={() => handleMarkRead(n._id)}
+                            onClick={() => handleMarkReadGroup(n.ids)}
                           >
-                            Mark as read
+                            Mark as read{isGrouped ? ` (${n.count})` : ""}
                           </button>
                         )}
                       </div>

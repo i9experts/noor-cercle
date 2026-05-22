@@ -6,6 +6,7 @@ export interface AuthUser {
   fullName: string;
   email   : string;
   role    : 'admin' | 'murabbi';
+  image  ?: string;
 }
 
 interface AuthContextType {
@@ -14,6 +15,7 @@ interface AuthContextType {
   isAdmin   : boolean;
   isMurabbi : boolean;
   saveTokens: (access: string, refresh: string, user: AuthUser) => void;
+  updateUser: (updates: Partial<AuthUser>) => void;
   logout    : () => void;
 }
 
@@ -38,6 +40,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('refreshToken', refresh);
     localStorage.setItem('user',         JSON.stringify(u));
     setUser(u);
+  };
+
+  const updateUser = (updates: Partial<AuthUser>) => {
+    setUser((prev) => {
+      if (!prev) return prev;
+      const updated = { ...prev, ...updates };
+      localStorage.setItem('user', JSON.stringify(updated));
+      return updated;
+    });
   };
 
   const clearAll = () => {
@@ -68,6 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAdmin  : user?.role === 'admin',
       isMurabbi: user?.role === 'murabbi',
       saveTokens,
+      updateUser,
       logout,
     }}>
       {children}

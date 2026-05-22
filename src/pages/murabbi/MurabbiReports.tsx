@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import NcCard, { CardHeader, CardTitle } from "@/components/shared/NcCard";
 import NcBadge from "@/components/shared/NcBadge";
 import SectionTitle from "@/components/shared/SectionTitle";
 import StatCard from "@/components/shared/StatCard";
-import { BarChart3, FilePieChart, Printer, Download, TrendingUp, Loader2 } from "lucide-react";
+import { BarChart3, FilePieChart, Printer, TrendingUp, Loader2 } from "lucide-react";
 import { reportsService } from "@/services/api.service";
 import { useToast } from "@/hooks/use-toast";
 
@@ -185,12 +185,12 @@ export default function MurabbiReports() {
   const reports  = report?.reports        || [];
   const insights = report?.visualInsights || {};
 
-  const handleGenerate = async (r: any, mode: "print" | "pdf") => {
+  const handleGenerate = async (r: any) => {
     if (r.status !== "Generated") {
       toast({ title: "No data yet — complete at least one session for this circle." });
       return;
     }
-    setGenerating(r.id + mode);
+    setGenerating(r.id);
     try {
       const res = await reportsService.getCircleReportDetail(r.id.toString());
       const detail = res.data.data;
@@ -236,7 +236,7 @@ export default function MurabbiReports() {
                   </thead>
                   <tbody className="divide-y divide-border">
                     {reports.map((r: any) => {
-                      const isLoading = generating === r.id + "print" || generating === r.id + "pdf";
+                      const isLoading = generating === r.id;
                       return (
                         <tr key={r.id} className="hover:bg-muted/30 transition-colors">
                           <td className="px-4 py-4">
@@ -259,24 +259,14 @@ export default function MurabbiReports() {
                               {isLoading ? (
                                 <Loader2 className="h-4 w-4 animate-spin text-nc-muted" />
                               ) : (
-                                <>
-                                  <button
-                                    className="flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1.5 bg-teal/10 hover:bg-teal/20 text-teal border border-teal/30 rounded-md transition-colors disabled:opacity-40"
-                                    onClick={() => handleGenerate(r, "print")}
-                                    disabled={r.status !== "Generated"}
-                                    title="Print Report"
-                                  >
-                                    <Printer className="h-3.5 w-3.5" /> Print
-                                  </button>
-                                  <button
-                                    className="flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30 rounded-md transition-colors disabled:opacity-40"
-                                    onClick={() => handleGenerate(r, "pdf")}
-                                    disabled={r.status !== "Generated"}
-                                    title="Download as PDF"
-                                  >
-                                    <Download className="h-3.5 w-3.5" /> PDF
-                                  </button>
-                                </>
+                                <button
+                                  className="flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1.5 bg-teal/10 hover:bg-teal/20 text-teal border border-teal/30 rounded-md transition-colors disabled:opacity-40"
+                                  onClick={() => handleGenerate(r)}
+                                  disabled={r.status !== "Generated"}
+                                  title="Print / Save as PDF"
+                                >
+                                  <Printer className="h-3.5 w-3.5" /> Print / PDF
+                                </button>
                               )}
                             </div>
                           </td>

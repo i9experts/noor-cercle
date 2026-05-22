@@ -12,6 +12,7 @@ import SignInPage         from './pages/SignInPage.tsx';
 import SignUpPage         from './pages/SignUpPage.tsx';
 import ForgotPasswordPage from './pages/ForgotPasswordPage.tsx';
 import VerifyOtpPage      from './pages/VerifyOtpPage.tsx';
+import ResetPasswordPage  from './pages/ResetPasswordPage.tsx';
 import ResetSuccessPage   from './pages/ResetSuccessPage.tsx';
 import NotFound           from './pages/NotFound.tsx';
 
@@ -57,7 +58,8 @@ const App = () => (
             <Route path="/signin"          element={<PublicRoute><SignInPage /></PublicRoute>} />
             <Route path="/sign-up"         element={<PublicRoute><SignUpPage /></PublicRoute>} />
             <Route path="/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />
-            <Route path="/verify-otp"      element={<VerifyOtpPage />} />
+            <Route path="/verify-otp"        element={<VerifyOtpPage />} />
+            <Route path="/reset-password"  element={<PublicRoute><ResetPasswordPage /></PublicRoute>} />
             <Route path="/reset-success"   element={<ResetSuccessPage />} />
 
             {/* ── Admin routes ── */}

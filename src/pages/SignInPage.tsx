@@ -5,6 +5,7 @@ import { Input }         from '@/components/ui/input';
 import AuthShell          from '@/components/auth/AuthShell';
 import PasswordInput      from '@/components/shared/PasswordInput';
 import { authService } from '@/services/auth.service';
+import { useAuth }     from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 
 function getApiError(error: unknown): string | null {
@@ -15,6 +16,7 @@ function getApiError(error: unknown): string | null {
 const SignInPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { saveTokens } = useAuth();
   const [email,       setEmail]       = useState('');
   const [password,    setPassword]    = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -28,9 +30,8 @@ const SignInPage = () => {
       const responseData = res.data?.data || res.data;
       const { accessToken, refreshToken, user } = responseData;
 
-      localStorage.setItem('accessToken',  accessToken);
-      localStorage.setItem('refreshToken', refreshToken);
-      localStorage.setItem('user',         JSON.stringify(user));
+      // saveTokens updates AuthContext so initials/name render correctly immediately
+      saveTokens(accessToken, refreshToken, user);
 
       toast({ title: 'Welcome back!', description: 'Signed in successfully.' });
 

@@ -124,29 +124,61 @@ export default function MurabbisPage({
         ) : murabbis.length === 0 ? (
           <div className="text-center py-10 text-nc-muted text-sm">No murabbis found. Add one to get started.</div>
         ) : (
-          <div className="scroll-hover max-h-[224px]">
-          {murabbis.map((m) => (
-            <div key={m._id} className="flex items-center gap-3 py-3 border-b border-border last:border-b-0">
-              <div className="w-[38px] h-[38px] rounded-xl bg-teal-lt flex items-center justify-center text-sm font-bold text-teal flex-shrink-0">
-                {getInitials(m.fullName)}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-semibold truncate">{m.fullName}</div>
-                <div className="text-xs text-nc-muted mt-px truncate">{m.email}</div>
-              </div>
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <NcBadge variant={m.isActive ? "green" : "amber"}>
-                  {m.isActive ? "Active" : "Inactive"}
-                </NcBadge>
-                <ActionMenu
-                  murabbi={m}
-                  onEdit={() => setEditMurabbi(m)}
-                  onToggle={() => toggleStatus(m)}
-                  onDelete={() => handleDelete(m)}
-                />
-              </div>
+          <div className="overflow-x-auto">
+            {/* Table header */}
+            <div className="grid grid-cols-[2fr_2fr_1.5fr_2fr_100px_44px] gap-3 px-3 py-2 border-b border-border bg-muted/40 rounded-t-md">
+              <span className="text-[11px] font-semibold text-nc-muted uppercase tracking-wide">Murabbi</span>
+              <span className="text-[11px] font-semibold text-nc-muted uppercase tracking-wide">Email</span>
+              <span className="text-[11px] font-semibold text-nc-muted uppercase tracking-wide">Phone</span>
+              <span className="text-[11px] font-semibold text-nc-muted uppercase tracking-wide">Address</span>
+              <span className="text-[11px] font-semibold text-nc-muted uppercase tracking-wide">Status</span>
+              <span />
             </div>
-          ))}
+
+            {/* Rows */}
+            <div className="scroll-hover max-h-[320px]">
+              {murabbis.map((m) => (
+                <div key={m._id} className="grid grid-cols-[2fr_2fr_1.5fr_2fr_100px_44px] gap-3 items-center px-3 py-3 border-b border-border last:border-b-0 hover:bg-muted/20 transition-colors">
+
+                  {/* Name + avatar */}
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-8 h-8 rounded-lg bg-teal-lt flex items-center justify-center text-xs font-bold text-teal flex-shrink-0 overflow-hidden">
+                      {m.image
+                        ? <img src={m.image} alt={m.fullName} className="w-full h-full object-cover" />
+                        : getInitials(m.fullName)
+                      }
+                    </div>
+                    <span className="text-[13px] font-semibold truncate">{m.fullName}</span>
+                  </div>
+
+                  {/* Email */}
+                  <div className="text-[12.5px] text-nc-muted truncate">{m.email}</div>
+
+                  {/* Phone */}
+                  <div className="text-[12.5px] text-nc-muted truncate">{m.phone || <span className="text-border">—</span>}</div>
+
+                  {/* Address */}
+                  <div className="text-[12.5px] text-nc-muted truncate">{m.address || <span className="text-border">—</span>}</div>
+
+                  {/* Status */}
+                  <div>
+                    <NcBadge variant={m.isActive ? "green" : "amber"}>
+                      {m.isActive ? "Active" : "Inactive"}
+                    </NcBadge>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex justify-end">
+                    <ActionMenu
+                      murabbi={m}
+                      onEdit={() => setEditMurabbi(m)}
+                      onToggle={() => toggleStatus(m)}
+                      onDelete={() => handleDelete(m)}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </NcCard>

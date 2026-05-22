@@ -1,5 +1,30 @@
-import { pageNames } from "@/data/mockData";
-import { useNavigate, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
+
+const pageNames: Record<string, string> = {
+  dashboard          : 'Admin Dashboard',
+  world              : 'Noor Circles World',
+  students           : 'Student Management',
+  murabbis           : 'Murabbi Management',
+  parents            : 'Parent Network',
+  circles            : 'Circle Management',
+  attendance         : 'Attendance Overview',
+  sessions           : 'Sessions & Curriculum',
+  performance        : 'Performance & Reviews',
+  incentives         : 'Incentives & Awards',
+  training           : 'Murabbi Training',
+  neighbourhoods     : 'Neighbourhoods',
+  reports            : 'Reports & Analytics',
+  settings           : 'System Settings',
+  'murabbi-dashboard': 'Murabbi Dashboard',
+  'murabbi-students' : 'My Students',
+  'murabbi-circles'  : 'My Circles',
+  'murabbi-attendance': 'Mark Attendance',
+  'murabbi-lessons'  : 'Lesson Plans',
+  'murabbi-training' : 'Training Materials',
+  'murabbi-reports'  : 'My Reports',
+  'murabbi-announcements': 'Announcements',
+  'murabbi-profile'  : 'My Profile',
+};
 import { useAuth } from "@/context/AuthContext";
 import {
   DropdownMenu,
@@ -20,7 +45,6 @@ interface TopBarProps {
 
 export default function TopBar({ activePage, onEnroll, onMurabbiNav }: TopBarProps) {
   const title = pageNames[activePage] || activePage;
-  const navigate = useNavigate();
   const { user, logout } = useAuth();
   const isMurabbiPanel = window.location.pathname.includes('/murabbi');
 
@@ -48,22 +72,6 @@ export default function TopBar({ activePage, onEnroll, onMurabbiNav }: TopBarPro
         </div>
       </div>
       <div className="flex items-center gap-3">
-        {!isMurabbiPanel && (
-          <button 
-            className="text-xs font-medium text-primary hover:underline mr-4"
-            onClick={() => navigate('/murabbi')}
-          >
-            Switch to Murabbi Panel →
-          </button>
-        )}
-        {isMurabbiPanel && (
-          <button 
-            className="text-xs font-medium text-nc-muted hover:underline mr-4"
-            onClick={() => navigate('/')}
-          >
-            ← Back to Admin
-          </button>
-        )}
         <div className="flex items-center gap-2.5 bg-muted border border-border rounded-sm px-3.5 w-[280px]">
           <span className="text-nc-muted text-sm">⌕</span>
           <input
@@ -77,8 +85,11 @@ export default function TopBar({ activePage, onEnroll, onMurabbiNav }: TopBarPro
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <div className="w-9 h-9 rounded-full bg-teal-lt flex items-center justify-center text-sm font-semibold text-teal cursor-pointer hover:bg-teal-lt/80 transition-colors" title={user?.fullName}>
-              {userInitials}
+            <div className="w-9 h-9 rounded-full bg-teal-lt flex items-center justify-center text-sm font-semibold text-teal cursor-pointer hover:bg-teal-lt/80 transition-colors overflow-hidden" title={user?.fullName}>
+              {user?.image
+                ? <img src={user.image} alt={user.fullName} className="w-full h-full object-cover" />
+                : userInitials
+              }
             </div>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56" align="end" forceMount>

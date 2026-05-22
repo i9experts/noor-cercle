@@ -1,11 +1,12 @@
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useEffect, useRef, useState } from 'react';
 import NcCard, { CardHeader, CardTitle } from '@/components/shared/NcCard';
 import SectionTitle from '@/components/shared/SectionTitle';
 import PasswordInput from '@/components/shared/PasswordInput';
 import { PasswordRules, isPasswordValid } from '@/components/shared/PasswordRules';
-import { usersService } from '@/services/api.service';
+import { usersService, uploadService } from '@/services/api.service';
 import { useToast } from '@/hooks/use-toast';
-import { User, Shield, Lock, Building2, CalendarDays, BadgeCheck } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import { User, Shield, Lock, Building2, CalendarDays, BadgeCheck, Camera, Loader2 } from 'lucide-react';
 
 function getApiError(error: unknown): string | null {
   const msg = (error as any)?.response?.data?.message;
@@ -22,9 +23,13 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
 
 export default function SettingsPage() {
   const { toast } = useToast();
+  const { updateUser } = useAuth();
 
-  const [profile, setProfile] = useState({ fullName: '', email: '', role: '' });
+  const [profile, setProfile] = useState({ fullName: '', email: '', role: '', image: '' });
   const [saving,  setSaving]  = useState(false);
+
+  const [imgUploading, setImgUploading] = useState(false);
+  const imgInputRef = useRef<HTMLInputElement>(null);
 
   const [pwForm,    setPwForm]    = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   const [pwTouched, setPwTouched] = useState(false);
@@ -33,9 +38,28 @@ export default function SettingsPage() {
   useEffect(() => {
     usersService.getMe().then((res) => {
       const u = res.data.data || res.data;
-      setProfile({ fullName: u.fullName || '', email: u.email || '', role: u.role || '' });
+      setProfile({ fullName: u.fullName || '', email: u.email || '', role: u.role || '', image: u.image || '' });
     }).catch(() => {});
   }, []);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImgUploading(true);
+    try {
+      const res = await uploadService.image(file);
+      const url: string = res.data.data?.url ?? res.data.url ?? res.data;
+      await usersService.updateMe({ image: url });
+      setProfile((p) => ({ ...p, image: url }));
+      updateUser({ image: url });
+      toast({ title: 'Profile photo updated!' });
+    } catch (err) {
+      toast({ variant: 'destructive', title: 'Upload failed', description: getApiError(err) || 'Please try again.' });
+    } finally {
+      setImgUploading(false);
+      if (imgInputRef.current) imgInputRef.current.value = '';
+    }
+  };
 
   const handleProfileSave = async (e: FormEvent) => {
     e.preventDefault();
@@ -81,38 +105,71 @@ export default function SettingsPage() {
     : '?';
 
   return (
-    <div className="page-animate max-w-4xl">
+    <div className="page-animate">
       <SectionTitle title="Settings" subtitle="Manage your account details and security preferences." />
 
-      {/* ── Profile ─────────────────────────────────────────── */}
-      <NcCard className="mb-5">
-        <CardHeader className="pb-5 border-b border-border mb-6">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-8 h-8 rounded-md bg-teal-lt">
-              <User className="h-4 w-4 text-teal" />
+      {/* ── Profile + Change Password side by side ──────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
+
+        {/* ── Profile ───────────────────────────────────────── */}
+        <NcCard>
+          <CardHeader className="pb-5 border-b border-border mb-6">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-8 h-8 rounded-md bg-teal-lt">
+                <User className="h-4 w-4 text-teal" />
+              </div>
+              <CardTitle sub="Update your display name and photo">Profile</CardTitle>
             </div>
-            <CardTitle sub="Update your display name">Profile</CardTitle>
-          </div>
-        </CardHeader>
+          </CardHeader>
 
-        {/* Avatar strip */}
-        <div className="flex items-center gap-4 mb-6 p-4 rounded-lg bg-secondary border border-border">
-          <div className="flex-shrink-0 flex items-center justify-center w-14 h-14 rounded-full bg-teal text-white font-semibold text-lg shadow-nc select-none">
-            {initials}
-          </div>
-          <div className="min-w-0">
-            <p className="text-[15px] font-semibold text-foreground leading-tight truncate">
-              {profile.fullName || '—'}
-            </p>
-            <p className="text-[13px] text-nc-muted mt-0.5 truncate">{profile.email}</p>
-            <span className="inline-block mt-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-teal-lt text-teal capitalize">
-              {profile.role || 'Member'}
-            </span>
-          </div>
-        </div>
+          {/* Avatar strip */}
+          <div className="flex items-center gap-4 mb-6 p-4 rounded-lg bg-secondary border border-border">
+            {/* Clickable avatar */}
+            <div className="relative flex-shrink-0 group cursor-pointer" onClick={() => !imgUploading && imgInputRef.current?.click()}>
+              <div className="w-14 h-14 rounded-full bg-teal text-white font-semibold text-lg shadow-nc select-none overflow-hidden flex items-center justify-center">
+                {imgUploading ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : profile.image ? (
+                  <img src={profile.image} alt={profile.fullName} className="w-full h-full object-cover" />
+                ) : (
+                  initials
+                )}
+              </div>
+              {!imgUploading && (
+                <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Camera className="h-4 w-4 text-white" />
+                </div>
+              )}
+            </div>
 
-        <form onSubmit={handleProfileSave} className="flex flex-col gap-5">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div className="min-w-0 flex-1">
+              <p className="text-[15px] font-semibold text-foreground leading-tight truncate">
+                {profile.fullName || '—'}
+              </p>
+              <p className="text-[13px] text-nc-muted mt-0.5 truncate">{profile.email}</p>
+              <span className="inline-block mt-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-teal-lt text-teal capitalize">
+                {profile.role || 'Member'}
+              </span>
+              <button
+                type="button"
+                className="block text-[11px] text-teal hover:underline mt-1.5 disabled:opacity-50"
+                disabled={imgUploading}
+                onClick={() => imgInputRef.current?.click()}
+              >
+                {imgUploading ? 'Uploading…' : profile.image ? 'Change Photo' : 'Upload Photo'}
+              </button>
+            </div>
+
+            <input
+              ref={imgInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={handleImageUpload}
+            />
+          </div>
+
+          <form onSubmit={handleProfileSave} className="flex flex-col gap-5">
             <div>
               <FieldLabel>Full Name</FieldLabel>
               <input
@@ -129,53 +186,49 @@ export default function SettingsPage() {
                 {profile.role || '—'}
               </div>
             </div>
-          </div>
-
-          <div>
-            <FieldLabel>Email Address</FieldLabel>
-            <div className="relative">
-              <div className="w-full px-3.5 py-2.5 border border-border rounded-md text-sm bg-muted text-nc-muted select-none pr-24 truncate">
-                {profile.email || '—'}
+            <div>
+              <FieldLabel>Email Address</FieldLabel>
+              <div className="relative">
+                <div className="w-full px-3.5 py-2.5 border border-border rounded-md text-sm bg-muted text-nc-muted select-none pr-24 truncate">
+                  {profile.email || '—'}
+                </div>
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-semibold text-nc-muted bg-border/40 px-1.5 py-0.5 rounded">
+                  Read-only
+                </span>
               </div>
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-semibold text-nc-muted bg-border/40 px-1.5 py-0.5 rounded">
-                Read-only
-              </span>
             </div>
-          </div>
 
-          <div className="pt-2 border-t border-border flex items-center justify-between gap-4">
-            <p className="text-[11px] text-nc-muted">Only your name can be edited.</p>
-            <button type="submit" className="btn-primary flex-shrink-0" disabled={saving}>
-              {saving ? 'Saving…' : 'Save Changes'}
-            </button>
-          </div>
-        </form>
-      </NcCard>
-
-      {/* ── Change Password ──────────────────────────────────── */}
-      <NcCard className="mb-5">
-        <CardHeader className="pb-5 border-b border-border mb-6">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-8 h-8 rounded-md bg-gold-lt">
-              <Lock className="h-4 w-4 text-gold" />
+            <div className="pt-2 border-t border-border flex items-center justify-between gap-4">
+              <p className="text-[11px] text-nc-muted">Only your name can be edited.</p>
+              <button type="submit" className="btn-primary flex-shrink-0" disabled={saving}>
+                {saving ? 'Saving…' : 'Save Changes'}
+              </button>
             </div>
-            <CardTitle sub="Keep your account secure with a strong password">Change Password</CardTitle>
-          </div>
-        </CardHeader>
+          </form>
+        </NcCard>
 
-        <form onSubmit={handlePasswordSave} className="flex flex-col gap-5">
-          <div>
-            <FieldLabel>Current Password</FieldLabel>
-            <PasswordInput
-              required
-              placeholder="Enter your current password"
-              value={pwForm.currentPassword}
-              onChange={(e) => setPwForm((p) => ({ ...p, currentPassword: e.target.value }))}
-              disabled={pwSaving}
-            />
-          </div>
+        {/* ── Change Password ────────────────────────────────── */}
+        <NcCard>
+          <CardHeader className="pb-5 border-b border-border mb-6">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-8 h-8 rounded-md bg-gold-lt">
+                <Lock className="h-4 w-4 text-gold" />
+              </div>
+              <CardTitle sub="Keep your account secure with a strong password">Change Password</CardTitle>
+            </div>
+          </CardHeader>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <form onSubmit={handlePasswordSave} className="flex flex-col gap-5">
+            <div>
+              <FieldLabel>Current Password</FieldLabel>
+              <PasswordInput
+                required
+                placeholder="Enter your current password"
+                value={pwForm.currentPassword}
+                onChange={(e) => setPwForm((p) => ({ ...p, currentPassword: e.target.value }))}
+                disabled={pwSaving}
+              />
+            </div>
             <div>
               <FieldLabel>New Password</FieldLabel>
               <PasswordInput
@@ -200,18 +253,18 @@ export default function SettingsPage() {
                 <p className="text-[12px] font-medium text-nc-red mt-1.5">Passwords do not match.</p>
               )}
             </div>
-          </div>
 
-          <div className="pt-2 border-t border-border flex items-center justify-between gap-4">
-            <p className="text-[11px] text-nc-muted">You will stay logged in after updating.</p>
-            <button type="submit" className="btn-gold flex-shrink-0" disabled={pwSaving}>
-              {pwSaving ? 'Updating…' : 'Update Password'}
-            </button>
-          </div>
-        </form>
-      </NcCard>
+            <div className="pt-2 border-t border-border flex items-center justify-between gap-4">
+              <p className="text-[11px] text-nc-muted">You will stay logged in after updating.</p>
+              <button type="submit" className="btn-gold flex-shrink-0" disabled={pwSaving}>
+                {pwSaving ? 'Updating…' : 'Update Password'}
+              </button>
+            </div>
+          </form>
+        </NcCard>
+      </div>
 
-      {/* ── Account Info ─────────────────────────────────────── */}
+      {/* ── Account Info — full width ─────────────────────────── */}
       <NcCard>
         <CardHeader className="pb-5 border-b border-border mb-6">
           <div className="flex items-center gap-3">

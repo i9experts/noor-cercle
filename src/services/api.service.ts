@@ -1,11 +1,24 @@
 import { API } from '@/lib/api';
 
 // ─────────────────────────────────────────────────────────────
+//  UPLOAD
+// ─────────────────────────────────────────────────────────────
+export const uploadService = {
+  image: (file: File) => {
+    const fd = new FormData();
+    fd.append('file', file);
+    return API.post<{ data: { url: string } }>('/upload/image', fd, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+};
+
+// ─────────────────────────────────────────────────────────────
 //  USERS (own profile)
 // ─────────────────────────────────────────────────────────────
 export const usersService = {
   getMe           : ()                                                           => API.get('/auth/me'),
-  updateMe        : (data: { fullName?: string; phone?: string; bio?: string }) => API.patch('/users/profile', data),
+  updateMe        : (data: { fullName?: string; phone?: string; bio?: string; image?: string }) => API.patch('/users/profile', data),
   changePassword  : (data: { currentPassword: string; newPassword: string })    => API.post('/users/change-password', data),
 };
 
@@ -17,9 +30,10 @@ export const adminService = {
   getDashboardExtended : ()                                           => API.get('/admin/dashboard/extended'),
   getAllUsers       : ()                                           => API.get('/admin/users'),
   getMurabbis      : ()                                           => API.get('/admin/murabbis'),
-  createMurabbi    : (data: { fullName: string; email: string; password: string }) =>
+  createMurabbi    : (data: { fullName: string; email: string; password: string; phone?: string; address?: string; image?: string }) =>
                        API.post('/admin/murabbis', data),
-  updateMurabbi    : (id: string, data: { fullName?: string })    => API.patch(`/admin/murabbis/${id}`, data),
+  updateMurabbi    : (id: string, data: { fullName?: string; phone?: string; address?: string; image?: string }) =>
+                       API.patch(`/admin/murabbis/${id}`, data),
   activateMurabbi  : (id: string)                                 => API.patch(`/admin/murabbis/${id}/activate`),
   deactivateMurabbi: (id: string)                                 => API.patch(`/admin/murabbis/${id}/deactivate`),
   deleteMurabbi    : (id: string)                                 => API.delete(`/admin/murabbis/${id}`),
@@ -115,12 +129,13 @@ export const incentivesService = {
 //  NOTIFICATIONS
 // ─────────────────────────────────────────────────────────────
 export const notificationsService = {
-  getAll        : ()           => API.get('/notifications'),
-  getUnreadCount: ()           => API.get('/notifications/unread-count'),
-  markRead      : (id: string) => API.patch(`/notifications/${id}/read`),
-  markAllRead   : ()           => API.patch('/notifications/read-all'),
-  accept        : (id: string) => API.patch(`/notifications/${id}/accept`),
-  reject        : (id: string) => API.patch(`/notifications/${id}/reject`),
+  getAll          : ()                    => API.get('/notifications'),
+  getUnreadCount  : ()                    => API.get('/notifications/unread-count'),
+  markRead        : (id: string)          => API.patch(`/notifications/${id}/read`),
+  markAllRead     : ()                    => API.patch('/notifications/read-all'),
+  accept          : (id: string)          => API.patch(`/notifications/${id}/accept`),
+  reject          : (id: string)          => API.patch(`/notifications/${id}/reject`),
+  requestMaterial : (note?: string)       => API.post('/notifications/request-material', { note: note || '' }),
 };
 
 // ─────────────────────────────────────────────────────────────

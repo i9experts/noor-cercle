@@ -3,8 +3,8 @@ import NcCard, { CardHeader, CardTitle } from "@/components/shared/NcCard";
 import NcBadge from "@/components/shared/NcBadge";
 import SectionTitle from "@/components/shared/SectionTitle";
 import Modal from "@/components/shared/Modal";
-import { Book, Download, PlayCircle, Search, X, ChevronRight, ListChecks, Tag, Clock, BookOpen } from "lucide-react";
-import { lessonsService } from "@/services/api.service";
+import { Book, Download, PlayCircle, Search, X, ChevronRight, ListChecks, Tag, Clock, BookOpen, Send } from "lucide-react";
+import { lessonsService, notificationsService } from "@/services/api.service";
 import { useToast } from "@/hooks/use-toast";
 
 const STATUS_TABS = ["All", "Available", "Upcoming", "Draft"] as const;
@@ -112,12 +112,25 @@ function LessonModal({ lesson, onClose }: { lesson: any; onClose: () => void }) 
 
 export default function MurabbiLessons() {
   const { toast } = useToast();
-  const [lessons, setLessons]       = useState<any[]>([]);
-  const [loading, setLoading]       = useState(true);
-  const [search, setSearch]         = useState("");
-  const [statusTab, setStatusTab]   = useState<StatusTab>("All");
+  const [lessons, setLessons]           = useState<any[]>([]);
+  const [loading, setLoading]           = useState(true);
+  const [search, setSearch]             = useState("");
+  const [statusTab, setStatusTab]       = useState<StatusTab>("All");
   const [moduleFilter, setModuleFilter] = useState("All");
-  const [selected, setSelected]     = useState<any>(null);
+  const [selected, setSelected]         = useState<any>(null);
+  const [requesting, setRequesting]     = useState(false);
+
+  const handleRequestMaterial = async () => {
+    setRequesting(true);
+    try {
+      await notificationsService.requestMaterial();
+      toast({ title: "Request sent!", description: "Admin team has been notified. You'll receive the material soon." });
+    } catch {
+      toast({ variant: "destructive", title: "Failed to send request", description: "Please try again." });
+    } finally {
+      setRequesting(false);
+    }
+  };
 
   useEffect(() => {
     lessonsService.getAll()
@@ -329,10 +342,12 @@ export default function MurabbiLessons() {
             </p>
           </div>
           <button
-            className="btn-gold text-xs px-4 flex-shrink-0"
-            onClick={() => toast({ title: "Request sent!", description: "The admin team has been notified. You'll receive the material soon." })}
+            className="btn-gold text-xs px-4 flex-shrink-0 flex items-center gap-1.5"
+            onClick={handleRequestMaterial}
+            disabled={requesting}
           >
-            Request Material
+            <Send className="h-3.5 w-3.5" />
+            {requesting ? "Sending…" : "Request Material"}
           </button>
         </div>
       </NcCard>

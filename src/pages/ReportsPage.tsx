@@ -1,9 +1,30 @@
 import { useEffect, useState } from "react";
+import {
+  BarChart, Bar, XAxis, YAxis, Tooltip,
+  ResponsiveContainer, Cell, CartesianGrid,
+} from "recharts";
 import StatCard from "@/components/shared/StatCard";
 import NcCard, { CardHeader, CardTitle } from "@/components/shared/NcCard";
 import ProgressBar from "@/components/shared/ProgressBar";
 import { reportsService } from "@/services/api.service";
 import { useToast } from "@/hooks/use-toast";
+
+const MONTH_NAMES = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const CLR = {
+  teal  : 'hsl(185, 78%, 25%)',
+  tealLt: 'hsl(185, 60%, 82%)',
+  mutedFg: 'hsl(185, 10%, 55%)',
+};
+
+function ChartTooltip({ active, payload, label }: any) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="bg-card border border-border rounded-lg px-3 py-2 shadow-nc text-xs">
+      <p className="font-semibold text-foreground mb-0.5">{label}</p>
+      <p className="text-teal">{payload[0].value} student{payload[0].value !== 1 ? "s" : ""} enrolled</p>
+    </div>
+  );
+}
 
 export default function ReportsPage() {
   const { toast } = useToast();
@@ -81,20 +102,54 @@ export default function ReportsPage() {
         </NcCard>
       </div>
 
-      {monthlyEnrollments.length > 0 && (
-        <NcCard className="mt-5">
-          <CardHeader><CardTitle sub="Last 6 months">Monthly Student Enrollments</CardTitle></CardHeader>
-          <div className="h-32 bg-muted rounded-sm flex items-end p-3 gap-2 overflow-hidden">
-            {monthlyEnrollments.map((m: any, i: number) => (
-              <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                <div className="text-[9px] text-nc-muted">{m.count}</div>
-                <div className="w-full bg-teal rounded-t" style={{ height: `${Math.max(4, (m.count / Math.max(...monthlyEnrollments.map((x: any) => x.count))) * 80)}px` }} />
-                <div className="text-[9px] text-nc-muted">M{m._id?.month}</div>
-              </div>
-            ))}
+      <NcCard className="mt-5">
+        <CardHeader>
+          <div className="flex items-center justify-between w-full">
+            <CardTitle sub="New students enrolled per month">Monthly Student Enrollments</CardTitle>
+            {!loading && (
+              <span className="text-xs text-nc-muted">
+                {monthlyEnrollments.length} month{monthlyEnrollments.length !== 1 ? "s" : ""} of data
+              </span>
+            )}
           </div>
-        </NcCard>
-      )}
+        </CardHeader>
+        {loading ? (
+          <div className="h-[180px] flex items-center justify-center text-nc-muted text-sm animate-pulse">Loading…</div>
+        ) : monthlyEnrollments.length === 0 ? (
+          <div className="h-[180px] flex items-center justify-center text-nc-muted text-sm">No enrollment data yet.</div>
+        ) : (
+          <ResponsiveContainer width="100%" height={180}>
+            <BarChart
+              data={monthlyEnrollments.map((m: any) => ({
+                month: MONTH_NAMES[(m._id?.month ?? 1) - 1] + (m._id?.year ? ` '${String(m._id.year).slice(2)}` : ''),
+                count: m.count,
+              }))}
+              margin={{ top: 8, right: 8, left: -20, bottom: 0 }}
+              barCategoryGap="35%"
+            >
+              <CartesianGrid vertical={false} strokeDasharray="4 3" stroke="hsl(185,10%,92%)" />
+              <XAxis
+                dataKey="month"
+                tick={{ fontSize: 11, fill: CLR.mutedFg }}
+                tickLine={false}
+                axisLine={false}
+              />
+              <YAxis
+                allowDecimals={false}
+                tick={{ fontSize: 10, fill: CLR.mutedFg }}
+                tickLine={false}
+                axisLine={false}
+              />
+              <Tooltip content={<ChartTooltip />} cursor={{ fill: "hsl(185,40%,96%)", radius: 4 }} />
+              <Bar dataKey="count" radius={[5, 5, 0, 0]} maxBarSize={48} animationDuration={500}>
+                {monthlyEnrollments.map((_: any, i: number) => (
+                  <Cell key={i} fill={CLR.teal} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        )}
+      </NcCard>
     </div>
   );
 }

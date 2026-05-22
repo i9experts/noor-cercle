@@ -159,8 +159,11 @@ export default function MurabbiSidebar({ activePage, onNavigate }: MurabbiSideba
       {/* User Profile Mini */}
       <div className="p-4 border-t border-white/5 bg-sidebar-accent/30">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold">
-            {user?.fullName ? getInitials(user.fullName) : "M"}
+          <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold overflow-hidden flex-shrink-0">
+            {(user as any)?.image
+              ? <img src={(user as any).image} alt={user?.fullName} className="w-full h-full object-cover" />
+              : user?.fullName ? getInitials(user.fullName) : "M"
+            }
           </div>
           <div className="flex flex-col">
             <span className="text-xs font-medium text-white">{user?.fullName || "Murabbi"}</span>

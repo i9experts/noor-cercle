@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import StatCard from "@/components/shared/StatCard";
 import NcCard, { CardHeader, CardTitle } from "@/components/shared/NcCard";
 import NcBadge from "@/components/shared/NcBadge";
@@ -6,6 +6,9 @@ import { adminService, circlesService, studentsService } from "@/services/api.se
 import { useToast } from "@/hooks/use-toast";
 import { MoreVertical, Pencil, UserCheck, UserX, Trash2 } from "lucide-react";
 import { EditStudentModal } from "@/components/modals/AllModals";
+
+const STATUS_TABS = ["All", "Active", "Inactive"] as const;
+type StatusTab = typeof STATUS_TABS[number];
 
 function getInitials(name: string) {
   return name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
@@ -69,21 +72,30 @@ export default function StudentsPage({
   onEnroll, refreshKey,
 }: { onEnroll: () => void; refreshKey?: number }) {
   const { toast } = useToast();
-  const [students, setStudents]       = useState<any[]>([]);
-  const [circles, setCircles]         = useState<any[]>([]);
-  const [stats, setStats]             = useState<any>(null);
-  const [loading, setLoading]         = useState(true);
-  const [search, setSearch]           = useState("");
+  const [students, setStudents]         = useState<any[]>([]);
+  const [circles, setCircles]           = useState<any[]>([]);
+  const [murabbis, setMurabbis]         = useState<any[]>([]);
+  const [stats, setStats]               = useState<any>(null);
+  const [loading, setLoading]           = useState(true);
+  const [search, setSearch]             = useState("");
   const [circleFilter, setCircleFilter] = useState("");
-  const [editStudent, setEditStudent] = useState<any>(null);
+  const [murabbiFilter, setMurabbiFilter] = useState("");
+  const [statusTab, setStatusTab]       = useState<StatusTab>("All");
+  const [editStudent, setEditStudent]   = useState<any>(null);
 
   function load() {
     setLoading(true);
-    Promise.all([studentsService.getAll(), adminService.getDashboard(), circlesService.getAll()])
-      .then(([sRes, dRes, cRes]) => {
+    Promise.all([
+      studentsService.getAll(),
+      adminService.getDashboard(),
+      circlesService.getAll(),
+      adminService.getMurabbis(),
+    ])
+      .then(([sRes, dRes, cRes, mRes]) => {
         setStudents(sRes.data.data || []);
         setStats(dRes.data.data || null);
         setCircles(cRes.data.data || []);
+        setMurabbis(mRes.data.data || []);
       })
       .catch(() => toast({ variant: "destructive", title: "Failed to load students" }))
       .finally(() => setLoading(false));
@@ -110,14 +122,22 @@ export default function StudentsPage({
     }
   }
 
-  const filtered = students.filter((s) => {
-    const matchSearch = !search ||
-      s.fullName?.toLowerCase().includes(search.toLowerCase()) ||
-      s.neighbourhood?.name?.toLowerCase().includes(search.toLowerCase()) ||
-      s.circle?.name?.toLowerCase().includes(search.toLowerCase());
-    const matchCircle = !circleFilter || (s.circle?._id || s.circle) === circleFilter;
-    return matchSearch && matchCircle;
-  });
+  const filtered = useMemo(() => students.filter((s) => {
+    if (statusTab === "Active"   && !s.isActive) return false;
+    if (statusTab === "Inactive" &&  s.isActive) return false;
+    if (circleFilter && (s.circle?._id || s.circle) !== circleFilter) return false;
+    if (murabbiFilter) {
+      const circleMurabbi = s.circle?.murabbi?._id || s.circle?.murabbi || s.circle?.murabbiId;
+      if (circleMurabbi !== murabbiFilter) return false;
+    }
+    if (search) {
+      const q = search.toLowerCase();
+      return s.fullName?.toLowerCase().includes(q) ||
+             s.neighbourhood?.name?.toLowerCase().includes(q) ||
+             s.circle?.name?.toLowerCase().includes(q);
+    }
+    return true;
+  }), [students, statusTab, circleFilter, murabbiFilter, search]);
 
   return (
     <div className="page-animate">
@@ -130,9 +150,10 @@ export default function StudentsPage({
 
       <NcCard>
         <CardHeader>
-          <CardTitle sub={`${students.length} enrolled`}>All Students</CardTitle>
-          <div className="flex gap-2.5 items-center">
-            <div className="flex items-center gap-2.5 bg-muted border border-border rounded-sm px-3.5 w-[220px]">
+          <CardTitle sub={`${filtered.length} of ${students.length} enrolled`}>All Students</CardTitle>
+          <div className="flex flex-wrap gap-2.5 items-center">
+            {/* Search */}
+            <div className="flex items-center gap-2.5 bg-muted border border-border rounded-sm px-3.5 w-[200px]">
               <span className="text-nc-muted text-sm">⌕</span>
               <input
                 className="border-none bg-transparent outline-none text-[13.5px] text-foreground flex-1 py-[9px] font-sans"
@@ -141,6 +162,39 @@ export default function StudentsPage({
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
+
+            {/* Status tabs */}
+            <div className="flex bg-muted border border-border rounded-sm p-0.5 gap-0.5">
+              {STATUS_TABS.map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setStatusTab(tab)}
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-sm transition-colors ${
+                    statusTab === tab
+                      ? "bg-card text-foreground shadow-sm"
+                      : "text-nc-muted hover:text-foreground"
+                  }`}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
+
+            {/* Murabbi filter */}
+            {murabbis.length > 0 && (
+              <select
+                className="border border-border bg-muted rounded-sm px-3 py-[9px] text-[13.5px] text-foreground outline-none cursor-pointer"
+                value={murabbiFilter}
+                onChange={(e) => setMurabbiFilter(e.target.value)}
+              >
+                <option value="">All Murabbis</option>
+                {murabbis.map((m: any) => (
+                  <option key={m._id} value={m._id}>{m.fullName}</option>
+                ))}
+              </select>
+            )}
+
+            {/* Circle filter */}
             <select
               className="border border-border bg-muted rounded-sm px-3 py-[9px] text-[13.5px] text-foreground outline-none cursor-pointer"
               value={circleFilter}
@@ -151,6 +205,7 @@ export default function StudentsPage({
                 <option key={c._id} value={c._id}>{c.name}</option>
               ))}
             </select>
+
             <button className="btn-gold" onClick={onEnroll}>+ Enroll Student</button>
           </div>
         </CardHeader>

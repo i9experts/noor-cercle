@@ -1,8 +1,73 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Modal, { FormGroup, FormInput, FormPasswordInput, FormSelect, FormTextarea, FormRow } from "@/components/shared/Modal";
-import { adminService, attendanceService, circlesService, incentivesService, murabbisService, neighbourhoodsService, parentsService, studentsService as studentsApi } from "@/services/api.service";
+import { adminService, attendanceService, circlesService, incentivesService, murabbisService, neighbourhoodsService, parentsService, studentsService as studentsApi, uploadService } from "@/services/api.service";
 import { useToast } from "@/hooks/use-toast";
-import { Check, X } from "lucide-react";
+import { Check, X, Camera, Loader2 } from "lucide-react";
+
+// ── Reusable image file picker ────────────────────────────────────────────────
+function ImageUpload({ value, onChange }: { value: string; onChange: (url: string) => void }) {
+  const { toast } = useToast();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ variant: "destructive", title: "Image must be under 5 MB." }); return;
+    }
+    setUploading(true);
+    try {
+      const res = await uploadService.image(file);
+      const url = (res.data as any)?.url || (res.data as any)?.data?.url;
+      if (!url) throw new Error("No URL returned");
+      onChange(url);
+    } catch {
+      toast({ variant: "destructive", title: "Image upload failed. Try again." });
+    } finally {
+      setUploading(false);
+      if (inputRef.current) inputRef.current.value = "";
+    }
+  }
+
+  return (
+    <div className="flex items-center gap-4">
+      <div
+        className="w-16 h-16 rounded-full border-2 border-dashed border-border bg-muted flex items-center justify-center overflow-hidden flex-shrink-0 cursor-pointer hover:border-teal transition-colors"
+        onClick={() => inputRef.current?.click()}
+      >
+        {uploading ? (
+          <Loader2 className="h-5 w-5 text-teal animate-spin" />
+        ) : value ? (
+          <img src={value} alt="preview" className="w-full h-full object-cover" />
+        ) : (
+          <Camera className="h-5 w-5 text-nc-muted" />
+        )}
+      </div>
+      <div className="flex-1">
+        <button
+          type="button"
+          className="text-xs font-semibold text-teal hover:underline"
+          onClick={() => inputRef.current?.click()}
+          disabled={uploading}
+        >
+          {uploading ? "Uploading…" : value ? "Change Photo" : "Upload Photo"}
+        </button>
+        <p className="text-[11px] text-nc-muted mt-0.5">JPG or PNG, max 5 MB</p>
+        {value && (
+          <button
+            type="button"
+            className="text-[11px] text-red-500 hover:underline mt-0.5"
+            onClick={() => onChange("")}
+          >
+            Remove
+          </button>
+        )}
+      </div>
+      <input ref={inputRef} type="file" accept="image/jpeg,image/png" className="hidden" onChange={handleFile} />
+    </div>
+  );
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Enroll Student Modal  (murabbiMode = restrict to murabbi's own circles)
@@ -421,7 +486,8 @@ export function AddMurabbiModal({
 }: { open: boolean; onClose: () => void; onSuccess?: () => void }) {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState({ fullName: "", email: "", password: "" });
+  const EMPTY = { fullName: "", email: "", password: "", phone: "", address: "", image: "" };
+  const [form, setForm] = useState(EMPTY);
 
   function set(field: string, value: string) { setForm((f) => ({ ...f, [field]: value })); }
 
@@ -431,9 +497,16 @@ export function AddMurabbiModal({
     }
     setLoading(true);
     try {
-      await adminService.createMurabbi({ fullName: form.fullName, email: form.email, password: form.password });
+      await adminService.createMurabbi({
+        fullName: form.fullName,
+        email   : form.email,
+        password: form.password,
+        ...(form.phone   && { phone:   form.phone }),
+        ...(form.address && { address: form.address }),
+        ...(form.image   && { image:   form.image }),
+      });
       toast({ title: "Murabbi account created successfully!" });
-      setForm({ fullName: "", email: "", password: "" });
+      setForm(EMPTY);
       onClose(); onSuccess?.();
     } catch (err: any) {
       toast({ variant: "destructive", title: err?.response?.data?.message || "Failed to create murabbi." });
@@ -442,10 +515,15 @@ export function AddMurabbiModal({
 
   return (
     <Modal open={open} onClose={onClose} title="Add New Murabbi" subtitle="Create a Murabbi account — they can log in immediately">
-      <FormGroup label="Full Name" required><FormInput placeholder="Full name" value={form.fullName} onChange={(e) => set("fullName", e.target.value)} /></FormGroup>
+      <FormRow>
+        <FormGroup label="Full Name" required><FormInput placeholder="Full name" value={form.fullName} onChange={(e) => set("fullName", e.target.value)} /></FormGroup>
+        <FormGroup label="Phone"><FormInput placeholder="+92 300 0000000" value={form.phone} onChange={(e) => set("phone", e.target.value)} /></FormGroup>
+      </FormRow>
       <FormGroup label="Email" required><FormInput type="email" placeholder="murabbi@example.com" value={form.email} onChange={(e) => set("email", e.target.value)} /></FormGroup>
       <FormGroup label="Password" required><FormPasswordInput placeholder="Min 8 chars, 1 uppercase, 1 number" value={form.password} onChange={(e) => set("password", e.target.value)} /></FormGroup>
       <p className="text-[11px] text-nc-muted -mt-1">Password must be at least 8 characters with one uppercase letter and one number.</p>
+      <FormGroup label="Address"><FormInput placeholder="Street, City" value={form.address} onChange={(e) => set("address", e.target.value)} /></FormGroup>
+      <FormGroup label="Profile Photo"><ImageUpload value={form.image} onChange={(url) => set("image", url)} /></FormGroup>
       <div className="flex gap-2.5 mt-2">
         <button className="btn-primary flex-1" onClick={handleSubmit} disabled={loading}>{loading ? "Creating…" : "Create Murabbi"}</button>
         <button className="btn-outline" onClick={onClose} disabled={loading}>Cancel</button>
@@ -462,15 +540,31 @@ export function EditMurabbiModal({
 }: { open: boolean; onClose: () => void; onSuccess?: () => void; murabbi: any }) {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [fullName, setFullName] = useState("");
+  const [form, setForm] = useState({ fullName: "", phone: "", address: "", image: "" });
 
-  useEffect(() => { if (open && murabbi) setFullName(murabbi.fullName || ""); }, [open, murabbi]);
+  useEffect(() => {
+    if (open && murabbi) {
+      setForm({
+        fullName: murabbi.fullName || "",
+        phone   : murabbi.phone   || "",
+        address : murabbi.address || "",
+        image   : murabbi.image   || "",
+      });
+    }
+  }, [open, murabbi]);
+
+  function set(field: string, value: string) { setForm((f) => ({ ...f, [field]: value })); }
 
   async function handleSubmit() {
-    if (!fullName.trim()) { toast({ variant: "destructive", title: "Full name is required." }); return; }
+    if (!form.fullName.trim()) { toast({ variant: "destructive", title: "Full name is required." }); return; }
     setLoading(true);
     try {
-      await adminService.updateMurabbi(murabbi._id, { fullName: fullName.trim() });
+      await adminService.updateMurabbi(murabbi._id, {
+        fullName: form.fullName.trim(),
+        phone   : form.phone,
+        address : form.address,
+        image   : form.image,
+      });
       toast({ title: "Murabbi updated!" });
       onClose(); onSuccess?.();
     } catch (err: any) {
@@ -480,8 +574,13 @@ export function EditMurabbiModal({
 
   return (
     <Modal open={open} onClose={onClose} title="Edit Murabbi" subtitle={`Editing: ${murabbi?.fullName || ""}`}>
-      <FormGroup label="Full Name" required><FormInput value={fullName} onChange={(e) => setFullName(e.target.value)} /></FormGroup>
+      <FormRow>
+        <FormGroup label="Full Name" required><FormInput value={form.fullName} onChange={(e) => set("fullName", e.target.value)} /></FormGroup>
+        <FormGroup label="Phone"><FormInput placeholder="+92 300 0000000" value={form.phone} onChange={(e) => set("phone", e.target.value)} /></FormGroup>
+      </FormRow>
       <FormGroup label="Email"><FormInput value={murabbi?.email || ""} readOnly className="text-nc-muted cursor-not-allowed" /></FormGroup>
+      <FormGroup label="Address"><FormInput placeholder="Street, City" value={form.address} onChange={(e) => set("address", e.target.value)} /></FormGroup>
+      <FormGroup label="Profile Photo"><ImageUpload value={form.image} onChange={(url) => set("image", url)} /></FormGroup>
       <div className="flex gap-2.5 mt-2">
         <button className="btn-primary flex-1" onClick={handleSubmit} disabled={loading}>{loading ? "Saving…" : "Save Changes"}</button>
         <button className="btn-outline" onClick={onClose} disabled={loading}>Cancel</button>
