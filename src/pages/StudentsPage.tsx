@@ -127,8 +127,8 @@ export default function StudentsPage({
     if (statusTab === "Inactive" &&  s.isActive) return false;
     if (circleFilter && (s.circle?._id || s.circle) !== circleFilter) return false;
     if (murabbiFilter) {
-      const circleMurabbi = s.circle?.murabbi?._id || s.circle?.murabbi || s.circle?.murabbiId;
-      if (circleMurabbi !== murabbiFilter) return false;
+      const studentMurabbi = s.murabbi?._id || s.murabbi;
+      if (studentMurabbi !== murabbiFilter) return false;
     }
     if (search) {
       const q = search.toLowerCase();

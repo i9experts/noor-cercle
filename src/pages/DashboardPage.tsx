@@ -8,6 +8,7 @@ import QuranBox from "@/components/shared/QuranBox";
 import NcCard, { CardHeader, CardTitle } from "@/components/shared/NcCard";
 import NcBadge from "@/components/shared/NcBadge";
 import { adminService, announcementsService, reportsService } from "@/services/api.service";
+import { useToast } from "@/hooks/use-toast";
 import {
   Users, BookOpen, Activity, Megaphone, Trash2, Plus, X,
   Calendar, GraduationCap, Info, Heart, TrendingUp, TrendingDown,
@@ -97,6 +98,7 @@ type CircleTrend = {
 
 // ── Main Component ────────────────────────────────────────────────────────────
 export default function DashboardPage() {
+  const { toast } = useToast();
   const [stats,         setStats]         = useState<any>(null);
   const [extended,      setExtended]      = useState<any>(null);
   const [loading,       setLoading]       = useState(true);
@@ -116,8 +118,8 @@ export default function DashboardPage() {
     try {
       const res = await reportsService.getAttendanceTrend(circleId);
       setMainTrend(res.data.data ?? []);
-    } catch (e) {
-      console.error(e);
+    } catch {
+      toast({ variant: "destructive", title: "Failed to load attendance trend." });
     } finally {
       setTrendLoading(false);
     }
@@ -136,7 +138,7 @@ export default function DashboardPage() {
         setMainTrend(trendRes.data.data ?? []);
         setCircleCharts(circleRes.data.data ?? []);
       })
-      .catch(console.error)
+      .catch(() => toast({ variant: "destructive", title: "Failed to load dashboard data." }))
       .finally(() => setLoading(false));
   }, []);
 
@@ -153,15 +155,18 @@ export default function DashboardPage() {
       setFormTitle(""); setFormBody(""); setFormIcon("info"); setShowForm(false);
       const ext = await adminService.getDashboardExtended();
       setExtended(ext.data.data);
-    } catch (e) { console.error(e); }
-    finally { setSubmitting(false); }
+    } catch {
+      toast({ variant: "destructive", title: "Failed to post announcement." });
+    } finally { setSubmitting(false); }
   };
 
   const handleDeleteAnnouncement = async (id: string) => {
     try {
       await announcementsService.remove(id);
       setExtended((p: any) => ({ ...p, announcements: p.announcements.filter((a: any) => a._id !== id) }));
-    } catch (e) { console.error(e); }
+    } catch {
+      toast({ variant: "destructive", title: "Failed to delete announcement." });
+    }
   };
 
   if (loading) {

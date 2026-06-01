@@ -6,6 +6,7 @@ import NcCard, { CardHeader, CardTitle } from "@/components/shared/NcCard";
 import NcBadge from "@/components/shared/NcBadge";
 import SectionTitle from "@/components/shared/SectionTitle";
 import { murabbisService, performanceService, liveSessionsService, announcementsService } from "@/services/api.service";
+import { useToast } from "@/hooks/use-toast";
 
 const ICON_MAP: Record<string, { Icon: React.ElementType; bg: string; text: string }> = {
   session  : { Icon: Calendar,      bg: "bg-teal/10",     text: "text-teal"     },
@@ -31,6 +32,7 @@ function rateColor(v: number) {
 }
 
 export default function MurabbiDashboard() {
+  const { toast } = useToast();
   const [data, setData]               = useState<any>(null);
   const [loading, setLoading]         = useState(true);
   const [reviews, setReviews]         = useState<any[]>([]);
@@ -43,7 +45,7 @@ export default function MurabbiDashboard() {
   useEffect(() => {
     murabbisService.getDashboard()
       .then((res) => setData(res.data.data))
-      .catch(console.error)
+      .catch(() => toast({ variant: "destructive", title: "Failed to load dashboard." }))
       .finally(() => setLoading(false));
 
     performanceService.getMyReviews()

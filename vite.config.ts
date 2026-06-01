@@ -2,9 +2,6 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 
-// FIX: Removed lovable-tagger plugin — it's a Lovable platform-specific package
-// that causes crashes in standard development environments (white screen / build error)
-
 export default defineConfig({
   server: {
     host: "::",
@@ -14,6 +11,18 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+    },
+  },
+  build: {
+    chunkSizeWarningLimit: 600,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          "vendor-react": ["react", "react-dom", "react-router-dom"],
+          "vendor-ui":    ["lucide-react", "@radix-ui/react-dialog", "@radix-ui/react-select", "@radix-ui/react-toast"],
+          "vendor-utils": ["axios", "date-fns"],
+        },
+      },
     },
   },
 });
