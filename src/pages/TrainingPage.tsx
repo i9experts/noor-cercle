@@ -1,542 +1,466 @@
 import { useEffect, useState } from "react";
-import { Plus, Trash2, BookOpen, Video, Calendar, Clock, Repeat, ExternalLink, Pencil } from "lucide-react";
 import StatCard from "@/components/shared/StatCard";
+import NcCard, { CardHeader, CardTitle } from "@/components/shared/NcCard";
 import NcBadge from "@/components/shared/NcBadge";
-import SectionTitle from "@/components/shared/SectionTitle";
-import Modal, { FormGroup, FormInput, FormSelect, FormTextarea, FormRow } from "@/components/shared/Modal";
-import { trainingService, liveSessionsService } from "@/services/api.service";
+import Modal, { FormGroup, FormInput, FormSelect, FormRow } from "@/components/shared/Modal";
+import { trainingService, adminService } from "@/services/api.service";
 import { useToast } from "@/hooks/use-toast";
+import { Loader2, Pencil, UserPlus, X } from "lucide-react";
 
-const STATUS_OPTIONS = ["Available", "Upcoming", "Locked"];
-const TYPE_OPTIONS   = ["Video", "PDF", "Live", "Mixed"];
-const DAY_OPTIONS    = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+function getInitials(name: string) {
+  return name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
+}
 
-const EMPTY_LIVE_FORM = {
-  title          : "",
-  description    : "",
-  zoomLink       : "",
-  isRecurring    : false,
-  scheduledAt    : "",
-  recurringDay   : "0",
-  recurringTime  : "",
-  durationMinutes: "60",
+function fmtDate(d: string | null) {
+  if (!d) return "—";
+  return new Date(d).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" });
+}
+
+const MODULE_STATUS_COLOR: Record<string, "green" | "amber" | "slate"> = {
+  Available: "green",
+  Upcoming : "amber",
+  Locked   : "slate",
 };
 
-const EMPTY_FORM = {
-  title          : "",
-  description    : "",
-  order          : "",
-  durationMinutes: "",
-  totalLessons   : "",
-  status         : "Available",
-  type           : "Video",
-};
+function ModuleCard({ m, i }: { m: any; i: number }) {
+  return (
+    <div className="border border-border rounded-xl p-4 bg-card hover:border-teal/30 transition-colors">
+      <div className="flex items-start justify-between mb-2.5">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-lg bg-foreground flex items-center justify-center text-background text-[13px] font-bold flex-shrink-0">
+            {m.order || i + 1}
+          </div>
+          <div>
+            <div className="font-semibold text-[13.5px]">{m.title}</div>
+            <div className="text-[11.5px] text-nc-muted mt-0.5">
+              {[m.timeSlot, m.durationMinutes && `${m.durationMinutes} min`].filter(Boolean).join(" · ") || "—"}
+            </div>
+          </div>
+        </div>
+        <NcBadge variant={MODULE_STATUS_COLOR[m.status] || "slate"}>{m.status}</NcBadge>
+      </div>
+      {m.description && (
+        <p className="text-[12.5px] text-nc-muted leading-relaxed pl-12">{m.description}</p>
+      )}
+    </div>
+  );
+}
 
-export default function TrainingPage() {
+// ── Create / Edit Batch Modal ──────────────────────────────────────────────────
+function BatchModal({ open, onClose, onSuccess, batch }: {
+  open: boolean; onClose: () => void; onSuccess: () => void; batch?: any;
+}) {
   const { toast } = useToast();
-  const [modules, setModules]   = useState<any[]>([]);
-  const [summary, setSummary]   = useState<any>(null);
-  const [loading, setLoading]   = useState(true);
-  const [showForm, setShowForm] = useState(false);
-  const [form, setForm]         = useState({ ...EMPTY_FORM });
-  const [saving, setSaving]     = useState(false);
-  const [deleting, setDeleting] = useState<string | null>(null);
+  const EMPTY = { batchNumber: "", day1Date: "", day2Date: "", day1Title: "Foundation & Identity", day2Title: "Skill, Safety & The Year", day1Meta: "9:00 AM – 3:00 PM · Modules 1, 2 & 3 · 5 hours", day2Meta: "8:45 AM – 3:00 PM · Modules 4, 5 & 6 · 5 hours", status: "upcoming" };
+  const [form, setForm] = useState({ ...EMPTY });
+  const [saving, setSaving] = useState(false);
 
-  // Live sessions state
-  const [liveSessions, setLiveSessions]     = useState<any[]>([]);
-  const [showLiveForm, setShowLiveForm]     = useState(false);
-  const [editingLive, setEditingLive]       = useState<any | null>(null);
-  const [liveForm, setLiveForm]             = useState({ ...EMPTY_LIVE_FORM });
-  const [savingLive, setSavingLive]         = useState(false);
-  const [deletingLive, setDeletingLive]     = useState<string | null>(null);
+  useEffect(() => {
+    if (open) setForm(batch ? {
+      batchNumber: String(batch.batchNumber), day1Date: batch.day1Date ? new Date(batch.day1Date).toISOString().slice(0,10) : "",
+      day2Date: batch.day2Date ? new Date(batch.day2Date).toISOString().slice(0,10) : "",
+      day1Title: batch.day1Title || EMPTY.day1Title, day2Title: batch.day2Title || EMPTY.day2Title,
+      day1Meta: batch.day1Meta || EMPTY.day1Meta, day2Meta: batch.day2Meta || EMPTY.day2Meta,
+      status: batch.status || "upcoming",
+    } : { ...EMPTY });
+  }, [open, batch]);
 
-  const load = () => {
-    Promise.all([trainingService.getModules(), trainingService.getProgressSummary()])
-      .then(([mRes, sRes]) => {
-        setModules(mRes.data.data || []);
-        setSummary(sRes.data.data || null);
-      })
-      .catch(() => toast({ variant: "destructive", title: "Failed to load training data" }))
-      .finally(() => setLoading(false));
-  };
+  const set = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
-  const loadLiveSessions = () => {
-    liveSessionsService.getAll()
-      .then((res) => setLiveSessions(res.data.data || []))
-      .catch(() => {});
-  };
-
-  useEffect(() => { load(); loadLiveSessions(); }, []);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-  };
-
-  const handleLiveChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target;
-    const checked = (e.target as HTMLInputElement).checked;
-    setLiveForm((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
-  };
-
-  const openCreateLive = () => {
-    setEditingLive(null);
-    setLiveForm({ ...EMPTY_LIVE_FORM });
-    setShowLiveForm(true);
-  };
-
-  const openEditLive = (s: any) => {
-    setEditingLive(s);
-    setLiveForm({
-      title          : s.title          ?? "",
-      description    : s.description    ?? "",
-      zoomLink       : s.zoomLink       ?? "",
-      isRecurring    : s.isRecurring     ?? false,
-      scheduledAt    : s.scheduledAt
-        ? new Date(s.scheduledAt).toISOString().slice(0, 16)
-        : "",
-      recurringDay   : s.recurringDay   != null ? String(s.recurringDay) : "0",
-      recurringTime  : s.recurringTime  ?? "",
-      durationMinutes: s.durationMinutes != null ? String(s.durationMinutes) : "60",
-    });
-    setShowLiveForm(true);
-  };
-
-  const closeLiveForm = () => {
-    setShowLiveForm(false);
-    setEditingLive(null);
-    setLiveForm({ ...EMPTY_LIVE_FORM });
-  };
-
-  const handleSaveLive = async () => {
-    if (!liveForm.title.trim()) {
-      toast({ variant: "destructive", title: "Title is required." });
-      return;
-    }
-    if (!liveForm.zoomLink.trim()) {
-      toast({ variant: "destructive", title: "Zoom link is required." });
-      return;
-    }
-    setSavingLive(true);
-    const payload: Record<string, any> = {
-      title          : liveForm.title.trim(),
-      description    : liveForm.description.trim(),
-      zoomLink       : liveForm.zoomLink.trim(),
-      isRecurring    : liveForm.isRecurring,
-      durationMinutes: liveForm.durationMinutes ? Number(liveForm.durationMinutes) : 60,
-    };
-    if (liveForm.isRecurring) {
-      payload.recurringDay  = Number(liveForm.recurringDay);
-      payload.recurringTime = liveForm.recurringTime;
-    } else {
-      payload.scheduledAt = liveForm.scheduledAt ? new Date(liveForm.scheduledAt).toISOString() : undefined;
-    }
-    try {
-      if (editingLive) {
-        await liveSessionsService.update(editingLive._id, payload);
-        toast({ title: "Meeting updated." });
-      } else {
-        await liveSessionsService.create(payload);
-        toast({ title: "Meeting scheduled." });
-      }
-      closeLiveForm();
-      loadLiveSessions();
-    } catch (err: any) {
-      toast({ variant: "destructive", title: err?.response?.data?.message || "Failed to save meeting." });
-    } finally {
-      setSavingLive(false);
-    }
-  };
-
-  const handleDeleteLive = async (id: string) => {
-    if (!confirm("Delete this live meeting? This cannot be undone.")) return;
-    setDeletingLive(id);
-    try {
-      await liveSessionsService.remove(id);
-      setLiveSessions((prev) => prev.filter((s) => s._id !== id));
-      toast({ title: "Meeting deleted." });
-    } catch (err: any) {
-      toast({ variant: "destructive", title: err?.response?.data?.message || "Failed to delete meeting." });
-    } finally {
-      setDeletingLive(null);
-    }
-  };
-
-  const formatMeetingTime = (s: any) => {
-    if (s.isRecurring && s.recurringDay != null && s.recurringTime) {
-      return `Every ${DAY_OPTIONS[s.recurringDay]} at ${s.recurringTime}`;
-    }
-    if (s.scheduledAt) {
-      return new Date(s.scheduledAt).toLocaleString("en-PK", {
-        weekday: "short", day: "numeric", month: "short",
-        year: "numeric", hour: "2-digit", minute: "2-digit",
-      });
-    }
-    return "—";
-  };
-
-  const handleCreate = async () => {
-    if (!form.title.trim()) {
-      toast({ variant: "destructive", title: "Title is required." });
-      return;
-    }
+  async function handleSave() {
+    if (!form.batchNumber) { toast({ variant: "destructive", title: "Batch number required." }); return; }
     setSaving(true);
     try {
-      await trainingService.createModule({
-        title          : form.title.trim(),
-        description    : form.description.trim(),
-        order          : form.order           ? Number(form.order)           : undefined,
-        durationMinutes: form.durationMinutes ? Number(form.durationMinutes) : undefined,
-        totalLessons   : form.totalLessons    ? Number(form.totalLessons)    : undefined,
-        status         : form.status,
-        type           : form.type,
-      });
-      toast({ title: "Training module created." });
-      setForm({ ...EMPTY_FORM });
-      setShowForm(false);
-      load();
+      const payload = { ...form, batchNumber: parseInt(form.batchNumber), day1Date: form.day1Date || undefined, day2Date: form.day2Date || undefined };
+      if (batch) await trainingService.updateBatch(batch._id, payload);
+      else        await trainingService.createBatch(payload);
+      toast({ title: batch ? "Batch updated." : "Batch created." });
+      onClose(); onSuccess();
     } catch (err: any) {
-      toast({ variant: "destructive", title: err?.response?.data?.message || "Failed to create module." });
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleDelete = async (id: string) => {
-    if (!confirm("Delete this training module? This cannot be undone.")) return;
-    setDeleting(id);
-    try {
-      await trainingService.deleteModule(id);
-      setModules((prev) => prev.filter((m) => m._id !== id));
-      toast({ title: "Module deleted." });
-    } catch (err: any) {
-      toast({ variant: "destructive", title: err?.response?.data?.message || "Failed to delete module." });
-    } finally {
-      setDeleting(null); }
-  };
+      toast({ variant: "destructive", title: err?.response?.data?.message || "Failed to save batch." });
+    } finally { setSaving(false); }
+  }
 
   return (
-    <div className="page-animate">
-      <div className="flex items-center justify-between mb-6">
-        <SectionTitle
-          title="Training Modules"
-          subtitle="Manage training content available to all Murabbis."
-        />
-        <button
-          className="btn-primary flex items-center gap-2 text-sm"
-          onClick={() => setShowForm(true)}
-        >
-          <Plus className="h-4 w-4" /> New Module
+    <Modal open={open} onClose={onClose} title={batch ? "Edit Batch" : "Create New Batch"}>
+      <FormRow>
+        <FormGroup label="Batch Number" required>
+          <FormInput type="number" value={form.batchNumber} onChange={(e) => set("batchNumber", e.target.value)} />
+        </FormGroup>
+        <FormGroup label="Status">
+          <FormSelect value={form.status} onChange={(e) => set("status", e.target.value)}>
+            <option value="upcoming">Upcoming</option>
+            <option value="active">Active</option>
+            <option value="completed">Completed</option>
+          </FormSelect>
+        </FormGroup>
+      </FormRow>
+      <FormRow>
+        <FormGroup label="Day 1 Date"><FormInput type="date" value={form.day1Date} onChange={(e) => set("day1Date", e.target.value)} /></FormGroup>
+        <FormGroup label="Day 2 Date"><FormInput type="date" value={form.day2Date} onChange={(e) => set("day2Date", e.target.value)} /></FormGroup>
+      </FormRow>
+      <FormGroup label="Day 1 Title"><FormInput value={form.day1Title} onChange={(e) => set("day1Title", e.target.value)} /></FormGroup>
+      <FormGroup label="Day 1 Meta (time/modules)"><FormInput value={form.day1Meta} onChange={(e) => set("day1Meta", e.target.value)} /></FormGroup>
+      <FormGroup label="Day 2 Title"><FormInput value={form.day2Title} onChange={(e) => set("day2Title", e.target.value)} /></FormGroup>
+      <FormGroup label="Day 2 Meta (time/modules)"><FormInput value={form.day2Meta} onChange={(e) => set("day2Meta", e.target.value)} /></FormGroup>
+      <div className="flex gap-2 mt-2">
+        <button className="btn-gold flex-1" onClick={handleSave} disabled={saving}>
+          {saving ? <Loader2 className="h-4 w-4 animate-spin mx-auto" /> : batch ? "Save Changes" : "Create Batch"}
         </button>
+        <button className="btn-outline" onClick={onClose} disabled={saving}>Cancel</button>
       </div>
+    </Modal>
+  );
+}
 
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4 mb-7">
-        <StatCard label="Total Modules"    value={summary?.total    ?? modules.length} meta="Available modules"  color="teal"   />
-        <StatCard label="Completed"        value={summary?.completed   ?? "—"}          meta="Modules done"       color="green"  />
-        <StatCard label="In Progress"      value={summary?.inProgress  ?? "—"}          meta="Currently ongoing"  color="gold"   />
-        <StatCard label="Overall Progress" value={summary?.overallPercent ? `${summary.overallPercent}%` : "—"} meta="Completion rate" color="purple" />
-      </div>
+// ── Add Candidates Modal ───────────────────────────────────────────────────────
+function AddCandidatesModal({ open, onClose, onSuccess, batchId, existingIds }: {
+  open: boolean; onClose: () => void; onSuccess: () => void; batchId: string; existingIds: string[];
+}) {
+  const { toast }             = useToast();
+  const [murabbis, setMurabbis] = useState<any[]>([]);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [saving, setSaving]   = useState(false);
 
-      <div className="scroll-hover max-h-[600px] grid grid-cols-2 gap-4">
-        {loading ? (
-          <div className="col-span-2 text-center py-20 text-nc-muted text-sm animate-pulse">Loading training modules...</div>
-        ) : modules.length === 0 ? (
-          <div className="col-span-2 text-center py-20 text-nc-muted text-sm">
-            No training modules yet. Click <strong>New Module</strong> to add one.
-          </div>
-        ) : (
-          modules.map((m) => (
-            <div key={m._id} className="border border-border rounded-lg overflow-hidden bg-card">
-              <div className="p-4 px-5 flex items-center gap-3.5 border-b border-border">
-                <div className="w-10 h-10 bg-nc-dark rounded-xl flex items-center justify-center font-serif text-[18px] text-sidebar-primary flex-shrink-0">
-                  {m.order || "?"}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="font-semibold text-sm text-foreground truncate">{m.title}</div>
-                  <div className="text-[11px] text-nc-muted mt-0.5">
-                    {[m.type, m.durationMinutes && `${m.durationMinutes} mins`, m.totalLessons && `${m.totalLessons} lessons`]
-                      .filter(Boolean).join(" · ") || "No details set"}
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <NcBadge variant={m.status === "Available" ? "green" : m.status === "Upcoming" ? "amber" : "dark"}>
-                    {m.status}
-                  </NcBadge>
-                  <button
-                    className="p-1.5 text-nc-muted hover:text-red-500 hover:bg-red-50 rounded-md transition-colors disabled:opacity-40"
-                    onClick={() => handleDelete(m._id)}
-                    disabled={deleting === m._id}
-                    title="Delete module"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
-              </div>
-              <div className="p-4 px-5">
-                <div className="text-[12.5px] text-slate leading-relaxed line-clamp-3">
-                  {m.description || <span className="text-nc-muted italic">No description.</span>}
-                </div>
-                {m.progressPercent > 0 && (
-                  <div className="mt-3">
-                    <div className="flex justify-between text-[11px] mb-1">
-                      <span className="text-nc-muted">Avg Progress</span>
-                      <span className="font-semibold text-teal">{m.progressPercent}%</span>
-                    </div>
-                    <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                      <div className="h-full bg-teal rounded-full" style={{ width: `${m.progressPercent}%` }} />
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          ))
-        )}
-      </div>
+  useEffect(() => {
+    if (!open) return;
+    setSelected(new Set());
+    adminService.getMurabbis()
+      .then((res) => setMurabbis((res.data.data || []).filter((m: any) => !existingIds.includes(m._id))))
+      .catch(() => toast({ variant: "destructive", title: "Failed to load murabbis." }));
+  }, [open]);
 
-      {/* ── Live Zoom Meetings section ─────────────────────────────────────── */}
-      <div className="mt-10">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
-              <Video className="h-5 w-5 text-teal" /> Live Meetings
-            </h2>
-            <p className="text-[12px] text-nc-muted mt-0.5">Zoom sessions scheduled for Murabbis.</p>
-          </div>
-          <button className="btn-primary flex items-center gap-2 text-sm" onClick={openCreateLive}>
-            <Plus className="h-4 w-4" /> Schedule Meeting
-          </button>
-        </div>
+  const toggle = (id: string) => setSelected((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
 
-        {liveSessions.length === 0 ? (
-          <div className="text-center py-12 text-nc-muted text-sm border border-dashed border-border rounded-lg">
-            No meetings scheduled yet. Click <strong>Schedule Meeting</strong> to add one.
-          </div>
-        ) : (
-          <div className="scroll-hover max-h-[400px] flex flex-col gap-3">
-            {liveSessions.map((s) => (
-              <div key={s._id} className="border border-border rounded-lg bg-card p-4 flex items-start gap-4">
-                <div className="w-10 h-10 rounded-xl bg-teal/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  {s.isRecurring
-                    ? <Repeat className="h-5 w-5 text-teal" />
-                    : <Calendar className="h-5 w-5 text-teal" />}
-                </div>
+  async function handleAdd() {
+    if (!selected.size) { toast({ variant: "destructive", title: "Select at least one murabbi." }); return; }
+    setSaving(true);
+    try {
+      await trainingService.addCandidates(batchId, [...selected]);
+      toast({ title: `${selected.size} candidate(s) added.` });
+      onClose(); onSuccess();
+    } catch (err: any) {
+      toast({ variant: "destructive", title: err?.response?.data?.message || "Failed to add." });
+    } finally { setSaving(false); }
+  }
 
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-semibold text-sm text-foreground">{s.title}</span>
-                    {s.isLive && (
-                      <span className="flex items-center gap-1 text-[11px] font-bold text-white bg-green-500 px-2 py-0.5 rounded-full">
-                        <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse inline-block" />
-                        LIVE
-                      </span>
-                    )}
-                  </div>
-                  <div className="text-[12px] text-nc-muted mt-0.5 flex items-center gap-1">
-                    <Clock className="h-3 w-3" />
-                    {formatMeetingTime(s)}
-                    <span className="mx-1">·</span>
-                    {s.durationMinutes} mins
-                  </div>
-                  {s.description && (
-                    <p className="text-[12px] text-nc-muted mt-1 line-clamp-1">{s.description}</p>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <a
-                    href={s.zoomLink}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="p-1.5 text-nc-muted hover:text-teal hover:bg-teal/10 rounded-md transition-colors"
-                    title="Open Zoom link"
-                  >
-                    <ExternalLink className="h-4 w-4" />
-                  </a>
-                  <button
-                    className="p-1.5 text-nc-muted hover:text-primary hover:bg-primary/10 rounded-md transition-colors"
-                    onClick={() => openEditLive(s)}
-                    title="Edit meeting"
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </button>
-                  <button
-                    className="p-1.5 text-nc-muted hover:text-red-500 hover:bg-red-50 rounded-md transition-colors disabled:opacity-40"
-                    onClick={() => handleDeleteLive(s._id)}
-                    disabled={deletingLive === s._id}
-                    title="Delete meeting"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
+  return (
+    <Modal open={open} onClose={onClose} title="Add Candidates to Batch">
+      {murabbis.length === 0
+        ? <p className="text-nc-muted text-sm py-4 text-center">All murabbis already added or none available.</p>
+        : <div className="max-h-[300px] overflow-y-auto divide-y divide-border mb-4">
+            {murabbis.map((m) => (
+              <div key={m._id} className="flex items-center gap-3 py-2.5 cursor-pointer hover:bg-muted/40" onClick={() => toggle(m._id)}>
+                <input type="checkbox" readOnly checked={selected.has(m._id)} className="rounded" />
+                <div className="w-7 h-7 rounded-full bg-teal-lt flex items-center justify-center text-[11px] font-bold text-teal">{getInitials(m.fullName)}</div>
+                <div>
+                  <div className="text-[13px] font-medium">{m.fullName}</div>
+                  <div className="text-[11px] text-nc-muted">{m.email}</div>
                 </div>
               </div>
             ))}
           </div>
-        )}
+      }
+      <div className="flex gap-2">
+        <button className="btn-gold flex-1" onClick={handleAdd} disabled={saving || !selected.size}>
+          {saving ? <Loader2 className="h-4 w-4 animate-spin mx-auto" /> : `Add ${selected.size ? `(${selected.size})` : ""}`}
+        </button>
+        <button className="btn-outline" onClick={onClose} disabled={saving}>Cancel</button>
+      </div>
+    </Modal>
+  );
+}
+
+// ── Main Page ─────────────────────────────────────────────────────────────────
+export default function TrainingPage() {
+  const { toast }                       = useToast();
+  const [data, setData]                 = useState<any>(null);
+  const [loading, setLoading]           = useState(true);
+  const [batchModal, setBatchModal]     = useState(false);
+  const [editBatch, setEditBatch]       = useState<any>(null);
+  const [addCandModal, setAddCandModal] = useState(false);
+  const [removingId, setRemovingId]     = useState<string | null>(null);
+
+  function load() {
+    setLoading(true);
+    trainingService.getPageData()
+      .then((res) => setData(res.data.data || res.data))
+      .catch(() => toast({ variant: "destructive", title: "Failed to load training data." }))
+      .finally(() => setLoading(false));
+  }
+
+  useEffect(() => { load(); }, []);
+
+  async function handleRemoveCandidate(userId: string) {
+    if (!activeBatch) return;
+    setRemovingId(userId);
+    try {
+      await trainingService.removeCandidate(activeBatch._id, userId);
+      toast({ title: "Candidate removed." });
+      load();
+    } catch { toast({ variant: "destructive", title: "Failed to remove." }); }
+    finally { setRemovingId(null); }
+  }
+
+  const stats       = data?.stats       || {};
+  const activeBatch = data?.activeBatch || null;
+  const modules     = data?.modules     || [];
+
+
+  const candidates: any[] = activeBatch?.candidates || [];
+  const existingCandIds   = candidates.map((c: any) => c._id || c);
+
+  const day1Count      = modules.filter((m: any) => m.daySlot === 1 || (!m.daySlot && (m.order || 0) <= 3)).length;
+  const modulesSubtitle = modules.length > 0
+    ? `Day 1: M1–M${day1Count || 3} · Day 2: M${(day1Count || 3) + 1}–M${modules.length}`
+    : "No modules yet";
+
+  return (
+    <div className="page-animate">
+
+      {/* ── Stats ───────────────────────────────────────────────── */}
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4 mb-7">
+        <StatCard
+          label="Batches Completed"
+          value={loading ? "—" : stats.batchesCompleted ?? 0}
+          meta={`${stats.murabbisInBatches ?? 0} Murabbis certified`}
+          color="teal"
+        />
+        <StatCard
+          label={`Batch ${stats.activeBatchNumber ?? "—"} — Active`}
+          value={loading ? "—" : stats.activeBatchCandidates ?? 0}
+          meta="Candidates registered"
+          color="gold"
+        />
+        <StatCard
+          label="Modules Available"
+          value={loading ? "—" : stats.modulesAvailable ?? 0}
+          meta={modulesSubtitle}
+          color="green"
+        />
+        <StatCard
+          label="Pass Rate"
+          value={loading ? "—" : `${stats.passRate ?? 0}%`}
+          meta="All cohorts combined"
+          color="purple"
+        />
       </div>
 
-      {/* Schedule / Edit meeting modal */}
-      <Modal
-        open={showLiveForm}
-        onClose={closeLiveForm}
-        title={editingLive ? "Edit Meeting" : "Schedule Meeting"}
-        subtitle="This meeting will be visible to all Murabbis."
-      >
-        <FormGroup label="Title" required>
-          <FormInput
-            name="title" value={liveForm.title} onChange={handleLiveChange}
-            placeholder="e.g. Weekly Murabbi Q&A"
-          />
-        </FormGroup>
+      {/* ── Batch schedule + Candidates ─────────────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
 
-        <FormGroup label="Description">
-          <FormTextarea
-            name="description" value={liveForm.description} onChange={handleLiveChange}
-            placeholder="Brief description of the meeting…"
-            rows={2}
-          />
-        </FormGroup>
+        {/* LEFT — Current Batch Schedule */}
+        <NcCard>
+          <CardHeader>
+            <CardTitle>
+              {activeBatch
+                ? `Tier 1 Training — Batch ${activeBatch.batchNumber}`
+                : "No Active Batch"}
+            </CardTitle>
+            <div className="flex items-center gap-2">
+              {activeBatch?.day1Date && (
+                <span className="text-[11.5px] font-semibold text-gold bg-gold/10 border border-gold/20 rounded-full px-3 py-1">
+                  Starting {fmtDate(activeBatch.day1Date)}
+                </span>
+              )}
+              <button className="p-1.5 hover:bg-muted rounded-md text-nc-muted"
+                onClick={() => { setEditBatch(activeBatch); setBatchModal(true); }}>
+                <Pencil className="h-3.5 w-3.5" />
+              </button>
+              <button className="btn-outline text-xs" onClick={() => { setEditBatch(null); setBatchModal(true); }}>
+                + New Batch
+              </button>
+            </div>
+          </CardHeader>
 
-        <FormGroup label="Zoom Link" required>
-          <FormInput
-            name="zoomLink" value={liveForm.zoomLink} onChange={handleLiveChange}
-            placeholder="https://zoom.us/j/..."
-          />
-        </FormGroup>
+          {loading ? (
+            <div className="text-center py-8 text-nc-muted text-sm animate-pulse">Loading…</div>
+          ) : !activeBatch ? (
+            <div className="text-center py-8 text-nc-muted text-sm">
+              No active batch. Create one to get started.
+            </div>
+          ) : (
+            <div className="px-4 pb-4 flex flex-col gap-3">
+              {/* Day 1 */}
+              <div className="rounded-xl border border-border bg-muted/30 p-4">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="font-semibold text-[13.5px] text-teal mb-0.5">
+                      Day 1 — {activeBatch.day1Title}
+                    </div>
+                    <div className="text-[12px] text-nc-muted">{activeBatch.day1Meta}</div>
+                  </div>
+                  <span className="text-[11.5px] text-nc-muted flex-shrink-0 ml-3">
+                    {fmtDate(activeBatch.day1Date)}
+                  </span>
+                </div>
+              </div>
+              {/* Day 2 */}
+              <div className="rounded-xl border border-border bg-muted/30 p-4">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="font-semibold text-[13.5px] text-teal mb-0.5">
+                      Day 2 — {activeBatch.day2Title}
+                    </div>
+                    <div className="text-[12px] text-nc-muted">{activeBatch.day2Meta}</div>
+                  </div>
+                  <span className="text-[11.5px] text-nc-muted flex-shrink-0 ml-3">
+                    {fmtDate(activeBatch.day2Date)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+        </NcCard>
 
-        <FormGroup label="Recurring Meeting">
-          <label className="flex items-center gap-2 cursor-pointer text-sm">
-            <input
-              type="checkbox"
-              name="isRecurring"
-              checked={liveForm.isRecurring}
-              onChange={handleLiveChange}
-              className="w-4 h-4 accent-teal"
-            />
-            <span className="text-foreground">This is a recurring weekly meeting</span>
-          </label>
-        </FormGroup>
+        {/* RIGHT — Batch Candidates */}
+        <NcCard>
+          <CardHeader>
+            <CardTitle sub={activeBatch ? `Batch ${activeBatch.batchNumber}` : ""}>
+              Batch Candidates
+            </CardTitle>
+            {activeBatch && (
+              <button className="btn-outline text-xs flex items-center gap-1" onClick={() => setAddCandModal(true)}>
+                <UserPlus className="h-3.5 w-3.5" /> Add
+              </button>
+            )}
+          </CardHeader>
 
-        {liveForm.isRecurring ? (
-          <FormRow>
-            <FormGroup label="Day of Week">
-              <FormSelect name="recurringDay" value={liveForm.recurringDay} onChange={handleLiveChange}>
-                {DAY_OPTIONS.map((d, i) => (
-                  <option key={d} value={i}>{d}</option>
+          {loading ? (
+            <div className="text-center py-8 text-nc-muted text-sm animate-pulse">Loading…</div>
+          ) : !activeBatch || candidates.length === 0 ? (
+            <div className="text-center py-8 text-nc-muted text-sm">
+              {activeBatch ? "No candidates yet. Add murabbis to this batch." : "Create an active batch first."}
+            </div>
+          ) : (
+            <div className="scroll-hover max-h-[300px] divide-y divide-border">
+              {candidates.map((c: any) => (
+                <div key={c._id} className="flex items-center justify-between px-4 py-3 hover:bg-muted/30">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-teal-lt flex items-center justify-center text-xs font-bold text-teal overflow-hidden flex-shrink-0">
+                      {c.image
+                        ? <img src={c.image} alt="" className="w-full h-full object-cover" />
+                        : getInitials(c.fullName || "?")}
+                    </div>
+                    <div>
+                      <div className="text-[13px] font-medium">{c.fullName}</div>
+                      {c.email && <div className="text-[11px] text-nc-muted">{c.email}</div>}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <NcBadge variant="amber">Registered</NcBadge>
+                    <button
+                      className="p-1 hover:bg-red-50 rounded text-red-400"
+                      onClick={() => handleRemoveCandidate(c._id)}
+                      disabled={removingId === c._id}
+                    >
+                      {removingId === c._id
+                        ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        : <X className="h-3.5 w-3.5" />}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </NcCard>
+      </div>
+
+      {/* ── Training Modules ─────────────────────────────────────── */}
+      {/* ── Training Modules ─────────────────────────────────── */}
+      {!loading && (
+        <div>
+          <h2 className="font-semibold text-[15px] mb-5">
+            Training Modules — Tier 1 Asaas
+            {modules.length > 0 && (() => {
+              const hrs = Math.round(modules.reduce((s: number, m: any) => s + (m.durationMinutes || 0), 0) / 60);
+              return hrs > 0 ? <span className="text-nc-muted font-normal ml-1.5 text-[13px]">({hrs} hours)</span> : null;
+            })()}
+          </h2>
+
+          {(() => {
+            const day1Mods = modules.filter((m: any) => (m.daySlot ?? 1) === 1);
+            const day2Mods = modules.filter((m: any) => m.daySlot === 2);
+
+            const DAYS = [
+              {
+                num      : 1,
+                title    : activeBatch?.day1Title || "Foundation & Identity",
+                meta     : activeBatch?.day1Meta  || "9:00 AM – 3:00 PM · Modules 1, 2 & 3 · 5 hours",
+                date     : activeBatch?.day1Date,
+                mods     : day1Mods,
+                bg       : "bg-teal/5 border-teal/20",
+                headerBg : "bg-teal/10 border-teal/20",
+                text     : "text-teal",
+              },
+              {
+                num      : 2,
+                title    : activeBatch?.day2Title || "Skill, Safety & The Year",
+                meta     : activeBatch?.day2Meta  || "8:45 AM – 3:00 PM · Modules 4, 5 & 6 · 5 hours",
+                date     : activeBatch?.day2Date,
+                mods     : day2Mods,
+                bg       : "bg-gold/5 border-gold/20",
+                headerBg : "bg-gold/10 border-gold/20",
+                text     : "text-gold",
+              },
+            ];
+
+            return (
+              <div className="flex flex-col gap-6">
+                {DAYS.map((day) => (
+                  <div key={day.num} className={`border rounded-xl overflow-hidden ${day.bg}`}>
+
+                    {/* Day header */}
+                    <div className={`flex items-center justify-between px-5 py-3.5 border-b ${day.headerBg}`}>
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <span className={`font-bold text-[14px] ${day.text}`}>
+                          Day {day.num} — {day.title}
+                        </span>
+                        <span className="text-[12px] text-nc-muted">{day.meta}</span>
+                      </div>
+                      {day.date && (
+                        <span className={`text-[12px] font-semibold flex-shrink-0 ml-4 ${day.text}`}>
+                          {fmtDate(day.date)}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Modules inside the day card */}
+                    {day.mods.length === 0 ? (
+                      <div className="text-center py-6 text-nc-muted text-sm">
+                        No modules added for Day {day.num} yet.
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 p-4">
+                        {day.mods.map((m: any, i: number) => (
+                          <ModuleCard key={m._id} m={m} i={i} />
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 ))}
-              </FormSelect>
-            </FormGroup>
-            <FormGroup label="Time">
-              <FormInput
-                name="recurringTime" value={liveForm.recurringTime} onChange={handleLiveChange}
-                type="time"
-              />
-            </FormGroup>
-          </FormRow>
-        ) : (
-          <FormGroup label="Date & Time">
-            <FormInput
-              name="scheduledAt" value={liveForm.scheduledAt} onChange={handleLiveChange}
-              type="datetime-local"
-            />
-          </FormGroup>
-        )}
-
-        <FormGroup label="Duration (mins)">
-          <FormInput
-            name="durationMinutes" value={liveForm.durationMinutes} onChange={handleLiveChange}
-            type="number" min="1" placeholder="60"
-          />
-        </FormGroup>
-
-        <div className="flex gap-2.5 mt-2">
-          <button
-            className="btn-primary flex-1 flex items-center justify-center gap-2 disabled:opacity-50"
-            onClick={handleSaveLive}
-            disabled={savingLive}
-          >
-            <Video className="h-4 w-4" />
-            {savingLive ? "Saving…" : editingLive ? "Update Meeting" : "Schedule Meeting"}
-          </button>
-          <button className="btn-outline" onClick={closeLiveForm} disabled={savingLive}>
-            Cancel
-          </button>
+              </div>
+            );
+          })()}
         </div>
-      </Modal>
+      )}
 
-      {/* Create module modal */}
-      <Modal
-        open={showForm}
-        onClose={() => { setShowForm(false); setForm({ ...EMPTY_FORM }); }}
-        title="New Training Module"
-        subtitle="This module will be visible to all Murabbis."
-      >
-        <FormGroup label="Title" required>
-          <FormInput
-            name="title" value={form.title} onChange={handleChange}
-            placeholder="e.g. Introduction to Tarbiyah"
-          />
-        </FormGroup>
-
-        <FormGroup label="Description">
-          <FormTextarea
-            name="description" value={form.description} onChange={handleChange}
-            placeholder="Brief overview of this module's content…"
-            rows={3}
-          />
-        </FormGroup>
-
-        <FormRow>
-          <FormGroup label="Order #">
-            <FormInput
-              name="order" value={form.order} onChange={handleChange}
-              type="number" min="1" placeholder="1"
-            />
-          </FormGroup>
-          <FormGroup label="Duration (mins)">
-            <FormInput
-              name="durationMinutes" value={form.durationMinutes} onChange={handleChange}
-              type="number" min="1" placeholder="60"
-            />
-          </FormGroup>
-        </FormRow>
-
-        <FormRow>
-          <FormGroup label="Total Lessons">
-            <FormInput
-              name="totalLessons" value={form.totalLessons} onChange={handleChange}
-              type="number" min="1" placeholder="5"
-            />
-          </FormGroup>
-          <FormGroup label="Type">
-            <FormSelect name="type" value={form.type} onChange={handleChange}>
-              {TYPE_OPTIONS.map((t) => <option key={t}>{t}</option>)}
-            </FormSelect>
-          </FormGroup>
-        </FormRow>
-
-        <FormGroup label="Status">
-          <FormSelect name="status" value={form.status} onChange={handleChange}>
-            {STATUS_OPTIONS.map((s) => <option key={s}>{s}</option>)}
-          </FormSelect>
-        </FormGroup>
-
-        <div className="flex gap-2.5 mt-2">
-          <button
-            className="btn-primary flex-1 flex items-center justify-center gap-2 disabled:opacity-50"
-            onClick={handleCreate}
-            disabled={saving}
-          >
-            <BookOpen className="h-4 w-4" />
-            {saving ? "Creating…" : "Create Module"}
-          </button>
-          <button
-            className="btn-outline"
-            onClick={() => { setShowForm(false); setForm({ ...EMPTY_FORM }); }}
-            disabled={saving}
-          >
-            Cancel
-          </button>
-        </div>
-      </Modal>
+      {/* Modals */}
+      <BatchModal
+        open={batchModal}
+        batch={editBatch}
+        onClose={() => { setBatchModal(false); setEditBatch(null); }}
+        onSuccess={load}
+      />
+      {activeBatch && (
+        <AddCandidatesModal
+          open={addCandModal}
+          batchId={activeBatch._id}
+          existingIds={existingCandIds}
+          onClose={() => setAddCandModal(false)}
+          onSuccess={load}
+        />
+      )}
     </div>
   );
 }

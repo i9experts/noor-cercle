@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
-import { Star, AlertTriangle, Video, Bell, Calendar, GraduationCap, Heart, Info } from "lucide-react";
+import { Star, AlertTriangle, Bell, Calendar, GraduationCap, Heart, Info, CalendarDays } from "lucide-react";
 import StatCard from "@/components/shared/StatCard";
 import QuranBox from "@/components/shared/QuranBox";
 import NcCard, { CardHeader, CardTitle } from "@/components/shared/NcCard";
 import NcBadge from "@/components/shared/NcBadge";
 import SectionTitle from "@/components/shared/SectionTitle";
-import { murabbisService, performanceService, liveSessionsService, announcementsService } from "@/services/api.service";
+import { murabbisService, performanceService, announcementsService, trainingService } from "@/services/api.service";
 import { useToast } from "@/hooks/use-toast";
 
 const ICON_MAP: Record<string, { Icon: React.ElementType; bg: string; text: string }> = {
@@ -35,12 +35,10 @@ export default function MurabbiDashboard() {
   const { toast } = useToast();
   const [data, setData]               = useState<any>(null);
   const [loading, setLoading]         = useState(true);
-  const [reviews, setReviews]         = useState<any[]>([]);
-  const [nextMeeting, setNextMeeting] = useState<any>(null);
+  const [reviews, setReviews]             = useState<any[]>([]);
+  const [activeBatch, setActiveBatch]     = useState<any>(null);
   const [announcements, setAnnouncements] = useState<any[]>([]);
   const user = JSON.parse(localStorage.getItem("user") || "{}");
-
-  const DAY_NAMES = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 
   useEffect(() => {
     murabbisService.getDashboard()
@@ -52,8 +50,8 @@ export default function MurabbiDashboard() {
       .then((res) => setReviews(res.data.data || []))
       .catch(() => {});
 
-    liveSessionsService.getUpcoming()
-      .then((res) => setNextMeeting((res.data.data || [])[0] ?? null))
+    trainingService.getActiveBatch()
+      .then((res) => setActiveBatch((res.data.data || res.data)?.batch || null))
       .catch(() => {});
 
     announcementsService.getAll()
@@ -83,59 +81,35 @@ export default function MurabbiDashboard() {
         reference="SURAH AL-ALAQ · 96:1"
       />
 
-      {/* Upcoming meeting widget */}
-      {nextMeeting && (() => {
-        const timeLabel = nextMeeting.isRecurring && nextMeeting.recurringDay != null && nextMeeting.recurringTime
-          ? `Every ${DAY_NAMES[nextMeeting.recurringDay]} at ${nextMeeting.recurringTime}`
-          : nextMeeting.scheduledAt
-            ? new Date(nextMeeting.scheduledAt).toLocaleString("en-PK", {
-                weekday: "short", day: "numeric", month: "short",
-                year: "numeric", hour: "2-digit", minute: "2-digit",
-              })
-            : "—";
-        return (
-          <div className="rounded-xl bg-gradient-to-r from-teal to-primary p-5 text-white mb-6 flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
-              <Video className="h-6 w-6 text-white" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-white/70 mb-0.5">
-                Upcoming Live Session
-              </p>
-              <p className="font-bold text-[15px] leading-snug truncate">{nextMeeting.title}</p>
-              <p className="text-[12px] text-white/80 mt-0.5">{timeLabel}</p>
-              <span className="inline-block mt-1 text-[11px] bg-white/20 px-2 py-0.5 rounded-full">
-                {nextMeeting.durationMinutes} mins
-              </span>
-            </div>
-            <div className="flex-shrink-0 flex flex-col items-end gap-2">
-              {nextMeeting.isLive && (
-                <span className="flex items-center gap-1 text-[11px] font-bold bg-green-400 text-white px-2 py-0.5 rounded-full">
-                  <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse inline-block" />
-                  LIVE NOW
-                </span>
-              )}
-              {nextMeeting.isLive ? (
-                <a
-                  href={nextMeeting.zoomLink}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="px-4 py-1.5 bg-white text-primary text-xs font-bold rounded-lg hover:bg-white/90 transition-colors"
-                >
-                  Join Now
-                </a>
-              ) : (
-                <button
-                  disabled
-                  className="px-4 py-1.5 bg-white/20 text-white/60 text-xs font-bold rounded-lg cursor-not-allowed"
-                >
-                  Join Meeting
-                </button>
-              )}
+      {/* Training schedule widget */}
+      {activeBatch && (
+        <div className="rounded-xl border border-teal/20 bg-teal/5 p-4 mb-6 flex items-start gap-4">
+          <div className="w-10 h-10 rounded-lg bg-teal/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+            <CalendarDays className="h-5 w-5 text-teal" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-teal mb-1">
+              Tier 1 Training — Batch {activeBatch.batchNumber}
+            </p>
+            <div className="flex flex-wrap gap-4">
+              <div>
+                <p className="font-semibold text-[13px]">Day 1 — {activeBatch.day1Title}</p>
+                <p className="text-[11.5px] text-nc-muted">{activeBatch.day1Meta}</p>
+                <p className="text-[11.5px] font-medium text-foreground mt-0.5">
+                  {activeBatch.day1Date ? new Date(activeBatch.day1Date).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" }) : "TBD"}
+                </p>
+              </div>
+              <div className="border-l border-border pl-4">
+                <p className="font-semibold text-[13px]">Day 2 — {activeBatch.day2Title}</p>
+                <p className="text-[11.5px] text-nc-muted">{activeBatch.day2Meta}</p>
+                <p className="text-[11.5px] font-medium text-foreground mt-0.5">
+                  {activeBatch.day2Date ? new Date(activeBatch.day2Date).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" }) : "TBD"}
+                </p>
+              </div>
             </div>
           </div>
-        );
-      })()}
+        </div>
+      )}
 
       {/* Stats row */}
       <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4 mb-7">

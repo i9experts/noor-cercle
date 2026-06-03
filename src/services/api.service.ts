@@ -29,11 +29,14 @@ export const adminService = {
   getDashboard         : ()                                           => API.get('/admin/stats'),
   getDashboardExtended : ()                                           => API.get('/admin/dashboard/extended'),
   getAllUsers       : ()                                           => API.get('/admin/users'),
-  getMurabbis      : ()                                           => API.get('/admin/murabbis'),
+  getMurabbis          : ()                                           => API.get('/admin/murabbis'),
+  getMurabbisWithStats : ()                                           => API.get('/admin/murabbis/with-stats'),
   createMurabbi    : (data: { fullName: string; email: string; password: string; phone?: string; address?: string; image?: string }) =>
                        API.post('/admin/murabbis', data),
   updateMurabbi    : (id: string, data: { fullName?: string; phone?: string; address?: string; image?: string }) =>
                        API.patch(`/admin/murabbis/${id}`, data),
+  updateMurabbiTier: (id: string, tier: 1 | 2 | 3) =>
+                       API.patch(`/admin/murabbis/${id}/tier`, { tier }),
   activateMurabbi  : (id: string)                                 => API.patch(`/admin/murabbis/${id}/activate`),
   deactivateMurabbi: (id: string)                                 => API.patch(`/admin/murabbis/${id}/deactivate`),
   deleteMurabbi    : (id: string)                                 => API.delete(`/admin/murabbis/${id}`),
@@ -51,19 +54,26 @@ export const murabbiSelfService = {
 //  NEIGHBOURHOODS
 // ─────────────────────────────────────────────────────────────
 export const neighbourhoodsService = {
-  getAll: ()                                          => API.get('/admin/neighbourhoods'),
-  getOne: (id: string)                                => API.get(`/admin/neighbourhoods/${id}`),
-  create: (data: { name: string; city?: string })     => API.post('/admin/neighbourhoods', data),
-  update: (id: string, data: { name?: string; city?: string }) =>
-            API.patch(`/admin/neighbourhoods/${id}`, data),
-  remove: (id: string)                                => API.delete(`/admin/neighbourhoods/${id}`),
+  getAll      : ()                       => API.get('/admin/neighbourhoods'),
+  getPageData : ()                       => API.get('/admin/neighbourhoods/page-data'),
+  getOne      : (id: string)             => API.get(`/admin/neighbourhoods/${id}`),
+  create      : (data: object)           => API.post('/admin/neighbourhoods', data),
+  update      : (id: string, data: object) => API.patch(`/admin/neighbourhoods/${id}`, data),
+  remove      : (id: string)             => API.delete(`/admin/neighbourhoods/${id}`),
+  // Pipeline
+  getPipeline          : ()                       => API.get('/admin/neighbourhoods/pipeline'),
+  createPipeline       : (data: object)           => API.post('/admin/neighbourhoods/pipeline', data),
+  updatePipeline       : (id: string, data: object) => API.patch(`/admin/neighbourhoods/pipeline/${id}`, data),
+  deletePipeline       : (id: string)             => API.delete(`/admin/neighbourhoods/pipeline/${id}`),
+  launchPipeline       : (id: string)             => API.post(`/admin/neighbourhoods/pipeline/${id}/launch`, {}),
 };
 
 // ─────────────────────────────────────────────────────────────
 //  CIRCLES
 // ─────────────────────────────────────────────────────────────
 export const circlesService = {
-  getAll : ()                                             => API.get('/admin/circles'),
+  getAll     : ()                                         => API.get('/admin/circles'),
+  getPageData: ()                                         => API.get('/admin/circles/page-data'),
   getOne : (id: string)                                   => API.get(`/admin/circles/${id}`),
   create : (data: {
     name: string;
@@ -121,6 +131,7 @@ export const incentivesService = {
   award        : (data: { studentId: string; awardType: string; note?: string }) =>
                    API.post('/incentives', data),
   getAll       : ()             => API.get('/incentives'),
+  getPageData  : ()             => API.get('/incentives/page-data'),
   getLeaderboard: ()            => API.get('/incentives/leaderboard'),
   getByStudent : (id: string)   => API.get(`/incentives/student/${id}`),
 };
@@ -186,12 +197,20 @@ export const sessionsService = {
 //  TRAINING
 // ─────────────────────────────────────────────────────────────
 export const trainingService = {
+  getPageData       : ()                                              => API.get('/training/page-data'),
+  getActiveBatch    : ()                                              => API.get('/training/active-batch'),
   getModules        : ()                                              => API.get('/training/modules'),
   getProgressSummary: ()                                              => API.get('/training/progress/summary'),
   updateProgress    : (moduleId: string, progressPercent: number)    => API.patch(`/training/progress/${moduleId}`, { progressPercent }),
   createModule      : (data: object)                                  => API.post('/training/modules', data),
   updateModule      : (id: string, data: object)                      => API.patch(`/training/modules/${id}`, data),
   deleteModule      : (id: string)                                    => API.delete(`/training/modules/${id}`),
+  // Batch management
+  getAllBatches      : ()                                              => API.get('/training/batches'),
+  createBatch       : (data: object)                                  => API.post('/training/batches', data),
+  updateBatch       : (id: string, data: object)                      => API.patch(`/training/batches/${id}`, data),
+  addCandidates     : (batchId: string, userIds: string[])            => API.post(`/training/batches/${batchId}/candidates`, { userIds }),
+  removeCandidate   : (batchId: string, userId: string)               => API.delete(`/training/batches/${batchId}/candidates/${userId}`),
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -225,6 +244,14 @@ export const parentsService = {
   getAll      : ()                       => API.get('/parents'),
   getOne      : (id: string)             => API.get(`/parents/${id}`),
   getStats    : ()                       => API.get('/parents/stats'),
+  getPageData : ()                       => API.get('/parents/page-data'),
+  // Engagement config
+  getEngagement        : ()                              => API.get('/parents/engagement'),
+  toggleWeeklyCard     : (active: boolean)               => API.patch('/parents/engagement/weekly-card', { active }),
+  toggleWhatsapp       : (enabled: boolean)              => API.patch('/parents/engagement/whatsapp', { enabled }),
+  scheduleEvening      : (month: number)                 => API.post('/parents/engagement/schedule-evening', { month }),
+  recordEveningHeld    : ()                              => API.post('/parents/engagement/record-evening', {}),
+  sendWhatsapp         : (message?: string)              => API.post('/parents/engagement/send-whatsapp', { message }),
   register    : (data: {
     fullName      : string;
     phone         : string;

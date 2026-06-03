@@ -48,7 +48,7 @@ export default function SettingsPage() {
     setImgUploading(true);
     try {
       const res = await uploadService.image(file);
-      const url: string = res.data.data?.url ?? res.data.url ?? res.data;
+      const url: string = res.data.data?.url ?? (res.data as any).url ?? '';
       await usersService.updateMe({ image: url });
       setProfile((p) => ({ ...p, image: url }));
       updateUser({ image: url });

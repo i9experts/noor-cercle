@@ -6,6 +6,7 @@ import { adminService, circlesService, studentsService } from "@/services/api.se
 import { useToast } from "@/hooks/use-toast";
 import { MoreVertical, Pencil, UserCheck, UserX, Trash2 } from "lucide-react";
 import { EditStudentModal } from "@/components/modals/AllModals";
+import DeleteConfirmModal from "@/components/shared/DeleteConfirmModal";
 
 const STATUS_TABS = ["All", "Active", "Inactive"] as const;
 type StatusTab = typeof STATUS_TABS[number];
@@ -82,6 +83,7 @@ export default function StudentsPage({
   const [murabbiFilter, setMurabbiFilter] = useState("");
   const [statusTab, setStatusTab]       = useState<StatusTab>("All");
   const [editStudent, setEditStudent]   = useState<any>(null);
+  const [deleteTarget, setDeleteTarget] = useState<any>(null);
 
   function load() {
     setLoading(true);
@@ -112,10 +114,15 @@ export default function StudentsPage({
   }
 
   async function handleDelete(s: any) {
-    if (!confirm(`Delete ${s.fullName}? This cannot be undone.`)) return;
+    setDeleteTarget(s);
+  }
+
+  async function confirmDelete() {
+    if (!deleteTarget) return;
     try {
-      await studentsService.remove(s._id);
+      await studentsService.remove(deleteTarget._id);
       toast({ title: "Student deleted." });
+      setDeleteTarget(null);
       load();
     } catch (err: any) {
       toast({ variant: "destructive", title: err?.response?.data?.message || "Delete failed." });
@@ -271,6 +278,13 @@ export default function StudentsPage({
         student={editStudent}
         onClose={() => setEditStudent(null)}
         onSuccess={() => { setEditStudent(null); load(); }}
+      />
+      <DeleteConfirmModal
+        open={!!deleteTarget}
+        title="Delete Student"
+        message={`Delete "${deleteTarget?.fullName}"? This cannot be undone.`}
+        onConfirm={confirmDelete}
+        onClose={() => setDeleteTarget(null)}
       />
     </div>
   );
