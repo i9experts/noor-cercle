@@ -172,10 +172,10 @@ export default function MurabbiLessons() {
       {/* Stats */}
       <div className="grid grid-cols-4 gap-4 mb-6">
         {[
-          { label: "Total Lessons", val: counts.total,     color: "text-teal"       },
-          { label: "Available",     val: counts.available, color: "text-nc-green"   },
-          { label: "Upcoming",      val: counts.upcoming,  color: "text-gold"       },
-          { label: "Draft",         val: counts.draft,     color: "text-nc-muted"   },
+          { label: "Total Lessons", val: counts.total,     color: "text-black"       },
+          { label: "Available",     val: counts.available, color: "text-black"   },
+          { label: "Upcoming",      val: counts.upcoming,  color: "text-black"       },
+          { label: "Draft",         val: counts.draft,     color: "text-black"   },
         ].map((s) => (
           <div key={s.label} className="bg-card border border-border rounded-lg p-4 text-center">
             <div className={`text-2xl font-bold font-serif ${s.color}`}>{s.val}</div>

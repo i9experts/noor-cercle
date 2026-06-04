@@ -199,16 +199,20 @@ function DeleteRequestModal({
 
 // ─── Main bell component ─────────────────────────────────────────────────────
 
-export default function NotificationBell() {
+interface NotificationBellProps {
+  onApproveDeleteRequest?: (studentId: string, notifId: string) => void;
+}
+
+export default function NotificationBell({ onApproveDeleteRequest }: NotificationBellProps = {}) {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [open, setOpen]               = useState(false);
-  const [count, setCount]             = useState(0);
-  const [notifications, setNotifs]    = useState<any[]>([]);
-  const [loading, setLoading]         = useState(false);
-  const [acting, setActing]           = useState(false);
-  const [viewNotif, setViewNotif]     = useState<any>(null);
-  const [viewReview, setViewReview]   = useState<any>(null);
+  const [open, setOpen]             = useState(false);
+  const [count, setCount]           = useState(0);
+  const [notifications, setNotifs]  = useState<any[]>([]);
+  const [loading, setLoading]       = useState(false);
+  const [acting, setActing]         = useState(false);
+  const [viewNotif, setViewNotif]   = useState<any>(null);
+  const [viewReview, setViewReview] = useState<any>(null);
   const ref = useRef<HTMLDivElement>(null);
 
   const isAdmin = user?.role === "admin";
@@ -300,13 +304,19 @@ export default function NotificationBell() {
 
   async function handleApprove() {
     if (!viewNotif) return;
+    const studentId = viewNotif.payload?.targetId;
+    if (!studentId) {
+      toast({ variant: "destructive", title: "Student ID not found in request." });
+      return;
+    }
     setActing(true);
     try {
-      await notificationsService.accept(viewNotif._id);
       setNotifs((prev) => prev.filter((n) => n._id !== viewNotif._id));
       setCount((c) => Math.max(0, c - 1));
+      const notifId = viewNotif._id;
       setViewNotif(null);
-      toast({ title: "Approved — student has been deleted." });
+      // Delegate to admin panel to open EditStudentModal + delete flow
+      onApproveDeleteRequest?.(studentId, notifId);
     } catch (err: any) {
       toast({ variant: "destructive", title: err?.response?.data?.message || "Action failed." });
     } finally { setActing(false); }
@@ -489,6 +499,7 @@ export default function NotificationBell() {
         notification={viewReview}
         onClose={() => setViewReview(null)}
       />
+
     </>
   );
 }

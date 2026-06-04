@@ -76,6 +76,23 @@ export default function MurabbiTraining() {
     } finally { setUpdating(null); }
   }
 
+  // Not assigned to any batch — show locked state
+  if (!loading && !activeBatch) {
+    return (
+      <div className="page-animate flex flex-col items-center justify-center py-24 gap-4">
+        <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
+          <Lock className="h-7 w-7 text-nc-muted" />
+        </div>
+        <div className="text-center">
+          <div className="font-semibold text-[16px] mb-1">Not assigned to a training batch</div>
+          <div className="text-[13px] text-nc-muted">
+            Contact your admin to be added to an active training batch.
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="page-animate">
       <div className="mb-6">
@@ -93,7 +110,7 @@ export default function MurabbiTraining() {
             { label: "%",     val: `${summary.overallPercent}%` },
           ] as { label: string; val: any }[]).map((s) => (
             <div key={s.label} className="bg-card border border-border rounded-lg p-3 text-center">
-              <div className="text-2xl font-bold font-serif text-teal">{s.val}</div>
+              <div className="text-2xl font-bold font-serif text-black">{s.val}</div>
               <div className="text-[11px] text-nc-muted mt-0.5">{s.label}</div>
             </div>
           ))}

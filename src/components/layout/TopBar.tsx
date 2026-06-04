@@ -1,4 +1,3 @@
-import { Link } from "react-router-dom";
 
 const pageNames: Record<string, string> = {
   dashboard          : 'Admin Dashboard',
@@ -38,12 +37,14 @@ import { LogOut, User, Settings, LayoutDashboard } from "lucide-react";
 import NotificationBell from "@/components/shared/NotificationBell";
 
 interface TopBarProps {
-  activePage: string;
-  onEnroll: () => void;
-  onMurabbiNav?: (page: string) => void;
+  activePage              : string;
+  onEnroll                : () => void;
+  onAdminNav             ?: (page: string) => void;
+  onMurabbiNav           ?: (page: string) => void;
+  onApproveDeleteRequest ?: (studentId: string, notifId: string) => void;
 }
 
-export default function TopBar({ activePage, onEnroll, onMurabbiNav }: TopBarProps) {
+export default function TopBar({ activePage, onEnroll, onAdminNav, onMurabbiNav, onApproveDeleteRequest }: TopBarProps) {
   const title = pageNames[activePage] || activePage;
   const { user, logout } = useAuth();
   const isMurabbiPanel = window.location.pathname.includes('/murabbi');
@@ -81,7 +82,7 @@ export default function TopBar({ activePage, onEnroll, onMurabbiNav }: TopBarPro
         </div>
         <button className="btn-gold" onClick={onEnroll}>+ Enroll Student</button>
 
-        <NotificationBell />
+        <NotificationBell onApproveDeleteRequest={onApproveDeleteRequest} />
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -122,23 +123,13 @@ export default function TopBar({ activePage, onEnroll, onMurabbiNav }: TopBarPro
               </>
             ) : (
               <>
-                <DropdownMenuItem asChild>
-                  <Link to="/settings" className="cursor-pointer">
-                    <User className="mr-2 h-4 w-4" />
-                    <span>Profile</span>
-                  </Link>
+                <DropdownMenuItem className="cursor-pointer" onClick={() => onAdminNav?.('dashboard')}>
+                  <LayoutDashboard className="mr-2 h-4 w-4" />
+                  <span>Dashboard</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/" className="cursor-pointer">
-                    <LayoutDashboard className="mr-2 h-4 w-4" />
-                    <span>Dashboard</span>
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/settings" className="cursor-pointer">
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>Settings</span>
-                  </Link>
+                <DropdownMenuItem className="cursor-pointer" onClick={() => onAdminNav?.('settings')}>
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Settings</span>
                 </DropdownMenuItem>
               </>
             )}
