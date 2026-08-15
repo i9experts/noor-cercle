@@ -971,19 +971,37 @@ const AWARD_OPTIONS = [
   { value: "courage-award",    label: "Courage Award — 40 pts",     desc: "Displayed courage in standing for truth" },
 ];
 
-export function AwardPointsModal({ open, onClose, onSuccess }: { open: boolean; onClose: () => void; onSuccess?: () => void }) {
+export function AwardPointsModal({
+  open, onClose, onSuccess, students: providedStudents, presetStudentId,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onSuccess?: () => void;
+  /**
+   * Pass this when opening from a murabbi context. Without it, the modal
+   * falls back to fetching /admin/students, which is admin-only — a
+   * murabbi opening the modal would get a silent 403 on every load.
+   */
+  students?: any[];
+  /** Pre-select a specific student, e.g. when opened from that student's row. */
+  presetStudentId?: string;
+}) {
   const { toast } = useToast();
   const [loading, setLoading]   = useState(false);
-  const [students, setStudents] = useState<any[]>([]);
+  const [students, setStudents] = useState<any[]>(providedStudents || []);
   const [form, setForm]         = useState({ studentId: "", awardType: "", note: "" });
 
   useEffect(() => {
     if (!open) return;
-    setForm({ studentId: "", awardType: "", note: "" });
+    setForm({ studentId: presetStudentId || "", awardType: "", note: "" });
+    if (providedStudents) {
+      setStudents(providedStudents);
+      return;
+    }
     studentsApi.getAll()
       .then((r) => setStudents(r.data.data || []))
       .catch(() => toast({ variant: "destructive", title: "Failed to load students" }));
-  }, [open]);
+  }, [open, presetStudentId, providedStudents]);
 
   function set(field: string, value: string) { setForm((f) => ({ ...f, [field]: value })); }
 
@@ -1004,7 +1022,7 @@ export function AwardPointsModal({ open, onClose, onSuccess }: { open: boolean; 
   return (
     <Modal open={open} onClose={onClose} title="Award Noor Points" subtitle="Recognise character, service, or consistency">
       <FormGroup label="Student" required>
-        <FormSelect value={form.studentId} onChange={(e) => set("studentId", e.target.value)}>
+        <FormSelect value={form.studentId} onChange={(e) => set("studentId", e.target.value)} disabled={!!presetStudentId}>
           <option value="">Select student…</option>
           {students.map((s) => <option key={s._id} value={s._id}>{s.fullName} — {s.circle?.name || "No circle"}</option>)}
         </FormSelect>
