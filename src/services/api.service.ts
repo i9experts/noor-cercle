@@ -211,6 +211,18 @@ export const trainingService = {
   updateBatch       : (id: string, data: object)                      => API.patch(`/training/batches/${id}`, data),
   addCandidates     : (batchId: string, userIds: string[])            => API.post(`/training/batches/${batchId}/candidates`, { userIds }),
   removeCandidate   : (batchId: string, userId: string)               => API.delete(`/training/batches/${batchId}/candidates/${userId}`),
+  // Exam + certification
+  getExam           : ()                                              => API.get('/training/exam'),
+  submitExam        : (answers: number[])                             => API.post('/training/exam/submit', { answers }),
+  getMyCertificates : ()                                              => API.get('/training/my-certificates'),
+  downloadCertificate: (tier: number)                                 =>
+    API.get(`/training/certificate/${tier}/download`, { responseType: 'blob' }),
+  // Admin: exam management
+  upsertExam        : (data: { tier: number; title: string; questions: object[]; passingScore?: number }) =>
+                       API.post('/training/exams', data),
+  getExamAdmin      : (tier: number)                                  => API.get(`/training/exams/${tier}`),
+  getAllCertificates: ()                                              => API.get('/training/certificates'),
+  revokeCertificate : (id: string)                                    => API.delete(`/training/certificates/${id}`),
 };
 
 // ─────────────────────────────────────────────────────────────
