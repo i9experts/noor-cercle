@@ -3,8 +3,9 @@ import NcCard from "@/components/shared/NcCard";
 import NcBadge from "@/components/shared/NcBadge";
 import SectionTitle from "@/components/shared/SectionTitle";
 import Modal, { FormGroup, FormInput, FormRow } from "@/components/shared/Modal";
-import { Search, Phone, MessageSquare, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { Search, Phone, MessageSquare, MoreVertical, Pencil, Trash2, Trophy } from "lucide-react";
 import { murabbisService } from "@/services/api.service";
+import { AwardPointsModal } from "@/components/modals/AllModals";
 import { useToast } from "@/hooks/use-toast";
 
 function EditStudentModal({
@@ -133,6 +134,7 @@ export default function MurabbiStudents() {
   const [loading, setLoading]         = useState(true);
   const [search, setSearch]           = useState("");
   const [editStudent, setEditStudent] = useState<any>(null);
+  const [awardStudent, setAwardStudent] = useState<any>(null);
 
   async function handleRequestDelete(student: any) {
     if (!confirm(`Send delete request for "${student.fullName}" to admin for approval?`)) return;
@@ -218,6 +220,13 @@ export default function MurabbiStudents() {
                         <button className="p-1.5 hover:bg-muted rounded-md text-nc-muted" title="Call Parent">
                           <Phone className="h-4 w-4" />
                         </button>
+                        <button
+                          className="p-1.5 hover:bg-muted rounded-md text-nc-muted"
+                          title="Award Points"
+                          onClick={() => setAwardStudent(s)}
+                        >
+                          <Trophy className="h-4 w-4" />
+                        </button>
                         <ActionMenu student={s} onEdit={() => setEditStudent(s)} onRequestDelete={() => handleRequestDelete(s)} />
                       </div>
                     </td>
@@ -234,6 +243,14 @@ export default function MurabbiStudents() {
         student={editStudent}
         onClose={() => setEditStudent(null)}
         onSuccess={() => { setEditStudent(null); load(); }}
+      />
+
+      <AwardPointsModal
+        open={!!awardStudent}
+        students={students}
+        presetStudentId={awardStudent?._id}
+        onClose={() => setAwardStudent(null)}
+        onSuccess={() => { setAwardStudent(null); load(); }}
       />
     </div>
   );
