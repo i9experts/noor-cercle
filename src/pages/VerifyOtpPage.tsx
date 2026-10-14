@@ -64,11 +64,21 @@ const VerifyOtpPage = () => {
         const res = await authService.signupVerifyOtp({ email: emailFromStorage, otp });
         const responseData = res.data?.data || res.data;
         const { accessToken, refreshToken, user } = responseData;
+        localStorage.removeItem('pendingEmail');
+
+        // New sign-ups wait for an admin to approve them — no session yet.
+        if (!accessToken) {
+          toast({
+            title      : 'Email verified! 🌙',
+            description: 'Your account is awaiting admin approval. You can sign in once it is approved.',
+          });
+          navigate('/signin');
+          return;
+        }
 
         localStorage.setItem('accessToken',  accessToken);
         localStorage.setItem('refreshToken', refreshToken);
         localStorage.setItem('user',         JSON.stringify(user));
-        localStorage.removeItem('pendingEmail');
 
         toast({ title: 'Email verified! Welcome to Noor Circle 🌙' });
         navigate(user?.role === 'admin' ? '/' : '/murabbi');
