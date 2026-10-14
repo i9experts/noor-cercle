@@ -5,6 +5,7 @@ import QuranBox from "@/components/shared/QuranBox";
 import NcCard, { CardHeader, CardTitle } from "@/components/shared/NcCard";
 import NcBadge from "@/components/shared/NcBadge";
 import SectionTitle from "@/components/shared/SectionTitle";
+import MyEngagementCard from "@/components/shared/MyEngagementCard";
 import { murabbisService, performanceService, announcementsService, trainingService } from "@/services/api.service";
 import { useToast } from "@/hooks/use-toast";
 
@@ -118,6 +119,8 @@ export default function MurabbiDashboard() {
         <StatCard label="My Circles"     value={stats.circleCount    ?? "—"} meta={`${stats.activeCircles ?? 0} active`}     color="gold"   />
         <StatCard label="Active Circles" value={stats.activeCircles  ?? "—"} meta="Running circles"                          color="purple" />
       </div>
+
+      <MyEngagementCard />
 
       {/* Assigned circles */}
       {circles.length > 0 && (

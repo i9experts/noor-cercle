@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import {
-  Award, BarChart3, BookOpen, CircleDot, ClipboardCheck, Globe2, GraduationCap,
+  Award, BarChart3, Gift, HandCoins, Star, BookOpen, CircleDot, ClipboardCheck, Globe2, GraduationCap,
   HeartHandshake, Inbox, LayoutDashboard, MapPin, School, Settings, TrendingUp, Users,
 } from "lucide-react";
-import { adminService, interestService } from "@/services/api.service";
+import { adminService, contributionsService, interestService } from "@/services/api.service";
 import AppSidebar, { SidebarNavGroup } from "./AppSidebar";
 
 const navGroups: SidebarNavGroup[] = [
@@ -36,6 +36,14 @@ const navGroups: SidebarNavGroup[] = [
     items: [
       { icon: TrendingUp, label: "Performance & Reviews", page: "performance" },
       { icon: Award,      label: "Incentives & Awards",   page: "incentives"  },
+    ],
+  },
+  {
+    label: "Finance",
+    items: [
+      { icon: HandCoins, label: "Contributions",   page: "contributions", badgeKey: "contributions" },
+      { icon: Gift,      label: "Reward Pool",     page: "rewards"       },
+      { icon: Star,      label: "Murabbi Ratings", page: "ratings"       },
     ],
   },
   {
@@ -72,6 +80,10 @@ export default function Sidebar({ activePage, onNavigate, open, onClose }: Sideb
     // Badge = requests still waiting for a first contact
     interestService.getAll({ status: "new" })
       .then((r) => setCounts((c) => ({ ...c, interest: (r.data.data || r.data || []).length })))
+      .catch(() => {});
+    // Badge = website pledges waiting to be confirmed
+    contributionsService.getContributors({ status: "pending" })
+      .then((r) => setCounts((c) => ({ ...c, contributions: (r.data.data || r.data || []).length })))
       .catch(() => {});
   }, []);
 
