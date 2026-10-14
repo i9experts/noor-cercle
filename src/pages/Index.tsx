@@ -17,6 +17,7 @@ import TrainingPage from "@/pages/TrainingPage";
 import NeighbourhoodsPage from "@/pages/NeighbourhoodsPage";
 import ReportsPage from "@/pages/ReportsPage";
 import SettingsPage from "@/pages/SettingsPage";
+import InterestPage from "@/pages/InterestPage";
 import {
   EnrollModal,
   NewCircleModal,
@@ -29,6 +30,7 @@ import { Trash2 } from "lucide-react";
 const Index = () => {
   const { toast } = useToast();
   const [activePage, setActivePage]       = useState("dashboard");
+  const [navOpen, setNavOpen]             = useState(false);
   const [enrollOpen, setEnrollOpen]       = useState(false);
   const [newCircleOpen, setNewCircleOpen] = useState(false);
   const [awardOpen, setAwardOpen]         = useState(false);
@@ -47,6 +49,7 @@ const Index = () => {
 
   const handleNav = (page: string) => {
     setActivePage(page);
+    setNavOpen(false);
     window.scrollTo(0, 0);
   };
 
@@ -109,6 +112,7 @@ const Index = () => {
       case "training":       return <TrainingPage />;
       case "neighbourhoods": return <NeighbourhoodsPage />;
       case "reports":        return <ReportsPage />;
+      case "interest":       return <InterestPage />;
       case "settings":       return <SettingsPage />;
       default:               return <DashboardPage />;
     }
@@ -116,15 +120,16 @@ const Index = () => {
 
   return (
     <>
-      <Sidebar activePage={activePage} onNavigate={handleNav} />
-      <div className="ml-[260px] min-h-screen flex flex-col">
+      <Sidebar activePage={activePage} onNavigate={handleNav} open={navOpen} onClose={() => setNavOpen(false)} />
+      <div className="lg:ml-[264px] min-h-screen flex flex-col">
         <TopBar
           activePage={activePage}
           onEnroll={() => setEnrollOpen(true)}
+          onMenu={() => setNavOpen(true)}
           onAdminNav={handleNav}
           onApproveDeleteRequest={handleApproveDeleteRequest}
         />
-        <div className="p-8 flex-1">{renderPage()}</div>
+        <main className="flex-1 p-4 sm:p-6 lg:p-8">{renderPage()}</main>
       </div>
 
       <EnrollModal
@@ -157,7 +162,7 @@ const Index = () => {
 
       {showPermDelete && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50">
-          <div className="bg-card border border-border rounded-xl shadow-xl w-[360px] p-5">
+          <div className="bg-card border border-border rounded-xl shadow-xl w-[360px] max-w-[calc(100vw-2rem)] p-5">
             <div className="flex items-start gap-3 mb-4">
               <div className="w-9 h-9 rounded-full bg-red-50 flex items-center justify-center flex-shrink-0">
                 <Trash2 className="h-5 w-5 text-red-500" />

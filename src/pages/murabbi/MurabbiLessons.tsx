@@ -63,12 +63,12 @@ function LessonModal({ lesson, onClose }: { lesson: any; onClose: () => void }) 
       {lesson.keyTopics?.length > 0 && (
         <div className="mb-4">
           <div className="flex items-center gap-2 mb-2">
-            <Tag className="h-4 w-4 text-gold" />
+            <Tag className="h-4 w-4 text-gold-dim" />
             <span className="text-[12px] font-bold uppercase tracking-wide text-nc-muted">Key Topics</span>
           </div>
           <div className="flex flex-wrap gap-2">
             {lesson.keyTopics.map((t: string, i: number) => (
-              <span key={i} className="text-[11px] bg-gold/10 text-gold border border-gold/30 px-2.5 py-1 rounded-full font-medium">
+              <span key={i} className="text-[11px] bg-gold/10 text-gold-dim border border-gold/30 px-2.5 py-1 rounded-full font-medium">
                 {t}
               </span>
             ))}
@@ -170,7 +170,7 @@ export default function MurabbiLessons() {
       <SectionTitle title="Lesson Plans" subtitle="Access curriculum materials and session guides for your circles." />
 
       {/* Stats */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
         {[
           { label: "Total Lessons", val: counts.total,     color: "text-black"       },
           { label: "Available",     val: counts.available, color: "text-black"   },
@@ -193,7 +193,7 @@ export default function MurabbiLessons() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search lessons…"
-            className="w-full pl-9 pr-8 py-2 text-sm border border-border rounded-lg bg-card focus:border-teal focus:shadow-[0_0_0_3px_rgba(14,107,114,0.08)] outline-none transition-colors"
+            className="w-full pl-9 pr-8 py-2 text-sm border border-border rounded-lg bg-card focus:border-teal focus:shadow-[0_0_0_3px_rgba(105,28,70,0.12)] outline-none transition-colors"
           />
           {search && (
             <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-nc-muted hover:text-foreground">

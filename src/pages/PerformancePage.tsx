@@ -36,7 +36,7 @@ function overallScore(d: Record<string, number>) {
 
 function rateColor(v: number) {
   if (v >= 80) return "text-teal";
-  if (v >= 60) return "text-gold";
+  if (v >= 60) return "text-gold-dim";
   return "text-nc-red";
 }
 function rateBg(v: number) {
@@ -406,7 +406,7 @@ export default function PerformancePage() {
   return (
     <div className="page-animate">
       {/* ── Stat Cards ──────────────────────────────────────────────── */}
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4 mb-6">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-3 sm:gap-4 mb-6">
         <StatCard label="Total Reviews"    value={summary?.totalReviews  ?? 0}                        meta="Session reviews"       color="teal"   />
         <StatCard label="Avg. Stars"       value={summary?.avgStars       ?? 0}                        meta="Out of 5.0"            color="gold"   />
         <StatCard label="Follow-ups"       value={summary?.followUpCount  ?? 0}                        meta="Requiring attention"   color="purple" />
@@ -449,10 +449,10 @@ export default function PerformancePage() {
       </div>
 
       {/* ── Main Two-Column ─────────────────────────────────────────── */}
-      <div className="grid grid-cols-5 gap-5">
+      <div className="grid grid-cols-1 xl:grid-cols-5 gap-5">
 
         {/* Character Indicators */}
-        <NcCard className="col-span-2">
+        <NcCard className="xl:col-span-2">
           <CardHeader>
             <CardTitle sub={filterMur || filterCir ? "Filtered average" : "Average across all reviews"}>
               <span className="flex items-center gap-1.5"><TrendingUp size={14} /> Character Indicators</span>
@@ -503,7 +503,7 @@ export default function PerformancePage() {
         </NcCard>
 
         {/* Reviews List */}
-        <NcCard className="col-span-3">
+        <NcCard className="xl:col-span-3">
           <CardHeader>
             <CardTitle sub={`${filtered.length} review${filtered.length !== 1 ? "s" : ""}`}>
               <span className="flex items-center gap-1.5"><Users size={14} /> Session Reviews</span>

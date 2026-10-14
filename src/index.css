@@ -17,77 +17,92 @@
 .scroll-hover:hover::-webkit-scrollbar-thumb { background: hsl(var(--border)); }
 
 @layer base {
+  /*
+   * Noor Circles brand system
+   *   Plum  #691C46  hsl(327 58% 26%)  — primary, surfaces, headings
+   *   Gold  #C79446  hsl(36 54% 53%)   — the star: highlights, accents, badges
+   *   White / warm ivory               — canvas
+   * Gold on white is only ~2.7:1, so gold is never used for body text on
+   * light backgrounds — use --gold-dim (text-safe) or plum instead.
+   */
   :root {
-    --background: 200 14% 96%;
-    --foreground: 0°, 2%, 1%;
+    --background: 30 27% 97%;
+    --foreground: 327 32% 14%;
 
     --card: 0 0% 100%;
-    --card-foreground: 341 32% 38%;
+    --card-foreground: 327 32% 14%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 341 32% 38%;
+    --popover-foreground: 327 32% 14%;
 
-    --primary: 185 78% 25%;
+    --primary: 327 58% 26%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 185 40% 94%;
-    --secondary-foreground: 341 32% 38%;
+    --secondary: 327 35% 95%;
+    --secondary-foreground: 327 58% 26%;
 
-    --muted: 200 14% 96%;
-    --muted-foreground: 197 16% 46%;
+    --muted: 30 22% 95%;
+    --muted-foreground: 327 9% 42%;
 
-    --accent: 42 90% 42%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 36 54% 53%;
+    --accent-foreground: 327 60% 15%;
 
-    --destructive: 5 75% 46%;
+    --destructive: 2 68% 46%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 185 78% 25% / 0.12;
-    --input: 185 78% 25% / 0.12;
-    --ring: 185 78% 25%;
+    --border: 327 22% 89%;
+    --input: 327 18% 86%;
+    --ring: 327 58% 26%;
 
     --radius: 14px;
 
-    /* Noor Circles custom tokens */
-    --gold: 40 88% 42%;
-    --gold-lt: 42 95% 95%;
-    --gold-dim: 38 85% 29%;
+    /* Brand gold */
+    --gold: 36 54% 53%;
+    --gold-lt: 38 64% 94%;
+    --gold-dim: 34 54% 35%;
+    --gold-foreground: 327 60% 15%;
 
-    --teal: 185 78% 25%;
-    --teal-lt: 185 40% 93%;
-    --teal-md: 184 72% 34%;
-    --teal-dk: 185 76% 16%;
+    /* Brand plum. The "teal" token names are legacy (the palette used to be
+       teal) and are kept so the ~270 existing bg-teal/text-teal usages pick
+       up the brand automatically. */
+    --teal: 327 58% 26%;
+    --teal-lt: 327 40% 95%;
+    --teal-md: 327 44% 37%;
+    --teal-dk: 327 62% 18%;
+    --plum: 327 58% 26%;
+    --plum-lt: 327 40% 95%;
+    --plum-dk: 327 62% 18%;
 
-    --nc-dark: 341 32% 38%;
-    --nc-dark2: 204 37% 15%;
-    --nc-dark3: 200 30% 18%;
+    --nc-dark: 327 45% 22%;
+    --nc-dark2: 327 40% 14%;
+    --nc-dark3: 327 30% 18%;
 
-    --slate: 200 24% 30%;
-    --nc-muted: 197 16% 46%;
-    --pale: 197 25% 71%;
+    --slate: 327 10% 28%;
+    --nc-muted: 327 8% 42%;
+    --pale: 327 14% 76%;
 
-    --nc-green: 150 63% 29%;
-    --nc-green-lt: 150 40% 93%;
+    --nc-green: 152 55% 29%;
+    --nc-green-lt: 150 40% 94%;
 
-    --nc-amber: 26 88% 38%;
-    --nc-amber-lt: 34 95% 94%;
+    --nc-amber: 24 82% 38%;
+    --nc-amber-lt: 34 90% 95%;
 
-    --nc-purple: 255 30% 49%;
-    --nc-purple-lt: 255 60% 93%;
+    --nc-purple: 268 32% 46%;
+    --nc-purple-lt: 268 50% 95%;
 
-    --nc-red: 5 65% 46%;
-    --nc-red-lt: 5 78% 96%;
+    --nc-red: 2 64% 46%;
+    --nc-red-lt: 4 76% 96%;
 
-    --shadow: 0 2px 16px hsl(185 78% 25% / 0.08);
+    --shadow: 0 1px 2px hsl(327 40% 20% / 0.04), 0 4px 18px hsl(327 40% 20% / 0.06);
 
-    --sidebar-background: 341, 68%, 25%;
-    --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 46 82% 59%;
-    --sidebar-primary-foreground: 341 32% 38%;
-    --sidebar-accent: 42 90% 42% / 0.12;
-    --sidebar-accent-foreground: 46 82% 59%;
-    --sidebar-border: 0 0% 100% / 0.07;
-    --sidebar-ring: 185 78% 25%;
+    --sidebar-background: 327 58% 26%;
+    --sidebar-foreground: 30 30% 96%;
+    --sidebar-primary: 36 54% 53%;
+    --sidebar-primary-foreground: 327 60% 15%;
+    --sidebar-accent: 0 0% 100% / 0.09;
+    --sidebar-accent-foreground: 38 66% 74%;
+    --sidebar-border: 0 0% 100% / 0.1;
+    --sidebar-ring: 36 54% 53%;
   }
 }
 
@@ -129,11 +144,11 @@
 
 /* Button utilities */
 .btn-primary {
-  @apply inline-flex items-center gap-1.5 px-[18px] py-2 rounded-sm text-[13.5px] font-medium cursor-pointer border-none transition-all bg-teal text-white hover:bg-teal-dk;
+  @apply inline-flex items-center gap-1.5 px-[18px] py-2 rounded-sm text-[13.5px] font-medium cursor-pointer border-none transition-all bg-primary text-primary-foreground hover:bg-teal-dk focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
   font-family: 'DM Sans', sans-serif;
 }
 .btn-gold {
-  @apply inline-flex items-center gap-1.5 px-[18px] py-2 rounded-sm text-[13.5px] font-medium cursor-pointer border-none transition-all bg-gold text-white hover:bg-gold-dim;
+  @apply inline-flex items-center gap-1.5 px-[18px] py-2 rounded-sm text-[13.5px] font-medium cursor-pointer border-none transition-all bg-gold text-gold-foreground font-semibold hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
   font-family: 'DM Sans', sans-serif;
 }
 .btn-outline {

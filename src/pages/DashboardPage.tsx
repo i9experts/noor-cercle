@@ -16,12 +16,12 @@ import {
 
 // ── Theme colour literals (used inside recharts, which can't read CSS vars) ──
 const CLR = {
-  teal      : "hsl(185, 78%, 25%)",
-  tealLt    : "hsl(185, 40%, 93%)",
-  gold      : "hsl(40, 88%, 42%)",
+  teal      : "hsl(327, 58%, 26%)", // brand plum
+  tealLt    : "hsl(327, 40%, 95%)",
+  gold      : "hsl(36, 54%, 53%)",  // brand gold
   green     : "hsl(150, 63%, 29%)",
   red       : "hsl(5, 65%, 46%)",
-  border    : "#e5e7eb",
+  border    : "hsl(327, 22%, 89%)",
   mutedFg   : "#9ca3af",
 };
 
@@ -34,7 +34,7 @@ function barFill(rate: number) {
 // ── Announcement icon map ─────────────────────────────────────────────────────
 const ANN_ICONS: Record<string, React.ReactNode> = {
   session : <Calendar      size={15} className="text-teal"     />,
-  training: <GraduationCap size={15} className="text-gold"     />,
+  training: <GraduationCap size={15} className="text-gold-dim"     />,
   donor   : <Heart         size={15} className="text-nc-green" />,
   info    : <Info          size={15} className="text-nc-muted" />,
 };
@@ -56,7 +56,7 @@ function timeAgo(iso: string) {
 
 function activityIcon(type: string) {
   if (type === "student_assigned") return <Users    size={13} className="text-teal"     />;
-  if (type === "circle_assigned")  return <BookOpen size={13} className="text-gold"     />;
+  if (type === "circle_assigned")  return <BookOpen size={13} className="text-gold-dim"     />;
   return                                  <Activity size={13} className="text-nc-muted" />;
 }
 
@@ -204,7 +204,7 @@ export default function DashboardPage() {
       />
 
       {/* ── Stat Cards ──────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4 mb-6">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 2xl:grid-cols-6 mb-6">
         <StatCard label="Total Students"     value={stats?.totalStudents     ?? "—"} meta="Enrolled students"    color="teal"   />
         <StatCard label="Active Circles"     value={stats?.activeCircles     ?? "—"} meta="Across neighbourhoods" color="gold"  />
         <StatCard label="Certified Murabbis" value={stats?.totalMurabbis     ?? "—"} meta="Registered murabbis"  color="green"  />
@@ -300,7 +300,7 @@ export default function DashboardPage() {
                 axisLine={false}
                 tickFormatter={(v) => `${v}%`}
               />
-              <Tooltip content={<ChartTooltip />} cursor={{ fill: "hsl(185, 40%, 96%)", radius: 4 }} />
+              <Tooltip content={<ChartTooltip />} cursor={{ fill: "hsl(327, 40%, 96%)", radius: 4 }} />
               <ReferenceLine
                 y={75}
                 stroke={CLR.mutedFg}

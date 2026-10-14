@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 
 const ICON_MAP: Record<string, { Icon: React.ElementType; bg: string; text: string }> = {
   session  : { Icon: Calendar,      bg: "bg-teal/10",     text: "text-teal"     },
-  training : { Icon: GraduationCap, bg: "bg-gold/10",     text: "text-gold"     },
+  training : { Icon: GraduationCap, bg: "bg-gold/10",     text: "text-gold-dim"     },
   donor    : { Icon: Heart,         bg: "bg-nc-green/10", text: "text-nc-green" },
   info     : { Icon: Info,          bg: "bg-nc-muted/10", text: "text-nc-muted" },
 };
@@ -28,7 +28,7 @@ function timeAgo(date: string) {
 }
 
 function rateColor(v: number) {
-  return v >= 80 ? "text-teal" : v >= 60 ? "text-gold" : "text-nc-red";
+  return v >= 80 ? "text-teal" : v >= 60 ? "text-gold-dim" : "text-nc-red";
 }
 
 export default function MurabbiDashboard() {
@@ -112,7 +112,7 @@ export default function MurabbiDashboard() {
       )}
 
       {/* Stats row */}
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4 mb-7">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-3 sm:gap-4 mb-7">
         <StatCard label="My Students"    value={stats.totalStudents  ?? "—"} meta={`${stats.activeStudents ?? 0} active`}    color="teal"   />
         <StatCard label="Active Students" value={stats.activeStudents ?? "—"} meta="Currently enrolled"                       color="green"  />
         <StatCard label="My Circles"     value={stats.circleCount    ?? "—"} meta={`${stats.activeCircles ?? 0} active`}     color="gold"   />

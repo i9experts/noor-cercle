@@ -13,8 +13,8 @@ const AWARD_CARDS = [
     pts    : 50,
     desc   : "50+ points in one session — exemplary character, courage, or service",
     bg     : "bg-gold/8 border border-gold/20",
-    accent : "text-gold",
-    ptsCls : "text-gold",
+    accent : "text-gold-dim",
+    ptsCls : "text-gold-dim",
   },
   {
     key    : "circle-champion",
@@ -89,7 +89,7 @@ export default function IncentivesPage({ onAwardPoints }: { onAwardPoints: () =>
       </div>
 
       {/* ── Top 3 Award Cards ────────────────────────────────────── */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         {AWARD_CARDS.map((a) => (
           <div
             key={a.key}
@@ -152,7 +152,7 @@ export default function IncentivesPage({ onAwardPoints }: { onAwardPoints: () =>
 
                   {/* Points */}
                   <div className="text-right flex-shrink-0">
-                    <span className="font-serif text-[18px] font-bold text-gold">{s.noorPoints}</span>
+                    <span className="font-serif text-[18px] font-bold text-gold-dim">{s.noorPoints}</span>
                     <span className="text-[10px] text-nc-muted ml-0.5">pts</span>
                   </div>
                 </div>
@@ -174,8 +174,8 @@ export default function IncentivesPage({ onAwardPoints }: { onAwardPoints: () =>
               {/* Murabbi of Month card */}
               <div className="rounded-xl bg-gold/10 border border-gold/20 p-4">
                 <div className="flex items-center gap-2 mb-3">
-                  <Trophy className="h-4 w-4 text-gold" />
-                  <span className="font-semibold text-[13.5px] text-gold">Murabbi of the Month</span>
+                  <Trophy className="h-4 w-4 text-gold-dim" />
+                  <span className="font-semibold text-[13.5px] text-gold-dim">Murabbi of the Month</span>
                 </div>
                 <p className="text-[11.5px] text-nc-muted mb-3">Based on attendance, reviews, and parent feedback</p>
 
@@ -230,7 +230,7 @@ export default function IncentivesPage({ onAwardPoints }: { onAwardPoints: () =>
                     <span className="text-teal">{a.icon}</span>
                     <span className="text-[13px] font-medium">{a.title}</span>
                   </div>
-                  <span className="font-serif text-[15px] font-bold text-gold">{a.pts} pts</span>
+                  <span className="font-serif text-[15px] font-bold text-gold-dim">{a.pts} pts</span>
                 </div>
               ))}
             </div>

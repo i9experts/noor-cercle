@@ -10,8 +10,8 @@ import { useToast } from "@/hooks/use-toast";
 // ─── Print helpers ────────────────────────────────────────────────────────────
 
 function rateColor(v: number) {
-  if (v >= 80) return "#0e6b72";
-  if (v >= 60) return "#d4a017";
+  if (v >= 80) return "#691C46";
+  if (v >= 60) return "#C79446";
   return "#e53e3e";
 }
 
@@ -59,8 +59,8 @@ function buildReportHTML(detail: any, reportName: string): string {
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
     body { font-family: 'Segoe UI', Arial, sans-serif; color:#1a202c; background:#fff; padding:32px; font-size:13px; }
-    .header { display:flex; justify-content:space-between; align-items:flex-start; border-bottom:3px solid #0e6b72; padding-bottom:20px; margin-bottom:24px; }
-    .org { font-size:22px; font-weight:700; color:#0e6b72; letter-spacing:-0.5px; }
+    .header { display:flex; justify-content:space-between; align-items:flex-start; border-bottom:3px solid #691C46; padding-bottom:20px; margin-bottom:24px; }
+    .org { font-size:22px; font-weight:700; color:#691C46; letter-spacing:-0.5px; }
     .org-sub { font-size:11px; color:#64748b; margin-top:2px; }
     .report-meta { text-align:right; }
     .report-title { font-size:16px; font-weight:700; color:#1a202c; }
@@ -70,10 +70,10 @@ function buildReportHTML(detail: any, reportName: string): string {
     .info-label { font-size:10px; font-weight:700; text-transform:uppercase; color:#64748b; letter-spacing:0.5px; margin-bottom:4px; }
     .info-value { font-size:15px; font-weight:700; color:#1a202c; }
     .stat-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:28px; }
-    .stat-box { background:#f0fdfa; border:1px solid #99f6e4; border-radius:8px; padding:12px; text-align:center; }
-    .stat-val { font-size:24px; font-weight:800; color:#0e6b72; }
+    .stat-box { background:#FAF4F7; border:1px solid #E8D3DD; border-radius:8px; padding:12px; text-align:center; }
+    .stat-val { font-size:24px; font-weight:800; color:#691C46; }
     .stat-label { font-size:10px; color:#64748b; margin-top:2px; }
-    h2 { font-size:14px; font-weight:700; color:#0e6b72; margin-bottom:12px; border-left:3px solid #0e6b72; padding-left:10px; }
+    h2 { font-size:14px; font-weight:700; color:#691C46; margin-bottom:12px; border-left:3px solid #691C46; padding-left:10px; }
     table { width:100%; border-collapse:collapse; margin-bottom:28px; }
     thead tr { background:#f1f5f9; }
     th { padding:10px 12px; text-align:left; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:#64748b; }

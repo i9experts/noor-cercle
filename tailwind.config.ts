@@ -69,6 +69,12 @@ export default {
           DEFAULT: "hsl(var(--gold))",
           lt: "hsl(var(--gold-lt))",
           dim: "hsl(var(--gold-dim))",
+          foreground: "hsl(var(--gold-foreground))",
+        },
+        plum: {
+          DEFAULT: "hsl(var(--plum))",
+          lt: "hsl(var(--plum-lt))",
+          dk: "hsl(var(--plum-dk))",
         },
         teal: {
           DEFAULT: "hsl(var(--teal))",

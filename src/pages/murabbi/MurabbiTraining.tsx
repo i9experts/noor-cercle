@@ -258,7 +258,7 @@ export default function MurabbiTraining() {
         {!examLoading && exam && (
           <NcCard>
             <div className="flex items-center gap-3 mb-1">
-              <div className="w-11 h-11 rounded-xl bg-gold/15 text-gold flex items-center justify-center flex-shrink-0">
+              <div className="w-11 h-11 rounded-xl bg-gold/15 text-gold-dim flex items-center justify-center flex-shrink-0">
                 <GraduationCap className="h-5.5 w-5.5" />
               </div>
               <div>
@@ -340,7 +340,7 @@ export default function MurabbiTraining() {
 
           {result.passed ? (
             <button
-              className="inline-flex items-center gap-2 px-5 py-2.5 text-[13.5px] font-semibold bg-gold text-white rounded-md hover:brightness-95 transition"
+              className="inline-flex items-center gap-2 px-5 py-2.5 text-[13.5px] font-semibold bg-gold text-gold-foreground rounded-md hover:brightness-95 transition"
               onClick={() => handleDownloadCertificate(1)}
             >
               <Download className="h-4 w-4" /> Download Your Certificate
@@ -380,7 +380,7 @@ export default function MurabbiTraining() {
         <NcCard className="mb-6 !bg-gold/[0.06] !border-gold/30">
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-xl bg-gold/15 text-gold flex items-center justify-center flex-shrink-0">
+              <div className="w-11 h-11 rounded-xl bg-gold/15 text-gold-dim flex items-center justify-center flex-shrink-0">
                 <Award className="h-5.5 w-5.5" />
               </div>
               <div>
@@ -391,7 +391,7 @@ export default function MurabbiTraining() {
               </div>
             </div>
             <button
-              className="flex items-center gap-2 px-4 py-2 text-[12.5px] font-semibold bg-gold text-white rounded-md hover:brightness-95 transition"
+              className="flex items-center gap-2 px-4 py-2 text-[12.5px] font-semibold bg-gold text-gold-foreground rounded-md hover:brightness-95 transition"
               onClick={() => handleDownloadCertificate(1)}
             >
               <Download className="h-3.5 w-3.5" /> Download Certificate
@@ -425,7 +425,7 @@ export default function MurabbiTraining() {
 
       {/* Progress summary */}
       {summary && (
-        <div className="grid grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
           {([
             { label: "Total", val: summary.total },
             { label: "Done",  val: summary.completed },

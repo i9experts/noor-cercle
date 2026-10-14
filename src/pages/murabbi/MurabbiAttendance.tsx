@@ -17,7 +17,7 @@ const STATUS_CYCLE: Record<Status, Status> = {
 const STATUS_COLORS: Record<Status, string> = {
   present: "bg-nc-green/10 text-nc-green border-nc-green/20",
   absent : "bg-nc-red/10  text-nc-red  border-nc-red/20",
-  excused: "bg-gold/10    text-gold     border-gold/20",
+  excused: "bg-gold/10    text-gold-dim     border-gold/20",
 };
 
 function getApiError(e: unknown) {
@@ -88,7 +88,7 @@ function EditModal({
 
   return (
     <Modal open onClose={onClose} title="Edit Attendance" subtitle={`${record.circle?.name || "—"} · ${fmtDate(record.sessionDate)}`}>
-      <div className="grid grid-cols-3 gap-3 mb-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
         <div>
           <label className="block text-[11px] font-semibold text-nc-muted uppercase tracking-wide mb-1">Session #</label>
           <input type="number" min={1} value={sessNum}
@@ -110,7 +110,7 @@ function EditModal({
       <div className="flex gap-2 mb-3">
         <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-nc-green/10 text-nc-green">{pCount} Present</span>
         <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-nc-red/10 text-nc-red">{aCount} Absent</span>
-        <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-gold/10 text-gold">{eCount} Excused</span>
+        <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-gold/10 text-gold-dim">{eCount} Excused</span>
         <span className="ml-auto text-[11px] text-nc-muted">Click to cycle status</span>
       </div>
 
@@ -261,7 +261,7 @@ export default function MurabbiAttendance() {
               <div className="flex gap-2">
                 <span className="text-xs font-semibold px-2.5 py-1 bg-nc-green/10 text-nc-green rounded-full">{pCount} Present</span>
                 <span className="text-xs font-semibold px-2.5 py-1 bg-nc-red/10  text-nc-red  rounded-full">{aCount} Absent</span>
-                {eCount > 0 && <span className="text-xs font-semibold px-2.5 py-1 bg-gold/10 text-gold rounded-full">{eCount} Excused</span>}
+                {eCount > 0 && <span className="text-xs font-semibold px-2.5 py-1 bg-gold/10 text-gold-dim rounded-full">{eCount} Excused</span>}
               </div>
             </CardHeader>
 
@@ -328,7 +328,7 @@ export default function MurabbiAttendance() {
                       <div className="flex items-center gap-3">
                         <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${
                           status === "present" ? "bg-green-100 text-green-700"
-                          : status === "excused" ? "bg-gold/20 text-gold"
+                          : status === "excused" ? "bg-gold/20 text-gold-dim"
                           : "bg-red-100 text-red-700"
                         }`}>
                           {s.fullName?.charAt(0)}
@@ -402,7 +402,7 @@ export default function MurabbiAttendance() {
                           )}
                         </div>
                         <div className="flex items-center gap-1.5 flex-shrink-0">
-                          <span className={`text-[12px] font-bold ${rate >= 85 ? "text-nc-green" : rate >= 60 ? "text-gold" : "text-nc-red"}`}>
+                          <span className={`text-[12px] font-bold ${rate >= 85 ? "text-nc-green" : rate >= 60 ? "text-gold-dim" : "text-nc-red"}`}>
                             {rate}%
                           </span>
                           <button
@@ -422,7 +422,7 @@ export default function MurabbiAttendance() {
                           {s.records.filter((r: any) => r.status === "absent").length}A
                         </span>
                         {s.records.filter((r: any) => r.status === "excused").length > 0 && (
-                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-gold/10 text-gold font-medium">
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-gold/10 text-gold-dim font-medium">
                             {s.records.filter((r: any) => r.status === "excused").length}E
                           </span>
                         )}

@@ -370,7 +370,7 @@ export default function TrainingPage() {
     <div className="page-animate">
 
       {/* ── Stats ───────────────────────────────────────────────── */}
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4 mb-7">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-3 sm:gap-4 mb-7">
         <StatCard
           label="Batches Completed"
           value={loading ? "—" : stats.batchesCompleted ?? 0}
@@ -410,7 +410,7 @@ export default function TrainingPage() {
             </CardTitle>
             <div className="flex items-center gap-2">
               {activeBatch?.day1Date && (
-                <span className="text-[11.5px] font-semibold text-gold bg-gold/10 border border-gold/20 rounded-full px-3 py-1">
+                <span className="text-[11.5px] font-semibold text-gold-dim bg-gold/10 border border-gold/20 rounded-full px-3 py-1">
                   Starting {fmtDate(activeBatch.day1Date)}
                 </span>
               )}
@@ -552,7 +552,7 @@ export default function TrainingPage() {
                 mods     : day2Mods,
                 bg       : "bg-gold/5 border-gold/20",
                 headerBg : "bg-gold/10 border-gold/20",
-                text     : "text-gold",
+                text     : "text-gold-dim",
               },
             ];
 

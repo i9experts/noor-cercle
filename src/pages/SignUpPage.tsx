@@ -91,7 +91,7 @@ const SignUpPage = () => {
 
         <Button
           type="submit"
-          className="h-11 w-full bg-gold text-white hover:bg-gold-dim"
+          className="h-11 w-full bg-gold text-gold-foreground hover:bg-gold-dim"
           disabled={isSubmitting}
         >
           {isSubmitting ? 'Sending OTP...' : 'Create Account'}

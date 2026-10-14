@@ -5,6 +5,7 @@ const pageNames: Record<string, string> = {
   students           : 'Student Management',
   murabbis           : 'Murabbi Management',
   parents            : 'Parent Network',
+  interest           : 'Interest Requests',
   circles            : 'Circle Management',
   attendance         : 'Attendance Overview',
   sessions           : 'Sessions & Curriculum',
@@ -14,12 +15,12 @@ const pageNames: Record<string, string> = {
   neighbourhoods     : 'Neighbourhoods',
   reports            : 'Reports & Analytics',
   settings           : 'System Settings',
-  'murabbi-dashboard': 'Murabbi Dashboard',
+  'murabbi-dashboard': 'Dashboard',
   'murabbi-students' : 'My Students',
   'murabbi-circles'  : 'My Circles',
   'murabbi-attendance': 'Mark Attendance',
   'murabbi-lessons'  : 'Lesson Plans',
-  'murabbi-training' : 'Training Materials',
+  'murabbi-training' : 'Training',
   'murabbi-reports'  : 'My Reports',
   'murabbi-announcements': 'Announcements',
   'murabbi-profile'  : 'My Profile',
@@ -33,18 +34,20 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOut, User, Settings, LayoutDashboard } from "lucide-react";
+import { LogOut, User, Settings, LayoutDashboard, Menu, Plus } from "lucide-react";
 import NotificationBell from "@/components/shared/NotificationBell";
 
 interface TopBarProps {
   activePage              : string;
   onEnroll                : () => void;
+  /** Opens the navigation drawer (below the lg breakpoint). */
+  onMenu                  : () => void;
   onAdminNav             ?: (page: string) => void;
   onMurabbiNav           ?: (page: string) => void;
   onApproveDeleteRequest ?: (studentId: string, notifId: string) => void;
 }
 
-export default function TopBar({ activePage, onEnroll, onAdminNav, onMurabbiNav, onApproveDeleteRequest }: TopBarProps) {
+export default function TopBar({ activePage, onEnroll, onMenu, onAdminNav, onMurabbiNav, onApproveDeleteRequest }: TopBarProps) {
   const title = pageNames[activePage] || activePage;
   const { user, logout } = useAuth();
   const isMurabbiPanel = window.location.pathname.includes('/murabbi');
@@ -61,37 +64,40 @@ export default function TopBar({ activePage, onEnroll, onAdminNav, onMurabbiNav,
   const userInitials = user?.fullName ? getInitials(user.fullName) : "AA";
 
   return (
-    <div className="bg-card border-b border-border px-8 h-16 flex items-center justify-between sticky top-0 z-50">
-      <div>
-        <div className="font-serif text-[22px] text-foreground">
+    <header className="bg-card/95 backdrop-blur border-b border-border px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3 sticky top-0 z-50">
+      <div className="flex min-w-0 items-center gap-2">
+        <button
+          className="-ml-1.5 rounded-md p-2 text-nc-dark hover:bg-muted lg:hidden"
+          onClick={onMenu}
+          aria-label="Open menu"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+        <h1 className="truncate font-serif text-[19px] text-nc-dark sm:text-[22px]">
           {title}
-          {activePage === 'dashboard' && (
-            <span className="font-sans text-[13px] text-nc-muted font-normal ml-2.5">
-              Welcome back, {user?.fullName || "Atiq Sahib"}
+          {activePage === 'dashboard' && user?.fullName && (
+            <span className="ml-2.5 hidden font-sans text-[13px] font-normal text-nc-muted md:inline">
+              Welcome back, {user.fullName}
             </span>
           )}
-        </div>
+        </h1>
       </div>
-      <div className="flex items-center gap-3">
-        <div className="flex items-center gap-2.5 bg-muted border border-border rounded-sm px-3.5 w-[280px]">
-          <span className="text-nc-muted text-sm">⌕</span>
-          <input
-            className="border-none bg-transparent outline-none text-[13.5px] text-foreground flex-1 py-[9px] font-sans"
-            placeholder="Search students, circles, murabbis…"
-          />
-        </div>
-        <button className="btn-gold" onClick={onEnroll}>+ Enroll Student</button>
+      <div className="flex flex-shrink-0 items-center gap-2 sm:gap-3">
+        <button className="btn-gold !px-3 sm:!px-[18px]" onClick={onEnroll} aria-label="Enroll student">
+          <Plus className="h-4 w-4" strokeWidth={2.4} />
+          <span className="hidden sm:inline">Enroll Student</span>
+        </button>
 
         <NotificationBell onApproveDeleteRequest={onApproveDeleteRequest} />
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <div className="w-9 h-9 rounded-full bg-teal-lt flex items-center justify-center text-sm font-semibold text-teal cursor-pointer hover:bg-teal-lt/80 transition-colors overflow-hidden" title={user?.fullName}>
+            <button className="w-9 h-9 rounded-full bg-plum-lt flex items-center justify-center text-sm font-semibold text-plum cursor-pointer ring-1 ring-gold/50 hover:ring-gold transition overflow-hidden" title={user?.fullName} aria-label="Account menu">
               {user?.image
                 ? <img src={user.image} alt={user.fullName} className="w-full h-full object-cover" />
                 : userInitials
               }
-            </div>
+            </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56" align="end" forceMount>
             <DropdownMenuLabel className="font-normal">
@@ -100,7 +106,7 @@ export default function TopBar({ activePage, onEnroll, onAdminNav, onMurabbiNav,
                 <p className="text-xs leading-none text-muted-foreground">
                   {user?.email}
                 </p>
-                <p className="text-[10px] leading-none text-teal font-bold uppercase mt-1">
+                <p className="text-[10px] leading-none text-gold-dim font-bold uppercase mt-1">
                   {user?.role}
                 </p>
               </div>
@@ -144,6 +150,6 @@ export default function TopBar({ activePage, onEnroll, onAdminNav, onMurabbiNav,
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-    </div>
+    </header>
   );
 }

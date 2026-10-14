@@ -15,11 +15,13 @@ import { EnrollModal, AwardPointsModal } from "@/components/modals/AllModals";
 
 const MurabbiIndex = () => {
   const [activePage, setActivePage] = useState('murabbi-dashboard');
+  const [navOpen, setNavOpen] = useState(false);
   const [enrollOpen, setEnrollOpen] = useState(false);
   const [awardOpen, setAwardOpen] = useState(false);
 
   const handleNav = (page: string) => {
     setActivePage(page);
+    setNavOpen(false);
     window.scrollTo(0, 0);
   };
 
@@ -41,12 +43,12 @@ const MurabbiIndex = () => {
 
   return (
     <>
-      <MurabbiSidebar activePage={activePage} onNavigate={handleNav} />
-      <div className="ml-[260px] min-h-screen flex flex-col">
-        <TopBar activePage={activePage} onEnroll={() => setEnrollOpen(true)} onMurabbiNav={handleNav} />
-        <div className="p-8 flex-1">
+      <MurabbiSidebar activePage={activePage} onNavigate={handleNav} open={navOpen} onClose={() => setNavOpen(false)} />
+      <div className="lg:ml-[264px] min-h-screen flex flex-col">
+        <TopBar activePage={activePage} onEnroll={() => setEnrollOpen(true)} onMenu={() => setNavOpen(true)} onMurabbiNav={handleNav} />
+        <main className="flex-1 p-4 sm:p-6 lg:p-8">
           {renderPage()}
-        </div>
+        </main>
       </div>
       <EnrollModal open={enrollOpen} onClose={() => setEnrollOpen(false)} murabbiMode={true} />
       <AwardPointsModal open={awardOpen} onClose={() => setAwardOpen(false)} />

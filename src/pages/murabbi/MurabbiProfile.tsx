@@ -180,7 +180,7 @@ export default function MurabbiProfile() {
                   <FieldLabel>Full Name</FieldLabel>
                   <input
                     type="text" required
-                    className="w-full px-3.5 py-2.5 border border-border rounded-md text-sm bg-card focus:border-teal focus:shadow-[0_0_0_3px_rgba(14,107,114,0.08)] outline-none transition-all"
+                    className="w-full px-3.5 py-2.5 border border-border rounded-md text-sm bg-card focus:border-teal focus:shadow-[0_0_0_3px_rgba(105,28,70,0.12)] outline-none transition-all"
                     value={profile.fullName}
                     onChange={(e) => setProfile((p) => ({ ...p, fullName: e.target.value }))}
                     placeholder="Enter your full name"
@@ -217,7 +217,7 @@ export default function MurabbiProfile() {
               <CardHeader className="pb-5 border-b border-border mb-6">
                 <div className="flex items-center gap-3">
                   <div className="flex items-center justify-center w-8 h-8 rounded-md bg-gold-lt">
-                    <Lock className="h-4 w-4 text-gold" />
+                    <Lock className="h-4 w-4 text-gold-dim" />
                   </div>
                   <CardTitle sub="Keep your account secure">Change Password</CardTitle>
                 </div>

@@ -40,7 +40,7 @@ function ScheduleEveningModal({ open, onClose, onSuccess }: {
   if (!open) return null;
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <div className="bg-card rounded-xl shadow-xl w-[340px] p-6 border border-border">
+      <div className="bg-card rounded-xl shadow-xl w-[340px] max-w-[calc(100vw-2rem)] p-6 border border-border">
         <h3 className="font-semibold text-[15px] mb-1">Schedule Parent Evening</h3>
         <p className="text-[12px] text-nc-muted mb-4">Enter the programme month number (1–12)</p>
         <input
@@ -143,7 +143,7 @@ function SendWhatsappModal({ open, onClose, onSuccess }: {
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <div className="bg-card rounded-xl shadow-xl w-[460px] border border-border overflow-hidden">
+      <div className="bg-card rounded-xl shadow-xl w-[460px] max-w-[calc(100vw-2rem)] border border-border overflow-hidden">
 
         {/* Header */}
         <div className="px-5 pt-5 pb-3">
@@ -358,7 +358,7 @@ export default function ParentsPage() {
         ? `Scheduled: Month ${scheduledMonth} · ${eveningsHeld} held this term`
         : `Quarterly gathering · ${eveningsHeld} held this term`,
       bg      : "bg-gold/10 border-gold/20",
-      titleCls: "text-gold",
+      titleCls: "text-gold-dim",
       action  : (
         <div className="flex items-center gap-1.5">
           <button
@@ -416,7 +416,7 @@ export default function ParentsPage() {
     <div className="page-animate">
 
       {/* ── Stats row ─────────────────────────────────────────────── */}
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4 mb-7">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-3 sm:gap-4 mb-7">
         <StatCard
           label="Registered Parents"
           value={loading ? "—" : stats.totalParents ?? 0}

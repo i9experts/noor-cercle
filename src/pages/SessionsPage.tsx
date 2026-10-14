@@ -26,13 +26,13 @@ type SessionRecord = {
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const THEME_CLR: Record<string, { bg: string; text: string }> = {
   teal  : { bg: "bg-teal-lt",      text: "text-teal"      },
-  gold  : { bg: "bg-nc-amber-lt",  text: "text-gold"      },
+  gold  : { bg: "bg-nc-amber-lt",  text: "text-gold-dim"      },
   green : { bg: "bg-nc-green-lt",  text: "text-nc-green"  },
   purple: { bg: "bg-nc-purple-lt", text: "text-nc-purple" },
 };
 
 function rateColor(r: number) {
-  return r >= 80 ? "text-teal" : r >= 60 ? "text-gold" : "text-nc-red";
+  return r >= 80 ? "text-teal" : r >= 60 ? "text-gold-dim" : "text-nc-red";
 }
 
 
@@ -188,7 +188,7 @@ export default function SessionsPage() {
     <div className="page-animate">
 
       {/* ── Stat Cards ──────────────────────────────────────────────── */}
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4 mb-6">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-3 sm:gap-4 mb-6">
         <StatCard
           label="Sessions Completed"
           value={stats?.sessionsCompleted ?? 0}
@@ -216,10 +216,10 @@ export default function SessionsPage() {
       </div>
 
       {/* ── Curriculum Grid + Theme Detail ──────────────────────────── */}
-      <div className="grid grid-cols-5 gap-5 mb-5">
+      <div className="grid grid-cols-1 xl:grid-cols-5 gap-5 mb-5">
 
         {/* Curriculum grid — 3 cols */}
-        <NcCard className="col-span-3">
+        <NcCard className="xl:col-span-3">
           <CardHeader>
             <CardTitle sub={`${completedCount} of 12 months completed`}>
               <span className="flex items-center gap-1.5">
@@ -264,7 +264,7 @@ export default function SessionsPage() {
         </NcCard>
 
         {/* Theme detail — 2 cols */}
-        <NcCard className="col-span-2">
+        <NcCard className="xl:col-span-2">
           {activeTheme ? (
             <ThemeDetail theme={activeTheme} stats={stats} />
           ) : (
