@@ -32,7 +32,7 @@ export default function WorldPage() {
     <div className="page-animate">
       <QuranBox arabic="خَيْرُ النَّاسِ أَنْفَعُهُمْ لِلنَّاسِ" translation='"The best of people are those most beneficial to people."' reference="PROPHET MUHAMMAD ﷺ" />
 
-      <div className="grid grid-cols-2 gap-5 mb-6">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 mb-6">
         {/* Hero card */}
         <div className="bg-gradient-to-br from-teal-lt to-card border border-teal/15 rounded-xl p-4 sm:p-5 md:p-6 transition-all shadow-sm">
 
@@ -40,11 +40,11 @@ export default function WorldPage() {
           <div className="flex flex-col md:flex-row items-center md:items-start gap-4 md:gap-6 mb-6">
 
             {/* Logo */}
-            <div className="bg-white/5 p-3 sm:p-4 rounded-xl backdrop-blur-sm flex-shrink-0">
+            <div className="flex-shrink-0">
               <img
-                src="/noor-circle-logo-white.png"
-                alt="Noor Circles Logo"
-                className="h-24 sm:h-28 md:h-32 w-auto object-contain mx-auto"
+                src="/brand/noor-circles-logo.svg"
+                alt="Noor Circles"
+                className="h-28 sm:h-32 md:h-36 w-auto mx-auto"
               />
             </div>
 
@@ -95,9 +95,9 @@ export default function WorldPage() {
       </div>
 
       <SectionTitle>World-Class Features — What Makes Noor Circles Extraordinary</SectionTitle>
-      <div className="grid grid-cols-3 gap-5 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-6">
         {features.map((f) => (
-          <div key={f.title} className="bg-gradient-to-br from-teal-lt to-card border border-teal/15 rounded-lg p-5 transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_28px_rgba(14,107,114,0.1)]">
+          <div key={f.title} className="bg-gradient-to-br from-teal-lt to-card border border-teal/15 rounded-lg p-5 transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_28px_rgba(105,28,70,0.1)]">
             <div className="w-11 h-11 rounded-xl bg-teal flex items-center justify-center mb-3">
               <f.icon className="h-5 w-5 text-white" />
             </div>
@@ -108,7 +108,7 @@ export default function WorldPage() {
       </div>
 
       <SectionTitle>The Three Scholars Who Ground Every Session</SectionTitle>
-      <div className="grid grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {scholars.map((s) => (
           <NcCard key={s.name} small>
             <div className="font-bold text-[15px] text-teal mb-1">{s.name}</div>

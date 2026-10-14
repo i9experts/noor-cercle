@@ -30,7 +30,7 @@ function timeAgo(date: string) {
 
 const ICON_CONFIG: Record<AnnouncementIcon, { Icon: React.ElementType; bg: string; text: string; label: string }> = {
   session  : { Icon: Calendar,      bg: "bg-teal/10",     text: "text-teal",     label: "Session"  },
-  training : { Icon: GraduationCap, bg: "bg-gold/10",     text: "text-gold",     label: "Training" },
+  training : { Icon: GraduationCap, bg: "bg-gold/10",     text: "text-gold-dim",     label: "Training" },
   donor    : { Icon: Heart,         bg: "bg-nc-green/10", text: "text-nc-green", label: "Donor"    },
   info     : { Icon: Info,          bg: "bg-nc-muted/10", text: "text-nc-muted", label: "Info"     },
 };
@@ -76,7 +76,7 @@ export default function MurabbiAnnouncements() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search announcements…"
-            className="w-full pl-9 pr-8 py-2 text-sm border border-border rounded-lg bg-card focus:border-teal focus:shadow-[0_0_0_3px_rgba(14,107,114,0.08)] outline-none transition-colors"
+            className="w-full pl-9 pr-8 py-2 text-sm border border-border rounded-lg bg-card focus:border-teal focus:shadow-[0_0_0_3px_rgba(105,28,70,0.12)] outline-none transition-colors"
           />
           {search && (
             <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-nc-muted hover:text-foreground">

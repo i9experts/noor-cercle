@@ -22,7 +22,7 @@ export default function DeleteConfirmModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-card border border-border rounded-xl shadow-xl w-[400px] p-6">
+      <div className="bg-card border border-border rounded-xl shadow-xl w-[400px] max-w-[calc(100vw-2rem)] p-6">
 
         {/* Icon + Title */}
         <div className="flex items-start gap-4 mb-4">

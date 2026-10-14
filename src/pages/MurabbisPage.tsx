@@ -16,7 +16,7 @@ const TIER_COLORS: Record<number, string> = {
   2: "bg-gold/10 border-gold/20",
   3: "bg-purple-100 border-purple-200",
 };
-const TIER_TEXT: Record<number, string> = { 1: "text-teal", 2: "text-gold", 3: "text-purple-600" };
+const TIER_TEXT: Record<number, string> = { 1: "text-teal", 2: "text-gold-dim", 3: "text-purple-600" };
 const TIER_BAR: Record<number, string>  = { 1: "bg-teal", 2: "bg-gold", 3: "bg-purple-500" };
 
 const BADGE_CONFIG = {
@@ -179,7 +179,7 @@ export default function MurabbisPage({
     <div className="page-animate">
 
       {/* ── Stats row ─────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4 mb-7">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-3 sm:gap-4 mb-7">
         <StatCard
           label="Total Murabbis"
           value={total}
@@ -388,7 +388,7 @@ export default function MurabbisPage({
             </div>
             <div className="flex items-center justify-between text-[12px] text-nc-muted">
               <span>Avg. circle health score</span>
-              <span className={`font-semibold ${avgHealth >= 80 ? "text-teal" : avgHealth >= 60 ? "text-gold" : "text-red-500"}`}>
+              <span className={`font-semibold ${avgHealth >= 80 ? "text-teal" : avgHealth >= 60 ? "text-gold-dim" : "text-red-500"}`}>
                 {avgHealth}%
               </span>
             </div>

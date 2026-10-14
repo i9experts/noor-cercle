@@ -21,7 +21,7 @@ function notifIcon(type: string) {
   if (type === "delete_request")      return <Trash2   className="h-4 w-4 text-red-500"    />;
   if (type === "student_assigned")    return <UserPlus className="h-4 w-4 text-teal"       />;
   if (type === "circle_assigned")     return <UserPlus className="h-4 w-4 text-nc-purple"  />;
-  if (type === "performance_review")  return <Award    className="h-4 w-4 text-gold"        />;
+  if (type === "performance_review")  return <Award    className="h-4 w-4 text-gold-dim"        />;
   if (type === "material_request")    return <BookOpen className="h-4 w-4 text-nc-green"   />;
   return <Info className="h-4 w-4 text-nc-muted" />;
 }
@@ -36,7 +36,7 @@ const INDICATOR_LABELS: Record<string, string> = {
 };
 
 function rateColor(v: number) {
-  return v >= 80 ? "text-teal" : v >= 60 ? "text-gold" : "text-nc-red";
+  return v >= 80 ? "text-teal" : v >= 60 ? "text-gold-dim" : "text-nc-red";
 }
 
 function PerformanceReviewModal({
@@ -353,7 +353,7 @@ export default function NotificationBell({ onApproveDeleteRequest }: Notificatio
         </button>
 
         {open && (
-          <div className="absolute right-0 top-12 w-[340px] bg-card border border-border rounded-xl shadow-2xl z-50 overflow-hidden">
+          <div className="absolute right-0 top-12 w-[340px] max-w-[calc(100vw-1.5rem)] bg-card border border-border rounded-xl shadow-2xl z-50 overflow-hidden">
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-border">
               <div className="flex items-center gap-2">
@@ -455,7 +455,7 @@ export default function NotificationBell({ onApproveDeleteRequest }: Notificatio
                         {/* View button for performance reviews */}
                         {isPerfReview && (
                           <button
-                            className="mt-2 flex items-center gap-1.5 text-xs font-semibold bg-nc-amber-lt hover:bg-gold/10 text-gold border border-gold/30 px-2.5 py-1 rounded-md transition-colors"
+                            className="mt-2 flex items-center gap-1.5 text-xs font-semibold bg-nc-amber-lt hover:bg-gold/10 text-gold-dim border border-gold/30 px-2.5 py-1 rounded-md transition-colors"
                             onClick={() => {
                               setOpen(false);
                               setViewReview(n);

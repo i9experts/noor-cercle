@@ -20,7 +20,7 @@ export default function Modal({ open, onClose, title, subtitle, children }: Moda
 
   return (
     <div className="fixed inset-0 bg-black/45 z-[200] flex items-center justify-center" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="bg-card rounded-lg p-8 w-[560px] max-w-[95vw] max-h-[90vh] overflow-y-auto relative">
+      <div className="bg-card rounded-lg p-5 sm:p-8 w-[560px] max-w-[95vw] max-h-[90vh] overflow-y-auto relative">
         <button className="absolute top-5 right-5 bg-muted border-none w-8 h-8 rounded-full cursor-pointer text-base text-nc-muted flex items-center justify-center hover:bg-teal-lt" onClick={onClose}><X className="h-4 w-4" /></button>
         <div className="font-serif text-[22px] text-foreground mb-1.5">{title}</div>
         {subtitle && <div className="text-[13px] text-nc-muted mb-6">{subtitle}</div>}
@@ -46,7 +46,7 @@ export function FormInput(props: React.ComponentPropsWithoutRef<'input'>) {
   return (
     <input
       {...rest}
-      className={`w-full px-3.5 py-2.5 border border-border rounded-sm text-sm text-foreground bg-card focus:border-teal focus:shadow-[0_0_0_3px_rgba(14,107,114,0.08)] outline-none transition-colors ${className ?? ''}`}
+      className={`w-full px-3.5 py-2.5 border border-border rounded-sm text-sm text-foreground bg-card focus:border-teal focus:shadow-[0_0_0_3px_rgba(105,28,70,0.12)] outline-none transition-colors ${className ?? ''}`}
     />
   );
 }
@@ -56,7 +56,7 @@ export function FormSelect(props: React.ComponentPropsWithoutRef<'select'>) {
   return (
     <select
       {...rest}
-      className={`w-full px-3.5 py-2.5 border border-border rounded-sm text-sm text-foreground bg-card focus:border-teal focus:shadow-[0_0_0_3px_rgba(14,107,114,0.08)] outline-none transition-colors ${className ?? ''}`}
+      className={`w-full px-3.5 py-2.5 border border-border rounded-sm text-sm text-foreground bg-card focus:border-teal focus:shadow-[0_0_0_3px_rgba(105,28,70,0.12)] outline-none transition-colors ${className ?? ''}`}
     >
       {children}
     </select>
@@ -68,7 +68,7 @@ export function FormTextarea(props: React.ComponentPropsWithoutRef<'textarea'>) 
   return (
     <textarea
       {...rest}
-      className={`w-full px-3.5 py-2.5 border border-border rounded-sm text-sm text-foreground bg-card focus:border-teal focus:shadow-[0_0_0_3px_rgba(14,107,114,0.08)] outline-none transition-colors resize-y min-h-[80px] ${className ?? ''}`}
+      className={`w-full px-3.5 py-2.5 border border-border rounded-sm text-sm text-foreground bg-card focus:border-teal focus:shadow-[0_0_0_3px_rgba(105,28,70,0.12)] outline-none transition-colors resize-y min-h-[80px] ${className ?? ''}`}
     />
   );
 }
@@ -81,7 +81,7 @@ export function FormPasswordInput(props: React.ComponentPropsWithoutRef<'input'>
       <input
         {...rest}
         type={show ? "text" : "password"}
-        className={`w-full px-3.5 py-2.5 pr-10 border border-border rounded-sm text-sm text-foreground bg-card focus:border-teal focus:shadow-[0_0_0_3px_rgba(14,107,114,0.08)] outline-none transition-colors ${className ?? ''}`}
+        className={`w-full px-3.5 py-2.5 pr-10 border border-border rounded-sm text-sm text-foreground bg-card focus:border-teal focus:shadow-[0_0_0_3px_rgba(105,28,70,0.12)] outline-none transition-colors ${className ?? ''}`}
       />
       <button
         type="button"

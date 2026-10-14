@@ -17,7 +17,7 @@ const NBH_STATUS: Record<string, { label: string; variant: "green" | "amber" | "
 
 const PIPE_STATUS: Record<string, { label: string; color: string }> = {
   prospecting      : { label: "Prospecting",       color: "text-slate bg-muted border border-border" },
-  "in-talks"       : { label: "In talks",           color: "text-gold bg-gold/10 border border-gold/20" },
+  "in-talks"       : { label: "In talks",           color: "text-gold-dim bg-gold/10 border border-gold/20" },
   "ready-to-launch": { label: "Ready to launch",   color: "text-nc-green bg-nc-green/10 border border-nc-green/20" },
 };
 

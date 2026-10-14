@@ -148,7 +148,7 @@ export default function StudentsPage({
 
   return (
     <div className="page-animate">
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4 mb-7">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-3 sm:gap-4 mb-7">
         <StatCard label="Total Enrolled"  value={stats?.totalStudents ?? students.length} meta="All circles"      color="teal"   />
         <StatCard label="Active Students" value={stats?.activeStudents ?? "—"}             meta="Currently active" color="green"  />
         <StatCard label="Total Circles"   value={stats?.totalCircles  ?? "—"}              meta="Across all areas" color="gold"   />
@@ -222,7 +222,7 @@ export default function StudentsPage({
         ) : filtered.length === 0 ? (
           <div className="text-center py-10 text-nc-muted text-sm">No students found.</div>
         ) : (
-          <div className="scroll-hover overflow-x-auto max-h-[280px]">
+          <div className="overflow-x-auto">
             <table className="w-full border-collapse text-[13.5px]">
               <thead>
                 <tr>

@@ -33,7 +33,7 @@ function fmtDate(d: string | Date) {
 const STATUS_COLORS: Record<string, string> = {
   present: 'text-nc-green bg-nc-green/10 border border-nc-green/20',
   absent : 'text-nc-red  bg-nc-red/10  border border-nc-red/20',
-  excused: 'text-gold    bg-gold/10    border border-gold/20',
+  excused: 'text-gold-dim    bg-gold/10    border border-gold/20',
 };
 
 const STATUS_CYCLE: Record<string, string> = {
@@ -102,7 +102,7 @@ function EditModal({
       subtitle={`${record.circle?.name || '—'} · Session #${record.sessionNumber}`}
     >
       {/* Session meta */}
-      <div className="grid grid-cols-3 gap-3 mb-5">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
         <div>
           <label className="block text-[11px] font-semibold text-nc-muted uppercase tracking-wide mb-1">Session #</label>
           <input
@@ -136,7 +136,7 @@ function EditModal({
       <div className="flex gap-2 mb-3">
         <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-nc-green/10 text-nc-green">{pCount} Present</span>
         <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-nc-red/10  text-nc-red">{aCount} Absent</span>
-        <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-gold/10    text-gold">{eCount} Excused</span>
+        <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-gold/10    text-gold-dim">{eCount} Excused</span>
         <span className="ml-auto text-[11px] text-nc-muted">Click status to cycle: Present → Absent → Excused</span>
       </div>
 
@@ -431,7 +431,7 @@ export default function AttendancePage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         {[
           { label: 'Total Sessions',     value: stats.total,            color: 'text-black',     icon: BookOpen     },
           { label: 'Avg Present Rate',   value: `${stats.avgRate}%`,    color: 'text-black', icon: CheckCircle2 },
@@ -479,7 +479,7 @@ export default function AttendancePage() {
                     ? 'Search by circle or topic…'
                     : 'Search by circle, topic, or murabbi…'
                 }
-                className="w-full pl-9 pr-8 py-2 text-sm border border-border rounded-lg bg-card focus:border-teal focus:shadow-[0_0_0_3px_rgba(14,107,114,0.08)] outline-none transition-colors"
+                className="w-full pl-9 pr-8 py-2 text-sm border border-border rounded-lg bg-card focus:border-teal focus:shadow-[0_0_0_3px_rgba(105,28,70,0.12)] outline-none transition-colors"
               />
               {search && (
                 <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-nc-muted hover:text-foreground">
@@ -554,8 +554,8 @@ export default function AttendancePage() {
                     <span className="text-[12px] font-semibold text-nc-muted">Overall:</span>
                     <span className="text-[13px] font-bold text-nc-green">{p} Present</span>
                     <span className="text-[13px] font-bold text-nc-red">{a} Absent</span>
-                    <span className="text-[13px] font-bold text-gold">{e} Excused</span>
-                    <span className={`ml-auto text-lg font-bold font-serif ${rate >= 85 ? 'text-nc-green' : rate >= 60 ? 'text-gold' : 'text-nc-red'}`}>
+                    <span className="text-[13px] font-bold text-gold-dim">{e} Excused</span>
+                    <span className={`ml-auto text-lg font-bold font-serif ${rate >= 85 ? 'text-nc-green' : rate >= 60 ? 'text-gold-dim' : 'text-nc-red'}`}>
                       {rate}% Attendance
                     </span>
                   </div>

@@ -11,9 +11,9 @@ import { useToast } from "@/hooks/use-toast";
 
 const MONTH_NAMES = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const CLR = {
-  teal  : 'hsl(185, 78%, 25%)',
-  tealLt: 'hsl(185, 60%, 82%)',
-  mutedFg: 'hsl(185, 10%, 55%)',
+  teal  : 'hsl(327, 58%, 26%)', // brand plum
+  tealLt: 'hsl(36, 54%, 53%)',  // brand gold
+  mutedFg: 'hsl(327, 8%, 50%)',
 };
 
 function ChartTooltip({ active, payload, label }: any) {
@@ -51,14 +51,14 @@ export default function ReportsPage() {
 
   return (
     <div className="page-animate">
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4 mb-7">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-3 sm:gap-4 mb-7">
         <StatCard label="Total Students" value={overview.totalStudents ?? "—"} meta="Enrolled" color="teal" />
         <StatCard label="Active Circles" value={overview.activeCircles ?? "—"} meta="Running" color="gold" />
         <StatCard label="Avg. Attendance" value={overview.avgAttendanceRate ? `${overview.avgAttendanceRate}%` : "—"} meta="All sessions" color="green" />
         <StatCard label="Awards Given" value={overview.totalIncentivesAwarded ?? "—"} meta="Total Noor Points" color="purple" />
       </div>
 
-      <div className="grid grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
         <NcCard>
           <CardHeader><CardTitle>Key Metrics — Year 1 Progress</CardTitle></CardHeader>
           {loading ? (
@@ -69,7 +69,7 @@ export default function ReportsPage() {
                 <div key={m.label}>
                   <div className="flex justify-between text-[13px] mb-1">
                     <span className="text-foreground">{m.label}</span>
-                    <span className={`font-semibold ${m.color === "teal" ? "text-teal" : m.color === "gold" ? "text-gold" : "text-nc-green"}`}>
+                    <span className={`font-semibold ${m.color === "teal" ? "text-teal" : m.color === "gold" ? "text-gold-dim" : "text-nc-green"}`}>
                       {m.value}
                     </span>
                   </div>
@@ -94,7 +94,7 @@ export default function ReportsPage() {
                     <div className="text-[13px] font-semibold">{b._id}</div>
                     <div className="text-[11px] text-nc-muted">{b.count} times · {b.totalPoints} total pts</div>
                   </div>
-                  <span className="font-bold text-gold font-serif">{b.totalPoints}</span>
+                  <span className="font-bold text-gold-dim font-serif">{b.totalPoints}</span>
                 </div>
               ))}
             </div>
@@ -127,7 +127,7 @@ export default function ReportsPage() {
               margin={{ top: 8, right: 8, left: -20, bottom: 0 }}
               barCategoryGap="35%"
             >
-              <CartesianGrid vertical={false} strokeDasharray="4 3" stroke="hsl(185,10%,92%)" />
+              <CartesianGrid vertical={false} strokeDasharray="4 3" stroke="hsl(327,20%,92%)" />
               <XAxis
                 dataKey="month"
                 tick={{ fontSize: 11, fill: CLR.mutedFg }}
@@ -140,7 +140,7 @@ export default function ReportsPage() {
                 tickLine={false}
                 axisLine={false}
               />
-              <Tooltip content={<ChartTooltip />} cursor={{ fill: "hsl(185,40%,96%)", radius: 4 }} />
+              <Tooltip content={<ChartTooltip />} cursor={{ fill: "hsl(327,40%,96%)", radius: 4 }} />
               <Bar dataKey="count" radius={[5, 5, 0, 0]} maxBarSize={48} animationDuration={500}>
                 {monthlyEnrollments.map((_: any, i: number) => (
                   <Cell key={i} fill={CLR.teal} />
