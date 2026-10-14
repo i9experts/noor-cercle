@@ -17,6 +17,7 @@ import TrainingPage from "@/pages/TrainingPage";
 import NeighbourhoodsPage from "@/pages/NeighbourhoodsPage";
 import ReportsPage from "@/pages/ReportsPage";
 import SettingsPage from "@/pages/SettingsPage";
+import InterestPage from "@/pages/InterestPage";
 import {
   EnrollModal,
   NewCircleModal,
@@ -111,6 +112,7 @@ const Index = () => {
       case "training":       return <TrainingPage />;
       case "neighbourhoods": return <NeighbourhoodsPage />;
       case "reports":        return <ReportsPage />;
+      case "interest":       return <InterestPage />;
       case "settings":       return <SettingsPage />;
       default:               return <DashboardPage />;
     }

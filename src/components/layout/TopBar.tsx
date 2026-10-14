@@ -5,6 +5,7 @@ const pageNames: Record<string, string> = {
   students           : 'Student Management',
   murabbis           : 'Murabbi Management',
   parents            : 'Parent Network',
+  interest           : 'Interest Requests',
   circles            : 'Circle Management',
   attendance         : 'Attendance Overview',
   sessions           : 'Sessions & Curriculum',

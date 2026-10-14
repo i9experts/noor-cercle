@@ -302,6 +302,16 @@ export const reportsService = {
 };
 
 // ─────────────────────────────────────────────────────────────
+//  INTEREST REQUESTS (landing-page "Find your place" form)
+// ─────────────────────────────────────────────────────────────
+export type InterestStatus = 'new' | 'contacted' | 'closed';
+export const interestService = {
+  getAll : (params: { status?: string; role?: string } = {}) => API.get('/interest', { params }),
+  update : (id: string, data: { status?: InterestStatus; notes?: string }) => API.patch(`/interest/${id}`, data),
+  remove : (id: string) => API.delete(`/interest/${id}`),
+};
+
+// ─────────────────────────────────────────────────────────────
 //  LIVE SESSIONS (Zoom meetings)
 // ─────────────────────────────────────────────────────────────
 export const liveSessionsService = {

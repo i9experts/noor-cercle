@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import {
   Award, BarChart3, BookOpen, CircleDot, ClipboardCheck, Globe2, GraduationCap,
-  HeartHandshake, LayoutDashboard, MapPin, School, Settings, TrendingUp, Users,
+  HeartHandshake, Inbox, LayoutDashboard, MapPin, School, Settings, TrendingUp, Users,
 } from "lucide-react";
-import { adminService } from "@/services/api.service";
+import { adminService, interestService } from "@/services/api.service";
 import AppSidebar, { SidebarNavGroup } from "./AppSidebar";
 
 const navGroups: SidebarNavGroup[] = [
@@ -20,6 +20,7 @@ const navGroups: SidebarNavGroup[] = [
       { icon: GraduationCap,  label: "Students", page: "students", badgeKey: "students" },
       { icon: Users,          label: "Murabbis", page: "murabbis", badgeKey: "murabbis" },
       { icon: HeartHandshake, label: "Parents",  page: "parents" },
+      { icon: Inbox,          label: "Interest Requests", page: "interest", badgeKey: "interest" },
     ],
   },
   {
@@ -65,8 +66,12 @@ export default function Sidebar({ activePage, onNavigate, open, onClose }: Sideb
     adminService.getDashboard()
       .then((r) => {
         const d = r.data.data || r.data;
-        setCounts({ students: d.totalStudents ?? 0, murabbis: d.totalMurabbis ?? 0 });
+        setCounts((c) => ({ ...c, students: d.totalStudents ?? 0, murabbis: d.totalMurabbis ?? 0 }));
       })
+      .catch(() => {});
+    // Badge = requests still waiting for a first contact
+    interestService.getAll({ status: "new" })
+      .then((r) => setCounts((c) => ({ ...c, interest: (r.data.data || r.data || []).length })))
       .catch(() => {});
   }, []);
 
