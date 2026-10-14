@@ -29,7 +29,13 @@ API.interceptors.response.use(
   async (error) => {
     const original = error.config;
 
-    if (error.response?.status === 401 && !original._retry) {
+    // A 401 from the public auth endpoints (wrong password, account pending
+    // approval, bad OTP…) is a real answer for the form to show — not an
+    // expired session. Without this, every failed sign-in triggered the
+    // refresh path, hard-reloaded /signin and wiped the error message.
+    const isPublicAuthCall = /\/auth\/(signin|signup|forgot-password|verify-otp|reset-password|resend-otp)/.test(original?.url ?? '');
+
+    if (error.response?.status === 401 && !original._retry && !isPublicAuthCall) {
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });

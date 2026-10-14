@@ -150,7 +150,7 @@ export default function MurabbisPage({
   async function toggleStatus(m: any) {
     try {
       if (m.isActive) { await adminService.deactivateMurabbi(m._id); toast({ title: `${m.fullName} deactivated.` }); }
-      else             { await adminService.activateMurabbi(m._id);   toast({ title: `${m.fullName} activated.` }); }
+      else             { await adminService.activateMurabbi(m._id);   toast({ title: `${m.fullName} ${m.pendingApproval ? "approved" : "activated"}.` }); }
       load();
     } catch { toast({ variant: "destructive", title: "Action failed." }); }
   }
@@ -167,7 +167,8 @@ export default function MurabbisPage({
   }
 
   const activeMurabbis   = murabbis.filter((m) => m.isActive);
-  const inactiveMurabbis = murabbis.filter((m) => !m.isActive);
+  const pendingMurabbis  = murabbis.filter((m) => !m.isActive && m.pendingApproval);
+  const inactiveMurabbis = murabbis.filter((m) => !m.isActive && !m.pendingApproval);
   const total            = pageStats.total ?? murabbis.length;
   const tier1Count       = tierCounts.tier1 ?? activeMurabbis.length;
   const tier2Count       = tierCounts.tier2 ?? 0;
@@ -268,6 +269,41 @@ export default function MurabbisPage({
                   </div>
                 );
               })}
+            </div>
+          )}
+
+          {/* Self-registered accounts waiting for an admin to approve them */}
+          {pendingMurabbis.length > 0 && (
+            <div className="border-t border-border px-4 py-3">
+              <p className="text-[12px] text-amber-600 font-semibold uppercase tracking-wide mb-2">
+                Awaiting approval ({pendingMurabbis.length})
+              </p>
+              <div className="divide-y divide-border">
+                {pendingMurabbis.map((m) => (
+                  <div key={m._id} className="flex items-center gap-3 py-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center text-xs font-bold text-amber-700 flex-shrink-0">
+                      {getInitials(m.fullName)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold text-[13px] truncate">{m.fullName}</div>
+                      <div className="text-[11px] text-nc-muted">{m.email}</div>
+                    </div>
+                    <button
+                      className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[12px] font-semibold text-green-700 bg-green-50 hover:bg-green-100"
+                      onClick={() => toggleStatus(m)}
+                    >
+                      <UserCheck className="h-3.5 w-3.5" /> Approve
+                    </button>
+                    <ActionMenu
+                      murabbi={m}
+                      onEdit={() => setEditMurabbi(m)}
+                      onToggle={() => toggleStatus(m)}
+                      onDelete={() => handleDelete(m)}
+                      onTierChange={(t) => handleTierChange(m, t)}
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
