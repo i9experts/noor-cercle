@@ -312,6 +312,49 @@ export const interestService = {
 };
 
 // ─────────────────────────────────────────────────────────────
+//  CONTRIBUTIONS (parents + public supporters, min PKR 250/month)
+// ─────────────────────────────────────────────────────────────
+export const contributionsService = {
+  summary          : (month?: string) => API.get('/contributions/summary', { params: { month } }),
+  getContributors  : (params: { type?: string; status?: string; search?: string } = {}) => API.get('/contributions/contributors', { params }),
+  getContributor   : (id: string)               => API.get(`/contributions/contributors/${id}`),
+  createContributor: (data: object)             => API.post('/contributions/contributors', data),
+  updateContributor: (id: string, data: object) => API.patch(`/contributions/contributors/${id}`, data),
+  removeContributor: (id: string)               => API.delete(`/contributions/contributors/${id}`),
+  getPayments      : (params: { month?: string; method?: string; status?: string; contributorId?: string } = {}) =>
+                       API.get('/contributions/payments', { params }),
+  recordPayment    : (data: object)             => API.post('/contributions/payments', data),
+  updatePayment    : (id: string, data: { status: 'refunded' | 'void'; notes?: string }) => API.patch(`/contributions/payments/${id}`, data),
+};
+
+// ─────────────────────────────────────────────────────────────
+//  MURABBI ENGAGEMENT RATING
+// ─────────────────────────────────────────────────────────────
+export const engagementService = {
+  ratings: (month?: string) => API.get('/engagement/ratings', { params: { month } }),
+  adjust : (murabbiId: string, month: string, data: { adjustment: number; note?: string }) =>
+             API.patch(`/engagement/ratings/${murabbiId}`, data, { params: { month } }),
+  my     : (month?: string) => API.get('/engagement/my', { params: { month } }),
+};
+
+// ─────────────────────────────────────────────────────────────
+//  MONTHLY REWARD POOL
+// ─────────────────────────────────────────────────────────────
+export const rewardsService = {
+  getPools        : ()                             => API.get('/rewards/pools'),
+  getPool         : (month: string)                => API.get(`/rewards/pools/${month}`),
+  createPool      : (data: object)                 => API.post('/rewards/pools', data),
+  updatePool      : (month: string, data: object)  => API.patch(`/rewards/pools/${month}`, data),
+  regenerate      : (month: string)                => API.post(`/rewards/pools/${month}/regenerate`),
+  approve         : (month: string)                => API.post(`/rewards/pools/${month}/approve`),
+  removePool      : (month: string)                => API.delete(`/rewards/pools/${month}`),
+  addAllocation   : (month: string, data: object)  => API.post(`/rewards/pools/${month}/allocations`, data),
+  updateAllocation: (id: string, data: object)     => API.patch(`/rewards/allocations/${id}`, data),
+  pay             : (id: string, data: object)     => API.post(`/rewards/allocations/${id}/pay`, data),
+  my              : ()                             => API.get('/rewards/my'),
+};
+
+// ─────────────────────────────────────────────────────────────
 //  LIVE SESSIONS (Zoom meetings)
 // ─────────────────────────────────────────────────────────────
 export const liveSessionsService = {

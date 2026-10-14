@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Inbox, Bell, Check, X, Info, UserPlus, Trash2, Eye, Star, Award, AlertTriangle, BookOpen } from "lucide-react";
+import { Inbox, Bell, HandCoins, Gift, Check, X, Info, UserPlus, Trash2, Eye, Star, Award, AlertTriangle, BookOpen } from "lucide-react";
 import { notificationsService } from "@/services/api.service";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -24,6 +24,8 @@ function notifIcon(type: string) {
   if (type === "performance_review")  return <Award    className="h-4 w-4 text-gold-dim"        />;
   if (type === "material_request")    return <BookOpen className="h-4 w-4 text-nc-green"   />;
   if (type === "interest_request")    return <Inbox    className="h-4 w-4 text-gold-dim"   />;
+  if (type === "contribution")        return <HandCoins className="h-4 w-4 text-plum"     />;
+  if (type === "reward")              return <Gift     className="h-4 w-4 text-gold-dim"   />;
   return <Info className="h-4 w-4 text-nc-muted" />;
 }
 
@@ -401,6 +403,8 @@ export default function NotificationBell({ onApproveDeleteRequest }: Notificatio
                       if (n.type === "circle_assigned")   return `${n.sender?.fullName ?? "Murabbi"} was assigned to ${n.count} circles`;
                       if (n.type === "material_request")  return `${n.sender?.fullName ?? "Murabbi"} sent ${n.count} material requests`;
                       if (n.type === "interest_request")  return `${n.count} new interest requests from the website`;
+                      if (n.type === "contribution")      return `${n.count} contribution updates from the website`;
+                      if (n.type === "reward")            return `You received ${n.count} rewards`;
                       return `${n.count} similar notifications from ${n.sender?.fullName ?? "Murabbi"}`;
                     })()
                   : n.message;

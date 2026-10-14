@@ -18,6 +18,9 @@ import NeighbourhoodsPage from "@/pages/NeighbourhoodsPage";
 import ReportsPage from "@/pages/ReportsPage";
 import SettingsPage from "@/pages/SettingsPage";
 import InterestPage from "@/pages/InterestPage";
+import ContributionsPage from "@/pages/ContributionsPage";
+import RewardsPage from "@/pages/RewardsPage";
+import MurabbiRatingsPage from "@/pages/MurabbiRatingsPage";
 import {
   EnrollModal,
   NewCircleModal,
@@ -113,6 +116,9 @@ const Index = () => {
       case "neighbourhoods": return <NeighbourhoodsPage />;
       case "reports":        return <ReportsPage />;
       case "interest":       return <InterestPage />;
+      case "contributions":  return <ContributionsPage />;
+      case "rewards":        return <RewardsPage />;
+      case "ratings":        return <MurabbiRatingsPage />;
       case "settings":       return <SettingsPage />;
       default:               return <DashboardPage />;
     }
