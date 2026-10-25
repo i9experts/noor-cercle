@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import {
-  BarChart3, BookOpen, CircleDot, ClipboardCheck, GraduationCap,
+  BarChart3, BookOpen, CircleDot, ClipboardCheck, GraduationCap, ListChecks,
   LayoutDashboard, Megaphone, School, Settings,
 } from "lucide-react";
 import { murabbisService } from "@/services/api.service";
@@ -21,6 +21,7 @@ const navGroups: SidebarNavGroup[] = [
   {
     label: "Activities",
     items: [
+      { icon: ListChecks,     label: "Weekly Agenda",   page: "murabbi-agenda"     },
       { icon: ClipboardCheck, label: "Mark Attendance", page: "murabbi-attendance" },
       { icon: BookOpen,       label: "Lesson Plans",    page: "murabbi-lessons"    },
     ],

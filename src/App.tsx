@@ -16,6 +16,7 @@ const VerifyOtpPage      = lazy(() => import('./pages/VerifyOtpPage.tsx'));
 const ResetPasswordPage  = lazy(() => import('./pages/ResetPasswordPage.tsx'));
 const ResetSuccessPage   = lazy(() => import('./pages/ResetSuccessPage.tsx'));
 const NotFound           = lazy(() => import('./pages/NotFound.tsx'));
+const FamilyPage         = lazy(() => import('./pages/FamilyPage.tsx'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -63,6 +64,9 @@ const App = () => (
               <Route path="/verify-otp"      element={<VerifyOtpPage />} />
               <Route path="/reset-password"  element={<PublicRoute><ResetPasswordPage /></PublicRoute>} />
               <Route path="/reset-success"   element={<ResetSuccessPage />} />
+
+              {/* ── Family page: public, opened from the link the team shares ── */}
+              <Route path="/family/:token" element={<FamilyPage />} />
 
               {/* ── Admin routes ── */}
               <Route path="/"  element={<ProtectedRoute role="admin"><Index /></ProtectedRoute>} />

@@ -356,6 +356,42 @@ export const rewardsService = {
 };
 
 // ─────────────────────────────────────────────────────────────
+//  SYLLABUS · WEEKLY AGENDA · CALENDAR
+// ─────────────────────────────────────────────────────────────
+export const syllabusService = {
+  tracks        : ()                              => API.get('/syllabus/tracks'),
+  setupDefaults : ()                              => API.post('/syllabus/tracks/defaults'),
+  updateTrack   : (id: string, data: object)      => API.patch(`/syllabus/tracks/${id}`, data),
+  sessions      : (trackId: string)               => API.get(`/syllabus/tracks/${trackId}/sessions`),
+  createSession : (trackId: string, data: object) => API.post(`/syllabus/tracks/${trackId}/sessions`, data),
+  updateSession : (id: string, data: object)      => API.patch(`/syllabus/sessions/${id}`, data),
+  deleteSession : (id: string)                    => API.delete(`/syllabus/sessions/${id}`),
+  progress      : ()                              => API.get('/syllabus/progress'),
+  circleProgress: (circleId: string)              => API.get(`/syllabus/progress/${circleId}`),
+  myAgenda      : ()                              => API.get('/syllabus/my-agenda'),
+  recordCoverage: (data: { circleId: string; sessionId: string; partsDone: string[]; completed?: boolean; date?: string; notes?: string }) =>
+                    API.post('/syllabus/coverage', data),
+  deleteCoverage: (id: string)                    => API.delete(`/syllabus/coverage/${id}`),
+  addNote       : (data: { studentId: string; note: string; sessionId?: string }) => API.post('/syllabus/notes', data),
+  studentNotes  : (studentId: string)             => API.get(`/syllabus/notes/student/${studentId}`),
+  deleteNote    : (id: string)                    => API.delete(`/syllabus/notes/${id}`),
+  calendar      : (params: { from?: string; to?: string; circleId?: string } = {}) => API.get('/syllabus/calendar', { params }),
+  events        : (params: { from?: string; to?: string } = {}) => API.get('/syllabus/events', { params }),
+  createEvent   : (data: object)                  => API.post('/syllabus/events', data),
+  updateEvent   : (id: string, data: object)      => API.patch(`/syllabus/events/${id}`, data),
+  deleteEvent   : (id: string)                    => API.delete(`/syllabus/events/${id}`),
+};
+
+// ─────────────────────────────────────────────────────────────
+//  FAMILY LINKS (private, password-free page per family)
+// ─────────────────────────────────────────────────────────────
+export const familyService = {
+  getLink: (parentId: string) => API.get(`/parents/${parentId}/family-link`),
+  rotate : (parentId: string) => API.post(`/parents/${parentId}/family-link/rotate`),
+  view   : (token: string)    => API.get(`/family/${encodeURIComponent(token)}`),
+};
+
+// ─────────────────────────────────────────────────────────────
 //  LIVE SESSIONS (Zoom meetings)
 // ─────────────────────────────────────────────────────────────
 export const liveSessionsService = {
