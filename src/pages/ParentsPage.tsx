@@ -84,13 +84,19 @@ function SendWhatsappModal({ open, onClose, onSuccess }: {
     onClose();
   }
 
-  function handleSend() {
-    const token = localStorage.getItem("accessToken");
-    if (!token) { toast({ variant: "destructive", title: "Not authenticated." }); return; }
+  async function handleSend() {
+    // A one-time ticket keeps the access token out of the URL (and server logs).
+    let ticket: string;
+    try {
+      const r = await parentsService.whatsappStreamTicket(message.trim());
+      ticket = (r.data.data || r.data).ticket;
+    } catch (err: any) {
+      toast({ variant: "destructive", title: err?.response?.data?.message || "Could not start the broadcast." });
+      return;
+    }
 
     const base = import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1";
-    const msg  = encodeURIComponent(message.trim());
-    const url  = `${base}/parents/engagement/whatsapp-stream?token=${token}&message=${msg}`;
+    const url  = `${base}/parents/engagement/whatsapp-stream?ticket=${encodeURIComponent(ticket)}`;
 
     setPhase("sending");
     setItems([]);

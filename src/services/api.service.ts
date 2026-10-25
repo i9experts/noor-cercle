@@ -264,6 +264,7 @@ export const parentsService = {
   scheduleEvening      : (month: number)                 => API.post('/parents/engagement/schedule-evening', { month }),
   recordEveningHeld    : ()                              => API.post('/parents/engagement/record-evening', {}),
   sendWhatsapp         : (message?: string)              => API.post('/parents/engagement/send-whatsapp', { message }),
+  whatsappStreamTicket : (message?: string)              => API.post('/parents/engagement/whatsapp-ticket', { message }),
   register    : (data: {
     fullName      : string;
     phone         : string;

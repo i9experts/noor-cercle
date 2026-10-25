@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import NcBadge from "@/components/shared/NcBadge";
 import { circlesService } from "@/services/api.service";
 import { useToast } from "@/hooks/use-toast";
-import { MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { MoreVertical, Pencil, Power, Trash2 } from "lucide-react";
 import { EditCircleModal } from "@/components/modals/AllModals";
 import DeleteConfirmModal from "@/components/shared/DeleteConfirmModal";
 import { useRef } from "react";
@@ -16,7 +16,9 @@ const STATUS_VARIANT: Record<string, "green" | "amber" | "slate"> = {
   inactive: "slate",
 };
 
-function ActionMenu({ onEdit, onDelete }: { onEdit: () => void; onDelete: () => void }) {
+function ActionMenu({ isActive, onEdit, onToggleActive, onDelete }: {
+  isActive: boolean; onEdit: () => void; onToggleActive: () => void; onDelete: () => void;
+}) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -26,13 +28,16 @@ function ActionMenu({ onEdit, onDelete }: { onEdit: () => void; onDelete: () => 
   }, []);
   return (
     <div className="relative" ref={ref}>
-      <button className="p-1 hover:bg-muted rounded-md text-nc-muted" onClick={() => setOpen((s) => !s)}>
+      <button className="p-1 hover:bg-muted rounded-md text-nc-muted" onClick={() => setOpen((s) => !s)} aria-label="Circle actions">
         <MoreVertical className="h-4 w-4" />
       </button>
       {open && (
-        <div className="absolute right-0 top-7 w-32 bg-card border border-border rounded-lg shadow-lg z-50 py-1 text-[13px]">
+        <div className="absolute right-0 top-7 w-36 bg-card border border-border rounded-lg shadow-lg z-50 py-1 text-[13px]">
           <button className="w-full flex items-center gap-2 px-3 py-2 hover:bg-muted" onClick={() => { setOpen(false); onEdit(); }}>
             <Pencil className="h-3.5 w-3.5 text-nc-muted" /> Edit
+          </button>
+          <button className="w-full flex items-center gap-2 px-3 py-2 hover:bg-muted" onClick={() => { setOpen(false); onToggleActive(); }}>
+            <Power className="h-3.5 w-3.5 text-nc-muted" /> {isActive ? "Deactivate" : "Reactivate"}
           </button>
           <button className="w-full flex items-center gap-2 px-3 py-2 hover:bg-red-50 text-red-500" onClick={() => { setOpen(false); onDelete(); }}>
             <Trash2 className="h-3.5 w-3.5" /> Delete
@@ -61,6 +66,16 @@ export default function CirclesPage({
   }
 
   useEffect(() => { load(); }, [refreshKey]);
+
+  async function toggleActive(c: any) {
+    try {
+      await circlesService.update(c._id, { isActive: !c.isActive });
+      toast({ title: c.isActive ? `"${c.name}" deactivated. Its history is kept.` : `"${c.name}" is active again.` });
+      load();
+    } catch (err: any) {
+      toast({ variant: "destructive", title: err?.response?.data?.message || "Update failed." });
+    }
+  }
 
   async function confirmDelete() {
     if (!deleteTarget) return;
@@ -118,7 +133,9 @@ export default function CirclesPage({
                       {badgeKey === "review" ? "Review" : c.isActive ? "Active" : "Inactive"}
                     </NcBadge>
                     <ActionMenu
+                      isActive={!!c.isActive}
                       onEdit={() => setEditCircle(c)}
+                      onToggleActive={() => toggleActive(c)}
                       onDelete={() => setDeleteTarget(c)}
                     />
                   </div>
@@ -163,7 +180,7 @@ export default function CirclesPage({
       <DeleteConfirmModal
         open={!!deleteTarget}
         title="Delete Circle"
-        message={`Delete "${deleteTarget?.name}"? This cannot be undone.`}
+        message={`Delete "${deleteTarget?.name}"? This cannot be undone. Circles that already have attendance or reviews can't be deleted; deactivate them instead.`}
         onConfirm={confirmDelete}
         onClose={() => setDeleteTarget(null)}
       />

@@ -334,9 +334,16 @@ export default function MurabbiTraining() {
           </div>
 
           <div className="text-[42px] font-bold font-serif mb-1">{result.scorePercent}%</div>
-          <div className="text-[12px] text-nc-muted mb-8">
+          <div className={`text-[12px] text-nc-muted ${!result.passed && result.attemptsRemaining != null ? "mb-2" : "mb-8"}`}>
             {result.correctCount} of {result.totalQuestions} correct
           </div>
+          {!result.passed && result.attemptsRemaining != null && (
+            <div className="text-[12px] text-nc-muted mb-8">
+              {result.attemptsRemaining > 0
+                ? `${result.attemptsRemaining} attempt${result.attemptsRemaining === 1 ? "" : "s"} left in the next 24 hours.`
+                : "You've used today's attempts. Review the modules and try again tomorrow."}
+            </div>
+          )}
 
           {result.passed ? (
             <button
@@ -345,14 +352,14 @@ export default function MurabbiTraining() {
             >
               <Download className="h-4 w-4" /> Download Your Certificate
             </button>
-          ) : (
+          ) : result.attemptsRemaining !== 0 ? (
             <button
               className="inline-flex items-center gap-2 px-5 py-2.5 text-[13.5px] font-semibold bg-teal text-white rounded-md hover:brightness-95 transition"
               onClick={openExam}
             >
               Retake Assessment
             </button>
-          )}
+          ) : null}
 
           <div>
             <button
