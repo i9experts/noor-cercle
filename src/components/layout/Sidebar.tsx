@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import {
-  Award, BarChart3, Gift, HandCoins, Star, BookOpen, CircleDot, ClipboardCheck, Globe2, GraduationCap,
+  Award, BarChart3, BookMarked, CalendarDays, Gift, HandCoins, ListChecks, Star, BookOpen, CircleDot, ClipboardCheck, Globe2, GraduationCap,
   HeartHandshake, Inbox, LayoutDashboard, MapPin, School, Settings, TrendingUp, Users,
 } from "lucide-react";
 import { adminService, contributionsService, interestService } from "@/services/api.service";
@@ -29,6 +29,9 @@ const navGroups: SidebarNavGroup[] = [
       { icon: CircleDot,      label: "Circles",               page: "circles"    },
       { icon: ClipboardCheck, label: "Attendance",            page: "attendance" },
       { icon: BookOpen,       label: "Sessions & Curriculum", page: "sessions"   },
+      { icon: BookMarked,     label: "Syllabus",              page: "syllabus"   },
+      { icon: ListChecks,     label: "Syllabus Progress",     page: "syllabus-progress" },
+      { icon: CalendarDays,   label: "Calendar",              page: "calendar"   },
     ],
   },
   {

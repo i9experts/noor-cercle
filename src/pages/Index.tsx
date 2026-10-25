@@ -21,6 +21,9 @@ import InterestPage from "@/pages/InterestPage";
 import ContributionsPage from "@/pages/ContributionsPage";
 import RewardsPage from "@/pages/RewardsPage";
 import MurabbiRatingsPage from "@/pages/MurabbiRatingsPage";
+import SyllabusPage from "@/pages/SyllabusPage";
+import SyllabusProgressPage from "@/pages/SyllabusProgressPage";
+import CalendarPage from "@/pages/CalendarPage";
 import {
   EnrollModal,
   NewCircleModal,
@@ -119,6 +122,9 @@ const Index = () => {
       case "contributions":  return <ContributionsPage />;
       case "rewards":        return <RewardsPage />;
       case "ratings":        return <MurabbiRatingsPage />;
+      case "syllabus":       return <SyllabusPage />;
+      case "syllabus-progress": return <SyllabusProgressPage />;
+      case "calendar":       return <CalendarPage />;
       case "settings":       return <SettingsPage />;
       default:               return <DashboardPage />;
     }

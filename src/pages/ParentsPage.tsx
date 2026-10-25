@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import StatCard from "@/components/shared/StatCard";
 import NcCard, { CardHeader, CardTitle } from "@/components/shared/NcCard";
 import NcBadge from "@/components/shared/NcBadge";
-import { Star, Plus, MessageSquarePlus, Trash2, Loader2 } from "lucide-react";
+import { Star, Plus, MessageSquarePlus, Trash2, Loader2, Link2 } from "lucide-react";
+import FamilyLinkModal from "@/components/shared/FamilyLinkModal";
 import { parentsService } from "@/services/api.service";
 import { useToast } from "@/hooks/use-toast";
 import { RegisterParentModal, AddParentFeedbackModal } from "@/components/modals/AllModals";
@@ -241,6 +242,7 @@ export default function ParentsPage() {
   const [search, setSearch]                     = useState("");
   const [registerOpen, setRegisterOpen]         = useState(false);
   const [feedbackTarget, setFeedbackTarget]     = useState<{ id: string; name: string } | null>(null);
+  const [linkTarget, setLinkTarget]             = useState<any>(null);
   const [scheduleOpen, setScheduleOpen]         = useState(false);
   const [whatsappOpen, setWhatsappOpen]         = useState(false);
   const [toggling, setToggling]                 = useState<string | null>(null);
@@ -568,6 +570,12 @@ export default function ParentsPage() {
                     </td>
                     <td className="px-3.5 py-3 border-b border-border">
                       <div className="flex items-center gap-1.5">
+                        <button className="p-1.5 hover:bg-plum-lt rounded-md text-plum"
+                          title="Family page link"
+                          aria-label={`Family page link for ${p.fullName}`}
+                          onClick={() => setLinkTarget(p)}>
+                          <Link2 className="h-3.5 w-3.5" />
+                        </button>
                         <button className="p-1.5 hover:bg-muted rounded-md text-nc-muted"
                           title="Add feedback"
                           onClick={() => setFeedbackTarget({ id: p._id, name: p.fullName })}>
@@ -608,6 +616,7 @@ export default function ParentsPage() {
         onClose={() => setScheduleOpen(false)}
         onSuccess={() => { setScheduleOpen(false); load(); }}
       />
+      <FamilyLinkModal parent={linkTarget} onClose={() => setLinkTarget(null)} />
       <SendWhatsappModal
         open={whatsappOpen}
         onClose={() => setWhatsappOpen(false)}

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import Modal, { FormGroup, FormInput, FormPasswordInput, FormSelect, FormTextarea, FormRow } from "@/components/shared/Modal";
-import { adminService, attendanceService, circlesService, incentivesService, murabbisService, neighbourhoodsService, parentsService, studentsService as studentsApi, uploadService } from "@/services/api.service";
+import { adminService, attendanceService, circlesService, incentivesService, murabbisService, neighbourhoodsService, parentsService, studentsService as studentsApi, uploadService, syllabusService } from "@/services/api.service";
+import { DAYS } from "@/lib/schedule";
 import { useToast } from "@/hooks/use-toast";
 import { Check, X, Camera, Loader2 } from "lucide-react";
 
@@ -346,6 +347,63 @@ export function EditStudentModal({
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  New Circle Modal
+
+// ── Circle schedule & syllabus (shared by create / edit) ─────────────────────
+type ScheduleForm = { trackId: string; meetingDay: string; meetingTime: string; startDate: string };
+const emptySchedule: ScheduleForm = { trackId: "", meetingDay: "", meetingTime: "", startDate: "" };
+
+function scheduleFrom(circle: any): ScheduleForm {
+  return {
+    trackId    : circle?.track?._id || circle?.track || "",
+    meetingDay : circle?.meetingDay == null ? "" : String(circle.meetingDay),
+    meetingTime: circle?.meetingTime || "",
+    startDate  : circle?.startDate || "",
+  };
+}
+
+/** API body: empty fields clear the value (edit) or are left out (create). */
+function scheduleBody(f: ScheduleForm, clearEmpty: boolean) {
+  const v = (x: string, cast?: (s: string) => unknown) => (x ? (cast ? cast(x) : x) : clearEmpty ? null : undefined);
+  const out: Record<string, unknown> = {
+    trackId: v(f.trackId), meetingDay: v(f.meetingDay, Number), meetingTime: v(f.meetingTime), startDate: v(f.startDate),
+  };
+  Object.keys(out).forEach((k) => out[k] === undefined && delete out[k]);
+  return out;
+}
+
+function CircleScheduleFields({ form, onChange, tracks }: {
+  form: ScheduleForm; onChange: (k: keyof ScheduleForm, v: string) => void; tracks: any[];
+}) {
+  return (
+    <div className="mb-[18px] rounded-lg border border-border bg-muted/40 p-4">
+      <div className="mb-3 text-[13px] font-semibold text-nc-dark">Syllabus & weekly schedule</div>
+      <FormRow>
+        <FormGroup label="Syllabus track">
+          <FormSelect value={form.trackId} onChange={(e) => onChange("trackId", e.target.value)}>
+            <option value="">{tracks.length ? "Select age group…" : "Set up the syllabus first"}</option>
+            {tracks.map((t) => <option key={t._id} value={t._id}>{t.name}</option>)}
+          </FormSelect>
+        </FormGroup>
+        <FormGroup label="First session">
+          <FormInput type="date" value={form.startDate} onChange={(e) => onChange("startDate", e.target.value)} />
+        </FormGroup>
+      </FormRow>
+      <FormRow>
+        <FormGroup label="Meets every">
+          <FormSelect value={form.meetingDay} onChange={(e) => onChange("meetingDay", e.target.value)}>
+            <option value="">Select day…</option>
+            {DAYS.map((d, i) => <option key={d} value={i}>{d}</option>)}
+          </FormSelect>
+        </FormGroup>
+        <FormGroup label="At (Pakistan time)">
+          <FormInput type="time" value={form.meetingTime} onChange={(e) => onChange("meetingTime", e.target.value)} />
+        </FormGroup>
+      </FormRow>
+      <p className="-mt-2 text-[11.5px] text-nc-muted">Used for the Murabbi&apos;s weekly agenda, the calendar, and to see whether the circle is on track.</p>
+    </div>
+  );
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 export function NewCircleModal({
   open, onClose, onSuccess,
@@ -355,12 +413,16 @@ export function NewCircleModal({
   const [neighbourhoods, setNeighbourhoods] = useState<any[]>([]);
   const [murabbis, setMurabbis]             = useState<any[]>([]);
   const [form, setForm] = useState({ name: "", neighbourhoodId: "", murabbiId: "", capacity: "30" });
+  const [schedule, setSchedule] = useState<ScheduleForm>(emptySchedule);
+  const [tracks, setTracks]     = useState<any[]>([]);
 
   useEffect(() => {
     if (!open) return;
+    setSchedule(emptySchedule);
     Promise.all([neighbourhoodsService.getAll(), adminService.getMurabbis()])
       .then(([nRes, mRes]) => { setNeighbourhoods(nRes.data.data || []); setMurabbis(mRes.data.data || []); })
       .catch(() => toast({ variant: "destructive", title: "Failed to load data" }));
+    syllabusService.tracks().then((r) => setTracks(r.data.data || [])).catch(() => {});
   }, [open]);
 
   function set(field: string, value: string) { setForm((f) => ({ ...f, [field]: value })); }
@@ -371,7 +433,7 @@ export function NewCircleModal({
     }
     setLoading(true);
     try {
-      await circlesService.create({ name: form.name, neighbourhoodId: form.neighbourhoodId, murabbiId: form.murabbiId, capacity: Number(form.capacity) || 30 });
+      await circlesService.create({ name: form.name, neighbourhoodId: form.neighbourhoodId, murabbiId: form.murabbiId, capacity: Number(form.capacity) || 30, ...scheduleBody(schedule, false) });
       toast({ title: "Circle created successfully!" });
       setForm({ name: "", neighbourhoodId: "", murabbiId: "", capacity: "30" });
       onClose(); onSuccess?.();
@@ -400,6 +462,7 @@ export function NewCircleModal({
           </FormSelect>
         </FormGroup>
       </FormRow>
+      <CircleScheduleFields form={schedule} tracks={tracks} onChange={(k, v) => setSchedule((f) => ({ ...f, [k]: v }))} />
       <div className="flex gap-2.5 mt-2">
         <button className="btn-gold flex-1" onClick={handleSubmit} disabled={loading}>{loading ? "Creating…" : "Create Circle"}</button>
         <button className="btn-outline" onClick={onClose} disabled={loading}>Cancel</button>
@@ -419,6 +482,8 @@ export function EditCircleModal({
   const [neighbourhoods, setNeighbourhoods] = useState<any[]>([]);
   const [murabbis, setMurabbis]             = useState<any[]>([]);
   const [form, setForm] = useState({ name: "", neighbourhoodId: "", murabbiId: "", capacity: "30" });
+  const [schedule, setSchedule] = useState<ScheduleForm>(emptySchedule);
+  const [tracks, setTracks]     = useState<any[]>([]);
 
   useEffect(() => {
     if (!open || !circle) return;
@@ -428,9 +493,11 @@ export function EditCircleModal({
       murabbiId: circle.murabbi?._id || circle.murabbi || "",
       capacity: String(circle.capacity || 30),
     });
+    setSchedule(scheduleFrom(circle));
     Promise.all([neighbourhoodsService.getAll(), adminService.getMurabbis()])
       .then(([nRes, mRes]) => { setNeighbourhoods(nRes.data.data || []); setMurabbis(mRes.data.data || []); })
       .catch(() => toast({ variant: "destructive", title: "Failed to load data" }));
+    syllabusService.tracks().then((r) => setTracks(r.data.data || [])).catch(() => {});
   }, [open, circle]);
 
   function set(field: string, value: string) { setForm((f) => ({ ...f, [field]: value })); }
@@ -444,6 +511,7 @@ export function EditCircleModal({
         ...(form.neighbourhoodId && { neighbourhoodId: form.neighbourhoodId }),
         ...(form.murabbiId && { murabbiId: form.murabbiId }),
         capacity: Number(form.capacity) || 30,
+        ...scheduleBody(schedule, true),
       });
       toast({ title: "Circle updated!" });
       onClose(); onSuccess?.();
@@ -472,6 +540,7 @@ export function EditCircleModal({
           </FormSelect>
         </FormGroup>
       </FormRow>
+      <CircleScheduleFields form={schedule} tracks={tracks} onChange={(k, v) => setSchedule((f) => ({ ...f, [k]: v }))} />
       <div className="flex gap-2.5 mt-2">
         <button className="btn-primary flex-1" onClick={handleSubmit} disabled={loading}>{loading ? "Saving…" : "Save Changes"}</button>
         <button className="btn-outline" onClick={onClose} disabled={loading}>Cancel</button>
