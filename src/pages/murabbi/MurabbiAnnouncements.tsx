@@ -119,7 +119,7 @@ export default function MurabbiAnnouncements() {
       ) : (
         <div className="flex flex-col gap-4">
           {filtered.map((a) => {
-            const cfg = ICON_CONFIG[a.icon] || ICON_CONFIG.INFO;
+            const cfg = ICON_CONFIG[a.icon] || ICON_CONFIG.info;
             const IconComp = cfg.Icon;
             return (
               <NcCard key={a._id} className="hover:border-teal/30 transition-colors">

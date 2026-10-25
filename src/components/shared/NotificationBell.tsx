@@ -238,7 +238,7 @@ export default function NotificationBell({ onApproveDeleteRequest }: Notificatio
     try {
       const r = await notificationsService.getUnreadCount();
       setCount(r.data.data?.count ?? 0);
-    } catch {}
+    } catch { /* non-critical: the bell refreshes on its next poll */ }
   }
 
   async function handleOpen() {
@@ -264,7 +264,7 @@ export default function NotificationBell({ onApproveDeleteRequest }: Notificatio
       await notificationsService.markRead(id);
       setNotifs((prev) => prev.filter((n) => n._id !== id));
       setCount((c) => Math.max(0, c - 1));
-    } catch {}
+    } catch { /* non-critical: the bell refreshes on its next poll */ }
   }
 
   async function handleMarkReadGroup(ids: string[]) {
@@ -272,7 +272,7 @@ export default function NotificationBell({ onApproveDeleteRequest }: Notificatio
       await Promise.all(ids.map((id) => notificationsService.markRead(id)));
       setNotifs((prev) => prev.filter((n) => !ids.includes(n._id)));
       setCount((c) => Math.max(0, c - ids.length));
-    } catch {}
+    } catch { /* non-critical: the bell refreshes on its next poll */ }
   }
 
   // Group same-type notifications from the same sender into one row.
@@ -302,7 +302,7 @@ export default function NotificationBell({ onApproveDeleteRequest }: Notificatio
       await notificationsService.markAllRead();
       setNotifs([]);
       setCount(0);
-    } catch {}
+    } catch { /* non-critical: the bell refreshes on its next poll */ }
   }
 
   async function handleApprove() {
