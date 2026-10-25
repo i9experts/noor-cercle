@@ -134,7 +134,7 @@ export function EnrollModal({
     setForm((f) => ({
       ...f,
       circleId,
-      neighbourhoodId: c?.neighbourhood?._id || c?.neighbourhood || f.neighbourhoodId,
+      neighbourhoodId: c?.neighbourhood?._id || c?.neighbourhood || "",
     }));
   }
 
@@ -190,8 +190,9 @@ export function EnrollModal({
           </FormSelect>
         </FormGroup>
         <FormGroup label="Neighbourhood" required>
-          <FormSelect value={form.neighbourhoodId} onChange={(e) => set("neighbourhoodId", e.target.value)}>
-            <option value="">Select neighbourhood…</option>
+          {/* Always the circle's neighbourhood: it follows the circle chosen. */}
+          <FormSelect value={form.neighbourhoodId} disabled title="Set by the circle" className="opacity-80">
+            <option value="">Chosen with the circle</option>
             {neighbourhoods.map((n) => <option key={n._id} value={n._id}>{n.name}{n.city ? ` — ${n.city}` : ""}</option>)}
           </FormSelect>
         </FormGroup>
@@ -269,7 +270,7 @@ export function EditStudentModal({
     setForm((f) => ({
       ...f,
       circleId,
-      neighbourhoodId: c?.neighbourhood?._id || c?.neighbourhood || f.neighbourhoodId,
+      neighbourhoodId: c?.neighbourhood?._id || c?.neighbourhood || "",
     }));
   }
 
@@ -328,8 +329,9 @@ export function EditStudentModal({
           </FormSelect>
         </FormGroup>
         <FormGroup label="Neighbourhood">
-          <FormSelect value={form.neighbourhoodId} onChange={(e) => set("neighbourhoodId", e.target.value)}>
-            <option value="">Select neighbourhood…</option>
+          {/* Always the circle's neighbourhood: it follows the circle chosen. */}
+          <FormSelect value={form.neighbourhoodId} disabled title="Set by the circle" className="opacity-80">
+            <option value="">Chosen with the circle</option>
             {nbhs.map((n) => <option key={n._id} value={n._id}>{n.name}</option>)}
           </FormSelect>
         </FormGroup>
