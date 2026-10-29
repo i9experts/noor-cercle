@@ -5,7 +5,7 @@ import { Toaster as Sonner } from '@/components/ui/sonner';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
-import { AuthProvider } from '@/context/AuthContext';
+import { AuthProvider, homeFor } from '@/context/AuthContext';
 
 const Index              = lazy(() => import('./pages/Index.tsx'));
 const MurabbiIndex       = lazy(() => import('./pages/murabbi/MurabbiIndex.tsx'));
@@ -17,6 +17,8 @@ const ResetPasswordPage  = lazy(() => import('./pages/ResetPasswordPage.tsx'));
 const ResetSuccessPage   = lazy(() => import('./pages/ResetSuccessPage.tsx'));
 const NotFound           = lazy(() => import('./pages/NotFound.tsx'));
 const FamilyPage         = lazy(() => import('./pages/FamilyPage.tsx'));
+const ParentHome         = lazy(() => import('./pages/ParentHome.tsx'));
+const SetPasswordPage    = lazy(() => import('./pages/SetPasswordPage.tsx'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -25,27 +27,35 @@ const queryClient = new QueryClient({
 });
 
 const isLoggedIn = () => !!localStorage.getItem('accessToken');
-const getUserRole = () => {
+const storedUser = (): { role?: string; mustChangePassword?: boolean } => {
   try {
-    return JSON.parse(localStorage.getItem('user') || '{}').role || null;
+    return JSON.parse(localStorage.getItem('user') || '{}');
   } catch {
-    return null;
+    return {};
   }
 };
 
-function ProtectedRoute({ children, role }: { children: JSX.Element; role?: 'admin' | 'murabbi' }) {
+function ProtectedRoute({ children, role }: { children: JSX.Element; role?: 'admin' | 'murabbi' | 'parent' }) {
   if (!isLoggedIn()) return <Navigate to="/signin" replace />;
-  if (role && getUserRole() !== role) {
-    return <Navigate to={getUserRole() === 'admin' ? '/' : '/murabbi'} replace />;
-  }
+  const u = storedUser();
+  // A temporary password must be replaced before anything else.
+  if (u.mustChangePassword) return <Navigate to="/set-password" replace />;
+  if (role && u.role !== role) return <Navigate to={homeFor(u.role)} replace />;
   return children;
 }
 
 function PublicRoute({ children }: { children: JSX.Element }) {
   if (isLoggedIn()) {
-    return <Navigate to={getUserRole() === 'admin' ? '/' : '/murabbi'} replace />;
+    const u = storedUser();
+    return <Navigate to={u.mustChangePassword ? '/set-password' : homeFor(u.role)} replace />;
   }
   return children;
+}
+
+function SetPasswordRoute() {
+  if (!isLoggedIn()) return <Navigate to="/signin" replace />;
+  if (!storedUser().mustChangePassword) return <Navigate to={homeFor(storedUser().role)} replace />;
+  return <SetPasswordPage />;
 }
 
 const App = () => (
@@ -64,6 +74,7 @@ const App = () => (
               <Route path="/verify-otp"      element={<VerifyOtpPage />} />
               <Route path="/reset-password"  element={<PublicRoute><ResetPasswordPage /></PublicRoute>} />
               <Route path="/reset-success"   element={<ResetSuccessPage />} />
+              <Route path="/set-password"    element={<SetPasswordRoute />} />
 
               {/* ── Family page: public, opened from the link the team shares ── */}
               <Route path="/family/:token" element={<FamilyPage />} />
@@ -71,6 +82,10 @@ const App = () => (
               {/* ── Admin routes ── */}
               <Route path="/"  element={<ProtectedRoute role="admin"><Index /></ProtectedRoute>} />
               <Route path="/*" element={<ProtectedRoute role="admin"><Index /></ProtectedRoute>} />
+
+              {/* ── Parent routes ── */}
+              <Route path="/parent"   element={<ProtectedRoute role="parent"><ParentHome /></ProtectedRoute>} />
+              <Route path="/parent/*" element={<ProtectedRoute role="parent"><ParentHome /></ProtectedRoute>} />
 
               {/* ── Murabbi routes ── */}
               <Route path="/murabbi"   element={<ProtectedRoute role="murabbi"><MurabbiIndex /></ProtectedRoute>} />

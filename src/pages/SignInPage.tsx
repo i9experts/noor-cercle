@@ -5,7 +5,8 @@ import { Input }         from '@/components/ui/input';
 import AuthShell          from '@/components/auth/AuthShell';
 import PasswordInput      from '@/components/shared/PasswordInput';
 import { authService } from '@/services/auth.service';
-import { useAuth }     from '@/context/AuthContext';
+import { homeFor, useAuth } from '@/context/AuthContext';
+import { rememberTempPassword } from '@/lib/tempPassword';
 import { useToast } from '@/hooks/use-toast';
 
 function getApiError(error: unknown): string | null {
@@ -33,9 +34,15 @@ const SignInPage = () => {
       // saveTokens updates AuthContext so initials/name render correctly immediately
       saveTokens(accessToken, refreshToken, user);
 
+      if (user?.mustChangePassword) {
+        rememberTempPassword(password);
+        navigate('/set-password');
+        return;
+      }
+
       toast({ title: 'Welcome back!', description: 'Signed in successfully.' });
 
-      navigate(user?.role === 'admin' ? '/' : '/murabbi');
+      navigate(homeFor(user?.role));
     } catch (e: unknown) {
       const errMsg = getApiError(e);
 
@@ -62,7 +69,7 @@ const SignInPage = () => {
   return (
     <AuthShell
       title="Sign In"
-      subtitle="Welcome back. Sign in to manage students, murabbis, circles and reports for Noor Circle."
+      subtitle="Welcome back. Sign in to your Noor Circles account: team members, murabbis and parents."
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">

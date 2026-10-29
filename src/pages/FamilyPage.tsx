@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { ReactNode, useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Award, CalendarDays, Heart, Home, Lock, MessageCircleHeart, Sparkles, Star } from "lucide-react";
 import { familyService } from "@/services/api.service";
@@ -10,21 +10,33 @@ import { formatDay, scheduleLabel } from "@/lib/schedule";
 /** Public, password-free family page: /family/:token (link shared by the Noor team). */
 export default function FamilyPage() {
   const { token = "" } = useParams();
+  const load = useCallback(() => familyService.view(token), [token]);
+  return <FamilyScreen load={load} />;
+}
+
+/**
+ * The family page itself, for the private link and for a parent signed in
+ * with their own account (who gets `actions` in the header).
+ */
+export function FamilyScreen({ load, actions }: { load: () => Promise<{ data: any }>; actions?: ReactNode }) {
   const [data, setData]   = useState<any>(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
     document.title = "Your family page · Noor Circles";
-    familyService.view(token)
+    load()
       .then((r) => setData(unwrap(r)))
       .catch((err) => setError(apiError(err, "We couldn’t open this page right now. Please try again later.")));
-  }, [token]);
+  }, [load]);
 
   return (
     <div className="min-h-screen bg-background">
       <header className="bg-plum px-4 pb-10 pt-6 text-white sm:px-6">
         <div className="mx-auto max-w-3xl">
-          <img src="/brand/noor-circles-logo-horizontal-white.svg" alt="Noor Circles" className="h-9" />
+          <div className="flex items-center justify-between gap-3">
+            <img src="/brand/noor-circles-logo-horizontal-white.svg" alt="Noor Circles" className="h-9" />
+            {actions}
+          </div>
           {data && (
             <>
               <h1 className="mt-6 font-serif text-[28px] leading-tight sm:text-[34px]">
@@ -60,7 +72,9 @@ export default function FamilyPage() {
 
             {data.children.length === 0 && (
               <div className="rounded-xl border border-border bg-card p-8 text-center text-[13.5px] text-nc-muted shadow-nc">
-                No active children are linked to this family yet.
+                {actions
+                  ? "Your child’s circle will appear here once the Noor Circles team has enrolled them. JazakAllah khair for your patience."
+                  : "No active children are linked to this family yet."}
               </div>
             )}
 
@@ -74,7 +88,7 @@ export default function FamilyPage() {
 
             <footer className="pt-2 text-center text-[11.5px] text-nc-muted">
               <Lock className="mr-1 inline h-3 w-3" />
-              This page is private to your family. Please don’t share the link.
+              {actions ? "Only you can see this page when signed in." : "This page is private to your family. Please don’t share the link."}
               <div className="mt-1">Noor Circles · A Circle of Light in Every Neighbourhood</div>
             </footer>
           </>

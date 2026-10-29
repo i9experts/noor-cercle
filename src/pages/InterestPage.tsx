@@ -1,11 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
-import { Home, Inbox, Mail, MapPin, MessageCircle, Phone, Sparkles, Trash2, Users } from "lucide-react";
+import { Home, Inbox, KeyRound, Mail, MapPin, MessageCircle, Phone, Sparkles, Trash2, UserCheck, UserPlus, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { interestService, InterestStatus } from "@/services/api.service";
+import { accountService, interestService, InterestStatus } from "@/services/api.service";
 import StatCard from "@/components/shared/StatCard";
 import NcCard from "@/components/shared/NcCard";
 import DeleteConfirmModal from "@/components/shared/DeleteConfirmModal";
+import Modal from "@/components/shared/Modal";
+import CredentialsModal, { IssuedCredentials } from "@/components/shared/CredentialsModal";
+import { apiError, unwrap } from "@/lib/finance";
 import { cn } from "@/lib/utils";
+import { whatsappLink } from "@/lib/contact";
 
 interface InterestRequest {
   _id          : string;
@@ -20,6 +24,8 @@ interface InterestRequest {
   status       : InterestStatus;
   notes        : string;
   createdAt    : string;
+  /** The portal account created from this request, if any. */
+  account      : { _id: string; email: string; role: string; isActive: boolean; mustChangePassword: boolean; lastLoginAt: string | null } | null;
 }
 
 const ROLE_META = {
@@ -33,14 +39,6 @@ const STATUS_META: Record<InterestStatus, { label: string; cls: string }> = {
   contacted: { label: "Contacted", cls: "bg-plum-lt text-plum" },
   closed   : { label: "Closed",    cls: "bg-muted text-nc-muted" },
 };
-
-/** wa.me needs digits only, in international form (Pakistan numbers given locally start with 0). */
-function whatsappLink(phone: string) {
-  let d = phone.replace(/[^\d+]/g, "");
-  if (d.startsWith("+")) d = d.slice(1);
-  else if (d.startsWith("0")) d = "92" + d.slice(1);
-  return `https://wa.me/${d}`;
-}
 
 function timeAgo(iso: string) {
   const mins = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
@@ -58,6 +56,20 @@ export default function InterestPage() {
   const [roleFilter, setRoleFilter] = useState<"" | InterestRequest["role"]>("");
   const [notesDraft, setNotesDraft] = useState<Record<string, string>>({});
   const [toDelete, setToDelete]     = useState<InterestRequest | null>(null);
+  const [toConvert, setToConvert]   = useState<InterestRequest | null>(null);
+  const [issued, setIssued]         = useState<{ data: IssuedCredentials; title: string } | null>(null);
+
+  async function resetPassword(item: InterestRequest) {
+    if (!item.account) return;
+    if (!window.confirm(`Issue a new temporary password for ${item.firstName} ${item.lastName}? Their current password will stop working.`)) return;
+    try {
+      const data = unwrap<IssuedCredentials>(await accountService.resetPassword(item.account._id));
+      setIssued({ data, title: "New temporary password" });
+      load();
+    } catch (err) {
+      toast({ variant: "destructive", title: apiError(err, "Could not reset the password.") });
+    }
+  }
 
   async function load() {
     try {
@@ -225,6 +237,38 @@ export default function InterestPage() {
                     </a>
                   </div>
 
+                  {/* Portal account */}
+                  {item.role !== "host" && (
+                    <div className="mt-3 flex flex-wrap items-center gap-2 rounded-md border border-dashed border-border bg-card/60 px-3 py-2">
+                      {item.account ? (
+                        <>
+                          <UserCheck className="h-4 w-4 text-nc-green" />
+                          <span className="text-[12.5px] text-nc-dark">
+                            <span className="font-semibold">{item.account.role === "parent" ? "Parent" : "Murabbi"} account</span>
+                            <span className="text-nc-muted">
+                              {" · "}{!item.account.isActive ? "sign-in blocked"
+                                : item.account.lastLoginAt ? `last signed in ${timeAgo(item.account.lastLoginAt)}`
+                                : "hasn’t signed in yet"}
+                            </span>
+                          </span>
+                          <button className="ml-auto inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-1.5 text-[12px] text-nc-dark hover:border-primary hover:text-primary"
+                            onClick={() => resetPassword(item)}>
+                            <KeyRound className="h-3.5 w-3.5" /> Reset password
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-[12.5px] text-nc-muted">
+                            {item.role === "mentor" ? "Ready to start? Give them a murabbi login." : "Give this family a login to follow their child’s circle."}
+                          </span>
+                          <button className="btn-primary ml-auto !py-1.5 text-[12.5px]" onClick={() => setToConvert(item)}>
+                            <UserPlus className="h-3.5 w-3.5" /> Create {item.role === "mentor" ? "murabbi" : "parent"} account
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  )}
+
                   {/* Notes */}
                   <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-start">
                     <textarea
@@ -261,6 +305,15 @@ export default function InterestPage() {
         )}
       </NcCard>
 
+      {toConvert && (
+        <ConvertModal
+          item={toConvert}
+          onClose={() => setToConvert(null)}
+          onDone={(data) => { setToConvert(null); setIssued({ data, title: "Account created" }); load(); }}
+        />
+      )}
+      <CredentialsModal issued={issued?.data ?? null} title={issued?.title} onClose={() => setIssued(null)} />
+
       <DeleteConfirmModal
         open={!!toDelete}
         title="Delete interest request?"
@@ -269,5 +322,55 @@ export default function InterestPage() {
         onClose={() => setToDelete(null)}
       />
     </div>
+  );
+}
+
+function ConvertModal({ item, onClose, onDone }: { item: InterestRequest; onClose: () => void; onDone: (data: IssuedCredentials) => void }) {
+  const { toast } = useToast();
+  const [assignTraining, setAssignTraining] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const mentor = item.role === "mentor";
+  const name = `${item.firstName} ${item.lastName}`;
+
+  async function create() {
+    setSaving(true);
+    try {
+      const data = unwrap<IssuedCredentials & { training?: string | null; linkedExisting?: boolean }>(
+        await accountService.fromInterest(item._id, mentor ? { assignTraining } : {}));
+      if (data.linkedExisting) toast({ title: "Linked to the parent already on file", description: "Their children appear on their page automatically." });
+      if (mentor && assignTraining && !data.training) toast({ variant: "destructive", title: "Account created, but the training couldn’t be assigned. Assign it from Asaas Training." });
+      onDone(data);
+    } catch (err) {
+      toast({ variant: "destructive", title: apiError(err, "Could not create the account.") });
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Modal open onClose={onClose} title={`Create ${mentor ? "murabbi" : "parent"} account`} subtitle={`${name} · ${item.email}`}>
+      <ul className="mb-5 space-y-2 text-[13px] text-nc-dark">
+        {mentor ? (
+          <>
+            <li>• {item.firstName} signs in to the murabbi portal with <span className="font-semibold">{item.email}</span>.</li>
+            <li>• You can assign their circle later from Circles.</li>
+          </>
+        ) : (
+          <>
+            <li>• {item.firstName} signs in with <span className="font-semibold">{item.email}</span> and sees their family page: attendance, this week’s topic, the calendar and notes from the murabbi.</li>
+            <li>• If this parent is already on file (same email or phone), the login is linked to that record. Otherwise a new parent record is added; enrol their child to link them.</li>
+          </>
+        )}
+        <li>• You’ll get a temporary password to share with them personally. They choose their own at first sign-in.</li>
+      </ul>
+      {mentor && (
+        <label className="mb-5 flex cursor-pointer items-start gap-2.5 rounded-md bg-muted px-3 py-2.5 text-[13px] text-nc-dark">
+          <input type="checkbox" checked={assignTraining} onChange={(e) => setAssignTraining(e.target.checked)} className="mt-0.5 accent-[hsl(var(--teal))]" />
+          <span>Assign the Asaas training now <span className="block text-[12px] text-nc-muted">They’ll find it under Asaas Training when they sign in.</span></span>
+        </label>
+      )}
+      <button className="btn-primary w-full justify-center" disabled={saving} onClick={create}>
+        {saving ? "Creating…" : "Create account"}
+      </button>
+    </Modal>
   );
 }

@@ -2,10 +2,12 @@ import { useEffect, useRef, useState } from "react";
 import StatCard from "@/components/shared/StatCard";
 import NcCard, { CardHeader, CardTitle } from "@/components/shared/NcCard";
 import NcBadge from "@/components/shared/NcBadge";
-import { adminService, courseService } from "@/services/api.service";
+import { accountService, adminService, courseService } from "@/services/api.service";
+import CredentialsModal, { IssuedCredentials } from "@/components/shared/CredentialsModal";
+import { apiError, unwrap } from "@/lib/finance";
 import CertifiedBadge from "@/components/course/CertifiedBadge";
 import { useToast } from "@/hooks/use-toast";
-import { MoreVertical, Pencil, UserCheck, UserX, Trash2, ShieldCheck, ChevronRight } from "lucide-react";
+import { MoreVertical, Pencil, UserCheck, UserX, Trash2, ShieldCheck, ChevronRight, KeyRound } from "lucide-react";
 import { AddMurabbiModal, EditMurabbiModal } from "@/components/modals/AllModals";
 
 function getInitials(name: string) {
@@ -27,9 +29,9 @@ const BADGE_CONFIG = {
   new         : { label: "new",          variant: "purple"as const },
 };
 
-function ActionMenu({ murabbi, onEdit, onToggle, onDelete, onTierChange }: {
+function ActionMenu({ murabbi, onEdit, onToggle, onDelete, onTierChange, onResetPassword }: {
   murabbi: any; onEdit: () => void; onToggle: () => void; onDelete: () => void;
-  onTierChange: (tier: 1 | 2 | 3) => void;
+  onTierChange: (tier: 1 | 2 | 3) => void; onResetPassword: () => void;
 }) {
   const [open, setOpen]           = useState(false);
   const [tierOpen, setTierOpen]   = useState(false);
@@ -60,6 +62,10 @@ function ActionMenu({ murabbi, onEdit, onToggle, onDelete, onTierChange }: {
           <button className="w-full flex items-center gap-2.5 px-3.5 py-2 hover:bg-muted text-left"
             onClick={() => { setOpen(false); onEdit(); }}>
             <Pencil className="h-3.5 w-3.5 text-nc-muted" /> Edit
+          </button>
+          <button className="w-full flex items-center gap-2.5 px-3.5 py-2 hover:bg-muted text-left"
+            onClick={() => { setOpen(false); onResetPassword(); }}>
+            <KeyRound className="h-3.5 w-3.5 text-nc-muted" /> Reset password
           </button>
 
           {/* Tier submenu */}
@@ -123,6 +129,17 @@ export default function MurabbisPage({
   const [tierCounts, setTierCounts]   = useState<any>({});
   const [loading, setLoading]         = useState(true);
   const [badges, setBadges]           = useState<Record<string, string>>({});
+  const [issued, setIssued]           = useState<IssuedCredentials | null>(null);
+
+  async function resetPassword(m: any) {
+    if (!window.confirm(`Issue a new temporary password for ${m.fullName}? Their current password will stop working.`)) return;
+    try {
+      const data = unwrap<IssuedCredentials>(await accountService.resetPassword(m._id));
+      setIssued({ ...data, account: { ...data.account, phone: data.account.phone ?? m.phone } });
+    } catch (err) {
+      toast({ variant: "destructive", title: apiError(err, "Could not reset the password.") });
+    }
+  }
   const [editMurabbi, setEditMurabbi] = useState<any>(null);
   const [showAdd, setShowAdd]         = useState(false);
 
@@ -270,6 +287,7 @@ export default function MurabbisPage({
                         onToggle={() => toggleStatus(m)}
                         onDelete={() => handleDelete(m)}
                         onTierChange={(t) => handleTierChange(m, t)}
+                      onResetPassword={() => resetPassword(m)}
                       />
                     </div>
                   </div>
@@ -306,6 +324,7 @@ export default function MurabbisPage({
                       onToggle={() => toggleStatus(m)}
                       onDelete={() => handleDelete(m)}
                       onTierChange={(t) => handleTierChange(m, t)}
+                      onResetPassword={() => resetPassword(m)}
                     />
                   </div>
                 ))}
@@ -335,6 +354,7 @@ export default function MurabbisPage({
                       onToggle={() => toggleStatus(m)}
                       onDelete={() => handleDelete(m)}
                       onTierChange={(t) => handleTierChange(m, t)}
+                      onResetPassword={() => resetPassword(m)}
                     />
                   </div>
                 ))}
@@ -414,6 +434,7 @@ export default function MurabbisPage({
         onClose={() => setEditMurabbi(null)}
         onSuccess={() => { setEditMurabbi(null); load(); }}
       />
+      <CredentialsModal issued={issued} title="New temporary password" onClose={() => setIssued(null)} />
     </div>
   );
 }
