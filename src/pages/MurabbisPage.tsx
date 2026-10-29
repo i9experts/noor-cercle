@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import StatCard from "@/components/shared/StatCard";
 import NcCard, { CardHeader, CardTitle } from "@/components/shared/NcCard";
 import NcBadge from "@/components/shared/NcBadge";
-import { adminService } from "@/services/api.service";
+import { adminService, courseService } from "@/services/api.service";
+import CertifiedBadge from "@/components/course/CertifiedBadge";
 import { useToast } from "@/hooks/use-toast";
 import { MoreVertical, Pencil, UserCheck, UserX, Trash2, ShieldCheck, ChevronRight } from "lucide-react";
 import { AddMurabbiModal, EditMurabbiModal } from "@/components/modals/AllModals";
@@ -121,6 +122,7 @@ export default function MurabbisPage({
   const [pageStats, setPageStats]     = useState<any>({});
   const [tierCounts, setTierCounts]   = useState<any>({});
   const [loading, setLoading]         = useState(true);
+  const [badges, setBadges]           = useState<Record<string, string>>({});
   const [editMurabbi, setEditMurabbi] = useState<any>(null);
   const [showAdd, setShowAdd]         = useState(false);
 
@@ -135,6 +137,9 @@ export default function MurabbisPage({
       })
       .catch(() => toast({ variant: "destructive", title: "Failed to load murabbis" }))
       .finally(() => setLoading(false));
+    courseService.badges()
+      .then((res) => setBadges(Object.fromEntries((res.data.data || []).map((b: any) => [b.user, b.badge]))))
+      .catch(() => { /* badges are extra; the list works without them */ });
   }
 
   useEffect(() => { load(); }, [refreshKey]);
@@ -248,6 +253,7 @@ export default function MurabbisPage({
                           <span className="ml-1 text-teal">+{m.circles.length - 1} more</span>
                         )}
                       </div>
+                      {badges[m._id] && <CertifiedBadge label={badges[m._id]} className="mt-1" />}
                     </div>
 
                     {/* Right side — badge + stats */}

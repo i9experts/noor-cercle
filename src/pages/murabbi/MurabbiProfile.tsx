@@ -3,7 +3,8 @@ import NcCard, { CardHeader, CardTitle } from "@/components/shared/NcCard";
 import SectionTitle from "@/components/shared/SectionTitle";
 import PasswordInput from "@/components/shared/PasswordInput";
 import { PasswordRules, isPasswordValid } from "@/components/shared/PasswordRules";
-import { usersService } from "@/services/api.service";
+import { courseService, usersService } from "@/services/api.service";
+import CertifiedBadge from "@/components/course/CertifiedBadge";
 import { useToast } from "@/hooks/use-toast";
 import { User, Lock, Bell } from "lucide-react";
 
@@ -67,6 +68,7 @@ export default function MurabbiProfile() {
   const [pwSaving,  setPwSaving]  = useState(false);
 
   const [prefs, setPrefs] = useState(loadPrefs);
+  const [badges, setBadges] = useState<any[]>([]);
 
   useEffect(() => {
     usersService.getMe()
@@ -76,6 +78,7 @@ export default function MurabbiProfile() {
       })
       .catch(() => toast({ variant: "destructive", title: "Failed to load profile" }))
       .finally(() => setLoading(false));
+    courseService.badges().then((res) => setBadges(res.data.data || [])).catch(() => {});
   }, []);
 
   const handleProfileSave = async (e: FormEvent) => {
@@ -172,6 +175,7 @@ export default function MurabbiProfile() {
                   <span className="inline-block mt-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-teal-lt text-teal capitalize">
                     {profile.role || "Murabbi"}
                   </span>
+                  {badges.map((b) => <CertifiedBadge key={b.courseKey} label={b.badge} className="ml-1.5 mt-1.5" />)}
                 </div>
               </div>
 
