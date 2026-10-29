@@ -2,8 +2,12 @@ import { useEffect, useRef, useState } from "react";
 import StatCard from "@/components/shared/StatCard";
 import NcCard, { CardHeader, CardTitle } from "@/components/shared/NcCard";
 import NcBadge from "@/components/shared/NcBadge";
-import { Star, Plus, MessageSquarePlus, Trash2, Loader2, Link2 } from "lucide-react";
+import { Star, Plus, MessageSquarePlus, Trash2, Loader2, Link2, KeyRound, Ban, UserPlus } from "lucide-react";
 import FamilyLinkModal from "@/components/shared/FamilyLinkModal";
+import CredentialsModal, { IssuedCredentials } from "@/components/shared/CredentialsModal";
+import Modal, { FormGroup, FormInput } from "@/components/shared/Modal";
+import { accountService } from "@/services/api.service";
+import { apiError, apiMessage, unwrap } from "@/lib/finance";
 import { parentsService } from "@/services/api.service";
 import { useToast } from "@/hooks/use-toast";
 import { RegisterParentModal, AddParentFeedbackModal } from "@/components/modals/AllModals";
@@ -246,6 +250,29 @@ export default function ParentsPage() {
   const [scheduleOpen, setScheduleOpen]         = useState(false);
   const [whatsappOpen, setWhatsappOpen]         = useState(false);
   const [toggling, setToggling]                 = useState<string | null>(null);
+  const [loginTarget, setLoginTarget]           = useState<any>(null);
+  const [issued, setIssued]                     = useState<{ data: IssuedCredentials; title: string } | null>(null);
+
+  async function resetLogin(p: any) {
+    if (!window.confirm(`Issue a new temporary password for ${p.fullName}? Their current password will stop working.`)) return;
+    try {
+      setIssued({ data: unwrap<IssuedCredentials>(await accountService.resetPassword(p.account._id)), title: "New temporary password" });
+      load();
+    } catch (err) {
+      toast({ variant: "destructive", title: apiError(err, "Could not reset the password.") });
+    }
+  }
+
+  async function toggleLogin(p: any) {
+    const active = !p.account.isActive;
+    if (!active && !window.confirm(`Stop ${p.fullName} from signing in? You can allow it again later.`)) return;
+    try {
+      toast({ title: apiMessage(await accountService.setAccess(p.account._id, active)) });
+      load();
+    } catch (err) {
+      toast({ variant: "destructive", title: apiError(err, "Could not update their access.") });
+    }
+  }
 
   async function load() {
     setLoading(true);
@@ -532,7 +559,7 @@ export default function ParentsPage() {
             <table className="w-full border-collapse text-[13px]">
               <thead>
                 <tr>
-                  {["Parent", "Phone", "Children", "Feedback", "Status", "Actions"].map((h) => (
+                  {["Parent", "Phone", "Children", "Feedback", "Status", "Login", "Actions"].map((h) => (
                     <th key={h} className="bg-muted px-3.5 py-2.5 text-left text-xs font-semibold text-nc-muted uppercase tracking-wide border-b border-border">
                       {h}
                     </th>
@@ -567,6 +594,31 @@ export default function ParentsPage() {
                       <NcBadge variant={p.isEngaged ? "green" : "amber"}>
                         {p.isEngaged ? "Engaged" : "No feedback"}
                       </NcBadge>
+                    </td>
+                    <td className="px-3.5 py-3 border-b border-border">
+                      {p.account ? (
+                        <div className="flex items-center gap-1">
+                          <div className="mr-1">
+                            <NcBadge variant={p.account.isActive ? "green" : "slate"}>{p.account.isActive ? "Active" : "Blocked"}</NcBadge>
+                            <div className="mt-0.5 whitespace-nowrap text-[11px] text-nc-muted">
+                              {p.account.lastLoginAt ? `Signed in ${new Date(p.account.lastLoginAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}` : "Not signed in yet"}
+                            </div>
+                          </div>
+                          <button className="p-1.5 hover:bg-muted rounded-md text-nc-muted" title="Reset password"
+                            aria-label={`Reset password for ${p.fullName}`} onClick={() => resetLogin(p)}>
+                            <KeyRound className="h-3.5 w-3.5" />
+                          </button>
+                          <button className="p-1.5 hover:bg-muted rounded-md text-nc-muted" title={p.account.isActive ? "Block sign-in" : "Allow sign-in"}
+                            aria-label={`${p.account.isActive ? "Block" : "Allow"} sign-in for ${p.fullName}`} onClick={() => toggleLogin(p)}>
+                            {p.account.isActive ? <Ban className="h-3.5 w-3.5" /> : <UserPlus className="h-3.5 w-3.5" />}
+                          </button>
+                        </div>
+                      ) : (
+                        <button className="whitespace-nowrap rounded-md border border-border px-2.5 py-1 text-[12px] font-medium text-teal hover:border-teal"
+                          onClick={() => setLoginTarget(p)}>
+                          Create login
+                        </button>
+                      )}
                     </td>
                     <td className="px-3.5 py-3 border-b border-border">
                       <div className="flex items-center gap-1.5">
@@ -617,11 +669,44 @@ export default function ParentsPage() {
         onSuccess={() => { setScheduleOpen(false); load(); }}
       />
       <FamilyLinkModal parent={linkTarget} onClose={() => setLinkTarget(null)} />
+      {loginTarget && (
+        <CreateLoginModal parent={loginTarget} onClose={() => setLoginTarget(null)}
+          onDone={(data) => { setLoginTarget(null); setIssued({ data, title: "Login created" }); load(); }} />
+      )}
+      <CredentialsModal issued={issued?.data ?? null} title={issued?.title} onClose={() => setIssued(null)} />
       <SendWhatsappModal
         open={whatsappOpen}
         onClose={() => setWhatsappOpen(false)}
         onSuccess={() => { setWhatsappOpen(false); }}
       />
     </div>
+  );
+}
+
+function CreateLoginModal({ parent, onClose, onDone }: { parent: any; onClose: () => void; onDone: (data: IssuedCredentials) => void }) {
+  const { toast } = useToast();
+  const [email, setEmail] = useState(parent.email ?? "");
+  const [saving, setSaving] = useState(false);
+
+  async function create() {
+    setSaving(true);
+    try {
+      onDone(unwrap<IssuedCredentials>(await accountService.forParent(parent._id, { email: email.trim() || undefined })));
+    } catch (err) {
+      toast({ variant: "destructive", title: apiError(err, "Could not create the login.") });
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Modal open onClose={onClose} title="Create a parent login" subtitle={`${parent.fullName} will see their family page: attendance, this week’s topic, the calendar and notes from the murabbi.`}>
+      <FormGroup label="Email (their sign-in name)" required>
+        <FormInput type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="parent@example.com" disabled={!!parent.email} />
+      </FormGroup>
+      <p className="mb-4 text-[12px] text-nc-muted">You’ll get a temporary password to share with them personally. They choose their own at first sign-in.</p>
+      <button className="btn-primary w-full justify-center" disabled={saving || !/^\S+@\S+\.\S+$/.test(email.trim())} onClick={create}>
+        {saving ? "Creating…" : "Create login"}
+      </button>
+    </Modal>
   );
 }

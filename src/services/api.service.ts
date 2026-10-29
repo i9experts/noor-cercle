@@ -426,6 +426,18 @@ export const familyService = {
   getLink: (parentId: string) => API.get(`/parents/${parentId}/family-link`),
   rotate : (parentId: string) => API.post(`/parents/${parentId}/family-link/rotate`),
   view   : (token: string)    => API.get(`/family/${encodeURIComponent(token)}`),
+  /** A signed-in parent's own family page. */
+  mine   : ()                 => API.get('/family/me'),
+};
+
+// ─────────────────────────────────────────────────────────────
+//  PORTAL ACCOUNTS (admin-created, temporary password shown once)
+// ─────────────────────────────────────────────────────────────
+export const accountService = {
+  fromInterest : (interestId: string, data: { assignTraining?: boolean } = {}) => API.post(`/interest/${interestId}/account`, data),
+  forParent    : (parentId: string, data: { email?: string } = {})            => API.post(`/parents/${parentId}/account`, data),
+  resetPassword: (userId: string)                                              => API.post(`/accounts/${userId}/reset-password`),
+  setAccess    : (userId: string, active: boolean)                             => API.patch(`/accounts/${userId}/access`, { active }),
 };
 
 // ─────────────────────────────────────────────────────────────

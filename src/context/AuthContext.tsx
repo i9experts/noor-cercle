@@ -5,8 +5,15 @@ export interface AuthUser {
   id      : string;
   fullName: string;
   email   : string;
-  role    : 'admin' | 'murabbi';
+  role    : 'admin' | 'murabbi' | 'parent';
   image  ?: string;
+  /** Signed in with a temporary password: must choose their own first. */
+  mustChangePassword?: boolean;
+}
+
+/** Where each kind of account lands after signing in. */
+export function homeFor(role?: string | null) {
+  return role === 'admin' ? '/' : role === 'parent' ? '/parent' : '/murabbi';
 }
 
 interface AuthContextType {
