@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
-import { Star, AlertTriangle, Bell, Calendar, GraduationCap, Heart, Info, CalendarDays } from "lucide-react";
+import { Star, AlertTriangle, Bell, Calendar, GraduationCap, Heart, Info, CalendarDays, Headphones } from "lucide-react";
+import CertifiedBadge from "@/components/course/CertifiedBadge";
 import StatCard from "@/components/shared/StatCard";
 import QuranBox from "@/components/shared/QuranBox";
 import NcCard, { CardHeader, CardTitle } from "@/components/shared/NcCard";
 import NcBadge from "@/components/shared/NcBadge";
 import SectionTitle from "@/components/shared/SectionTitle";
 import MyEngagementCard from "@/components/shared/MyEngagementCard";
-import { murabbisService, performanceService, announcementsService, trainingService } from "@/services/api.service";
+import { murabbisService, performanceService, announcementsService, trainingService, courseService } from "@/services/api.service";
 import { useToast } from "@/hooks/use-toast";
 
 const ICON_MAP: Record<string, { Icon: React.ElementType; bg: string; text: string }> = {
@@ -32,13 +33,14 @@ function rateColor(v: number) {
   return v >= 80 ? "text-teal" : v >= 60 ? "text-gold-dim" : "text-nc-red";
 }
 
-export default function MurabbiDashboard() {
+export default function MurabbiDashboard({ onNavigate }: { onNavigate?: (page: string) => void }) {
   const { toast } = useToast();
   const [data, setData]               = useState<any>(null);
   const [loading, setLoading]         = useState(true);
   const [reviews, setReviews]             = useState<any[]>([]);
   const [activeBatch, setActiveBatch]     = useState<any>(null);
   const [announcements, setAnnouncements] = useState<any[]>([]);
+  const [courses, setCourses]             = useState<any[]>([]);
   const user = JSON.parse(localStorage.getItem("user") || "{}");
 
   useEffect(() => {
@@ -53,6 +55,10 @@ export default function MurabbiDashboard() {
 
     trainingService.getActiveBatch()
       .then((res) => setActiveBatch((res.data.data || res.data)?.batch || null))
+      .catch(() => {});
+
+    courseService.my()
+      .then((res) => setCourses(res.data.data || []))
       .catch(() => {});
 
     announcementsService.getAll()
@@ -81,6 +87,42 @@ export default function MurabbiDashboard() {
         translation='"Read in the name of your Lord who created."'
         reference="SURAH AL-ALAQ · 96:1"
       />
+
+      {/* Asaas audio training */}
+      {courses.map((c) => {
+        const pct = c.lessonsTotal ? Math.round((c.lessonsCompleted / c.lessonsTotal) * 100) : 0;
+        return (
+          <div key={c.key} className={`rounded-xl border p-4 mb-6 flex flex-wrap items-center gap-4 ${c.certifiedAt ? "border-gold/30 bg-gold/[0.06]" : "border-teal/20 bg-teal/5"}`}>
+            <div className="w-10 h-10 rounded-lg bg-teal/15 flex items-center justify-center flex-shrink-0">
+              <Headphones className="h-5 w-5 text-teal" />
+            </div>
+            <div className="flex-1 min-w-[200px]">
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="font-semibold text-[13.5px]">{c.title}</p>
+                {c.certifiedAt && <CertifiedBadge label={c.badge} />}
+              </div>
+              {c.certifiedAt ? (
+                <p className="text-[11.5px] text-nc-muted mt-0.5">Completed. Your certificate is ready to download.</p>
+              ) : (
+                <>
+                  <div className="mt-1.5 h-1.5 max-w-xs overflow-hidden rounded-full bg-muted">
+                    <div className="h-full rounded-full bg-plum" style={{ width: `${pct}%` }} />
+                  </div>
+                  <p className="text-[11.5px] text-nc-muted mt-1">
+                    {c.lessonsCompleted}/{c.lessonsTotal} lessons heard
+                    {c.dueDate ? ` · finish by ${new Date(c.dueDate).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}` : ""}
+                  </p>
+                </>
+              )}
+            </div>
+            {onNavigate && (
+              <button className="btn-primary !py-2 text-[12.5px]" onClick={() => onNavigate("murabbi-course")}>
+                {c.certifiedAt ? "View" : c.lessonsCompleted ? "Continue listening" : "Start listening"}
+              </button>
+            )}
+          </div>
+        );
+      })}
 
       {/* Training schedule widget */}
       {activeBatch && (

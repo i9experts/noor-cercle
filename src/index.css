@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&family=Noto+Nastaliq+Urdu:wght@400;600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -125,6 +125,10 @@
   .arabic {
     font-family: 'Amiri', serif;
   }
+
+  .urdu {
+    font-family: 'Noto Nastaliq Urdu', serif;
+  }
 }
 
 /* Scrollbar */
@@ -144,15 +148,15 @@
 
 /* Button utilities */
 .btn-primary {
-  @apply inline-flex items-center gap-1.5 px-[18px] py-2 rounded-sm text-[13.5px] font-medium cursor-pointer border-none transition-all bg-primary text-primary-foreground hover:bg-teal-dk focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
+  @apply inline-flex items-center gap-1.5 px-[18px] py-2 rounded-sm text-[13.5px] font-medium cursor-pointer border-none transition-all bg-primary text-primary-foreground hover:bg-teal-dk focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
   font-family: 'DM Sans', sans-serif;
 }
 .btn-gold {
-  @apply inline-flex items-center gap-1.5 px-[18px] py-2 rounded-sm text-[13.5px] font-medium cursor-pointer border-none transition-all bg-gold text-gold-foreground font-semibold hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
+  @apply inline-flex items-center gap-1.5 px-[18px] py-2 rounded-sm text-[13.5px] font-medium cursor-pointer border-none transition-all bg-gold text-gold-foreground font-semibold hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
   font-family: 'DM Sans', sans-serif;
 }
 .btn-outline {
-  @apply inline-flex items-center gap-1.5 px-[18px] py-2 rounded-sm text-[13.5px] font-medium cursor-pointer transition-all bg-transparent border border-border text-slate hover:border-teal hover:text-teal;
+  @apply inline-flex items-center gap-1.5 px-[18px] py-2 rounded-sm text-[13.5px] font-medium cursor-pointer transition-all bg-transparent border border-border text-slate hover:border-teal hover:text-teal disabled:cursor-not-allowed disabled:opacity-50;
   font-family: 'DM Sans', sans-serif;
 }
 .btn-ghost {

@@ -24,6 +24,7 @@ import MurabbiRatingsPage from "@/pages/MurabbiRatingsPage";
 import SyllabusPage from "@/pages/SyllabusPage";
 import SyllabusProgressPage from "@/pages/SyllabusProgressPage";
 import CalendarPage from "@/pages/CalendarPage";
+import AsaasTrainingPage from "@/pages/AsaasTrainingPage";
 import {
   EnrollModal,
   NewCircleModal,
@@ -116,6 +117,7 @@ const Index = () => {
       case "performance":    return <PerformancePage />;
       case "incentives":     return <IncentivesPage onAwardPoints={() => setAwardOpen(true)} />;
       case "training":       return <TrainingPage />;
+      case "asaas":          return <AsaasTrainingPage />;
       case "neighbourhoods": return <NeighbourhoodsPage />;
       case "reports":        return <ReportsPage />;
       case "interest":       return <InterestPage />;

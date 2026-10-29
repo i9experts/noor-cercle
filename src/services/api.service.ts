@@ -383,6 +383,43 @@ export const syllabusService = {
 };
 
 // ─────────────────────────────────────────────────────────────
+//  ASAAS AUDIO TRAINING COURSE
+// ─────────────────────────────────────────────────────────────
+export const courseService = {
+  // murabbi
+  my           : ()                                  => API.get('/course/my'),
+  badges       : ()                                  => API.get('/course/badges'),
+  me           : (key: string)                       => API.get(`/course/${key}/me`),
+  play         : (lessonId: string)                  => API.get(`/course/lessons/${lessonId}/play`),
+  heartbeat    : (lessonId: string, data: { segments: number[][]; position: number }) =>
+                   API.post(`/course/lessons/${lessonId}/heartbeat`, data),
+  assessment   : (key: string)                       => API.get(`/course/${key}/assessment`),
+  submit       : (key: string, answers: number[])    => API.post(`/course/${key}/assessment`, { answers }),
+  reflect      : (key: string, text: string)         => API.post(`/course/${key}/reflection`, { text }),
+  // admin
+  outline      : (key: string)                       => API.get(`/course/${key}`),
+  settings     : (key: string, data: object)         => API.patch(`/course/${key}/settings`, data),
+  questions    : (key: string, questions: object[])  => API.put(`/course/${key}/questions`, { questions }),
+  uploadAudio  : (key: string, files: File[], onProgress?: (pct: number) => void) => {
+    const form = new FormData();
+    files.forEach((f) => form.append('files', f));
+    return API.post(`/course/${key}/audio`, form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 0,
+      onUploadProgress: (e) => onProgress?.(e.total ? Math.round((e.loaded / e.total) * 100) : 0),
+    });
+  },
+  assign       : (key: string, data: { userIds: string[]; dueDate?: string; note?: string }) => API.post(`/course/${key}/assign`, data),
+  unassign     : (key: string, userId: string)       => API.delete(`/course/${key}/assign/${userId}`),
+  progress     : (key: string)                       => API.get(`/course/${key}/progress`),
+  userDetail   : (key: string, userId: string)       => API.get(`/course/${key}/progress/${userId}`),
+  reflections  : (key: string, status?: string)      => API.get(`/course/${key}/reflections`, { params: status ? { status } : {} }),
+  review       : (id: string, data: { status: 'approved' | 'revision'; feedback?: string }) => API.patch(`/course/reflections/${id}`, data),
+  practical    : (key: string, userId: string, data: { scores: number[]; notes?: string }) =>
+                   API.put(`/course/${key}/practical/${userId}`, data),
+};
+
+// ─────────────────────────────────────────────────────────────
 //  FAMILY LINKS (private, password-free page per family)
 // ─────────────────────────────────────────────────────────────
 export const familyService = {

@@ -19,6 +19,7 @@ export default {
         sans: ["DM Sans", "sans-serif"],
         serif: ["DM Serif Display", "serif"],
         arabic: ["Amiri", "serif"],
+        urdu: ["Noto Nastaliq Urdu", "serif"],
       },
       colors: {
         border: "hsl(var(--border))",
