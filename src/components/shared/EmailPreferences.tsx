@@ -4,7 +4,7 @@ import { emailService } from "@/services/api.service";
 import { apiError, apiMessage, unwrap } from "@/lib/finance";
 
 const LABELS: Record<string, { title: string; text: string }> = {
-  "training-reminders": { title: "Training reminders", text: "Nudges when your training is waiting, paused or near its due date." },
+  "training-reminders": { title: "Training reminders", text: "Nudges when your training is waiting, paused or near its due date, and, for parents, when a new Asaas module opens." },
   announcements: { title: "News and group emails", text: "Messages the Noor Circles team sends to murabbis or parents." },
 };
 
