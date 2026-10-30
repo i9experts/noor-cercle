@@ -26,6 +26,7 @@ import SyllabusProgressPage from "@/pages/SyllabusProgressPage";
 import CalendarPage from "@/pages/CalendarPage";
 import AsaasTrainingPage from "@/pages/AsaasTrainingPage";
 import EmailsPage from "@/pages/EmailsPage";
+import ParentAsaasPage from "@/pages/ParentAsaasPage";
 import ParentInsightsPage from "@/pages/ParentInsightsPage";
 import {
   EnrollModal,
@@ -120,6 +121,7 @@ const Index = () => {
       case "incentives":     return <IncentivesPage onAwardPoints={() => setAwardOpen(true)} />;
       case "training":       return <TrainingPage />;
       case "asaas":          return <AsaasTrainingPage />;
+      case "parent-asaas":   return <ParentAsaasPage />;
       case "emails":         return <EmailsPage />;
       case "neighbourhoods": return <NeighbourhoodsPage />;
       case "reports":        return <ReportsPage />;
