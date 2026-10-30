@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Award, CheckCircle2, ChevronDown, Clock, Download, GraduationCap, Headphones, Lock, NotebookPen, PlayCircle,
-  RotateCcw, Sparkles, X,
+  Presentation, RotateCcw, Sparkles, X,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { courseService, trainingService } from "@/services/api.service";
 import NcCard from "@/components/shared/NcCard";
 import StatCard from "@/components/shared/StatCard";
 import CertifiedBadge from "@/components/course/CertifiedBadge";
+import FlipChartSheet from "@/components/course/FlipChartSheet";
 import { cn } from "@/lib/utils";
 import { apiError, apiMessage, formatDate, unwrap } from "@/lib/finance";
 import { ASAAS_KEY, BAND_META, clock, hasUrdu, minutesLabel, titleProps } from "@/lib/course";
@@ -24,6 +25,7 @@ export default function MurabbiCourse() {
   const [openSection, setOpenSection] = useState<string | null>(null);
   const [quizOpen, setQuizOpen]   = useState(false);
   const autoplay = useRef(false);
+  const [chartOpen, setChartOpen] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -100,6 +102,13 @@ export default function MurabbiCourse() {
   const pct = p.lessonsTotal ? Math.round((p.lessonsCompleted / p.lessonsTotal) * 100) : 0;
   const index = lessons.findIndex((l) => l._id === lessonId);
   const nextLesson = index >= 0 ? lessons[index + 1] : undefined;
+  const lockedIds = new Set(lessons.filter((l) => l.locked).map((l) => l._id as string));
+  const charts: any[] = me.flipCharts ?? [];
+  const lessonCharts = lesson ? charts.filter((c) => c.lessons.some((x: any) => x._id === lesson._id)) : [];
+  const openLessonById = (id: string) => { const l = lessons.find((x) => x._id === id); if (l) { setChartOpen(null); selectLesson(l); } };
+  const onChartReport = (r: { justStudied?: boolean }) => {
+    if (r?.justStudied) { toast({ title: "Flip chart studied", description: "It’s now ticked off in your Flip charts." }); load(); }
+  };
 
   return (
     <div className="page-animate">
@@ -163,6 +172,23 @@ export default function MurabbiCourse() {
             </NcCard>
           )}
 
+          {lessonCharts.map((c) => (
+            <NcCard key={c.key} className="!p-4 sm:!p-5">
+              <div className="mb-3 flex flex-wrap items-center gap-2">
+                <Presentation className="h-4 w-4 text-plum" />
+                <span className="text-[13.5px] font-semibold text-nc-dark">Flip chart {c.number} for this lesson</span>
+                {c.studied && <span className="rounded-full bg-nc-green-lt px-2 py-0.5 text-[11px] font-semibold text-nc-green">Studied</span>}
+                <span className="text-[12px] text-nc-muted">Look it over while you listen; your trainer draws or prepares this on paper.</span>
+              </div>
+              <FlipChartSheet chartKey={c.key} courseKey={me.course.key} lessons={c.lessons} lockedLessons={lockedIds}
+                onOpenLesson={openLessonById} onReport={onChartReport} />
+            </NcCard>
+          ))}
+
+          <FlipChartsCard charts={charts} onOpen={(c) => (c.locked
+            ? toast({ title: "This flip chart opens with its lesson.", description: `Listen up to ${c.lessons[0]?.code ?? "its lesson"} first.` })
+            : setChartOpen(c.key))} />
+
           <AssessmentCard me={me} onStart={() => setQuizOpen(true)} />
           <ReflectionCard me={me} onSaved={load} />
           {(me.course.requirePractical || me.practical) && <PracticalCard me={me} />}
@@ -222,6 +248,15 @@ export default function MurabbiCourse() {
       </div>
 
       {quizOpen && <QuizModal me={me} onClose={() => setQuizOpen(false)} onDone={load} />}
+      {chartOpen && (() => {
+        const c = charts.find((x) => x.key === chartOpen);
+        return c && (
+          <FlipChartModal title={`Flip chart ${c.number} · ${c.module}`} onClose={() => setChartOpen(null)}>
+            <FlipChartSheet chartKey={c.key} courseKey={me.course.key} lessons={c.lessons} lockedLessons={lockedIds}
+              onOpenLesson={openLessonById} onReport={onChartReport} />
+          </FlipChartModal>
+        );
+      })()}
     </div>
   );
 }
@@ -434,22 +469,85 @@ function Player({ lessonId, nextLesson, threshold, autoPlay, onProgress, onNext 
   );
 }
 
+/** Transcript text marks emphasis with <b>…</b>; show it bold (as React text, never as HTML). */
+function Rich({ text }: { text: string }) {
+  const parts = text.split(/<b>(.*?)<\/b>/g);
+  return <>{parts.map((part, i) => (i % 2 ? <strong key={i} className="font-semibold text-plum">{part}</strong> : part.replace(/<\/?b>/g, "")))}</>;
+}
+
 function Transcript({ paras }: { paras: { k: string; t: string }[] }) {
   if (!paras?.length) return <div className="text-[13px] text-nc-muted">No transcript for this lesson.</div>;
   return (
     <div className="space-y-4">
       {paras.map((p, i) => p.k === "ar" ? (
-        <p key={i} dir="rtl" lang="ar" className="arabic rounded-md bg-gold/[0.07] px-4 py-3 text-center text-[22px] leading-[2] text-nc-dark">{p.t}</p>
+        <p key={i} dir="rtl" lang="ar" className="arabic rounded-md bg-gold/[0.07] px-4 py-3 text-center text-[22px] leading-[2] text-nc-dark"><Rich text={p.t} /></p>
       ) : hasUrdu(p.t) ? (
-        <p key={i} dir="rtl" lang="ur" className="urdu text-right text-[17px] leading-[2.3] text-nc-dark">{p.t}</p>
+        <p key={i} dir="rtl" lang="ur" className="urdu text-right text-[17px] leading-[2.3] text-nc-dark"><Rich text={p.t} /></p>
       ) : (
-        <p key={i} className="text-[14px] leading-relaxed text-nc-dark">{p.t}</p>
+        <p key={i} className="text-[14px] leading-relaxed text-nc-dark"><Rich text={p.t} /></p>
       ))}
     </div>
   );
 }
 
 // ── Assessment, reflection, practical ───────────────────────────────────────
+
+function FlipChartsCard({ charts, onOpen }: { charts: any[]; onOpen: (c: any) => void }) {
+  if (!charts.length) return null;
+  const studied = charts.filter((c) => c.studied).length;
+  return (
+    <NcCard>
+      <div className="mb-3 flex flex-wrap items-center gap-3">
+        <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-gold/15 text-gold-dim">
+          <Presentation className="h-5 w-5" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="text-[14px] font-semibold text-nc-dark">Flip charts</div>
+          <div className="text-[12px] text-nc-muted">
+            The {charts.length} charts the trainer uses, drawn as they look on paper. {studied} of {charts.length} studied.
+          </div>
+        </div>
+      </div>
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        {charts.map((c) => (
+          <button key={c.key} onClick={() => onOpen(c)}
+            className={cn("flex items-center gap-3 rounded-md border border-border px-3 py-2 text-left hover:border-teal hover:bg-teal-lt/40",
+              c.locked && "opacity-60")}>
+            <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-plum/10 font-semibold text-plum text-[12.5px]">{c.number}</span>
+            <span className="min-w-0 flex-1">
+              <span dir="rtl" lang="ur" className="urdu block truncate text-start text-[14px] leading-[1.9] text-nc-dark">{c.title}</span>
+              <span className="block truncate text-[11px] text-nc-muted">{c.module} · {c.lessons.map((l: any) => l.code).join(", ")}</span>
+            </span>
+            {c.studied ? <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-nc-green" aria-label="Studied" />
+              : c.locked ? <Lock className="h-3.5 w-3.5 flex-shrink-0 text-nc-muted" aria-label="Locked" /> : null}
+          </button>
+        ))}
+      </div>
+    </NcCard>
+  );
+}
+
+function FlipChartModal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
+  return (
+    <div className="fixed inset-0 z-[200] flex items-start justify-center overflow-y-auto bg-black/50 p-3 sm:p-6" role="dialog" aria-modal="true" aria-label={title}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="relative w-full max-w-3xl">
+        <div className="mb-2 flex items-center justify-between text-white">
+          <span className="text-[13px] font-semibold">{title}</span>
+          <button className="flex h-8 w-8 items-center justify-center rounded-full bg-white/15 hover:bg-white/25" onClick={onClose} aria-label="Close">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
 
 function AssessmentCard({ me, onStart }: { me: any; onStart: () => void }) {
   const a = me.assessment;

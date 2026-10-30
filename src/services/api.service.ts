@@ -393,6 +393,7 @@ export const courseService = {
   play         : (lessonId: string)                  => API.get(`/course/lessons/${lessonId}/play`),
   heartbeat    : (lessonId: string, data: { segments: number[][]; position: number }) =>
                    API.post(`/course/lessons/${lessonId}/heartbeat`, data),
+  flipChartView: (key: string, chart: string, seconds: number) => API.post(`/course/${key}/flip-charts/${chart}/view`, { seconds }),
   assessment   : (key: string)                       => API.get(`/course/${key}/assessment`),
   submit       : (key: string, answers: number[])    => API.post(`/course/${key}/assessment`, { answers }),
   reflect      : (key: string, text: string)         => API.post(`/course/${key}/reflection`, { text }),

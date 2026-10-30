@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  CheckCircle2, Headphones, Pencil, Plus, Search, Trash2, Upload, UserPlus, X,
+  CheckCircle2, Eye, Headphones, Pencil, Plus, Presentation, Search, Trash2, Upload, UserPlus, X,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { courseService, murabbisService } from "@/services/api.service";
@@ -8,13 +8,15 @@ import StatCard from "@/components/shared/StatCard";
 import NcCard from "@/components/shared/NcCard";
 import Modal, { FormGroup, FormInput, FormTextarea } from "@/components/shared/Modal";
 import CertifiedBadge from "@/components/course/CertifiedBadge";
+import FlipChartSheet from "@/components/course/FlipChartSheet";
 import { cn } from "@/lib/utils";
 import { apiError, apiMessage, downloadCsv, formatDate, unwrap } from "@/lib/finance";
 import { ASAAS_KEY, BAND_META, STATUS_META, clock, hasUrdu, minutesLabel, practicalBand, titleProps } from "@/lib/course";
 
-type Tab = "progress" | "reflections" | "content" | "questions" | "settings";
+type Tab = "progress" | "flipcharts" | "reflections" | "content" | "questions" | "settings";
 const TABS: { key: Tab; label: string }[] = [
   { key: "progress",    label: "Murabbis & progress" },
+  { key: "flipcharts",  label: "Flip charts" },
   { key: "reflections", label: "Reflections" },
   { key: "content",     label: "Lessons & audio" },
   { key: "questions",   label: "Assessment" },
@@ -90,6 +92,8 @@ export default function AsaasTrainingPage() {
         <ProgressTab report={report} outline={outline} onChanged={load} />
       ) : tab === "reflections" ? (
         <ReflectionsTab onChanged={load} />
+      ) : tab === "flipcharts" ? (
+        <FlipChartsTab report={report} outline={outline} />
       ) : tab === "content" ? (
         <ContentTab outline={outline} onChanged={load} />
       ) : tab === "questions" ? (
@@ -118,11 +122,11 @@ function ProgressTab({ report, outline, onChanged }: { report: any; outline: any
 
   function exportCsv() {
     downloadCsv("asaas-training-progress.csv", [
-      ["Murabbi", "Email", "Status", "Lessons heard", "Lessons total", "% heard", "Minutes listened", "Last active", "Due", "Best score", "Attempts", "Reflection", "Practical", "Certificate"],
+      ["Murabbi", "Email", "Status", "Lessons heard", "Lessons total", "% heard", "Minutes listened", "Last active", "Due", "Best score", "Attempts", "Reflection", "Practical", "Flip charts studied", "Certificate"],
       ...rows.map((r) => [
         r.user.fullName, r.user.email, STATUS_META[r.status]?.label ?? r.status, r.lessonsCompleted, r.lessonsTotal, r.percentHeard,
         r.listenMinutes, r.lastActive ? formatDate(r.lastActive) : "", r.dueDate ?? "", r.assessment?.best ?? "", r.assessment?.attempts ?? 0,
-        r.reflection ?? "", r.practical ? `${r.practical.total}/18` : "", r.certificate?.number ?? "",
+        r.reflection ?? "", r.practical ? `${r.practical.total}/18` : "", r.flipCharts ? `${r.flipCharts.studied}/${r.flipCharts.total}` : "", r.certificate?.number ?? "",
       ]),
     ]);
   }
@@ -166,6 +170,7 @@ function ProgressTab({ report, outline, onChanged }: { report: any; outline: any
                 <th className="px-3 py-2 font-medium">Listening</th>
                 <th className="px-3 py-2 font-medium">Assessment</th>
                 <th className="px-3 py-2 font-medium">Reflection</th>
+                <th className="px-3 py-2 font-medium">Flip charts</th>
                 {outline.course.requirePractical && <th className="px-3 py-2 font-medium">Practical</th>}
                 <th className="px-3 py-2 font-medium">Status</th>
                 <th className="px-3 py-2 font-medium">Due</th>
@@ -192,6 +197,13 @@ function ProgressTab({ report, outline, onChanged }: { report: any; outline: any
                       ) : <span className="text-nc-muted">—</span>}
                     </td>
                     <td className="px-3 py-3"><ReflectionChip status={r.reflection} /></td>
+                    <td className="whitespace-nowrap px-3 py-3 text-nc-dark">
+                      {r.flipCharts?.total ? (
+                        <span className={cn(r.flipCharts.studied === r.flipCharts.total && "font-semibold text-nc-green")}>
+                          {r.flipCharts.studied}/{r.flipCharts.total}
+                        </span>
+                      ) : <span className="text-nc-muted">—</span>}
+                    </td>
                     {outline.course.requirePractical && (
                       <td className="px-3 py-3">
                         {r.practical ? (
@@ -400,6 +412,25 @@ function DetailModal({ userId, requirePractical, onClose, onChanged }: { userId:
             <p className="mt-2 text-[11px] text-nc-muted">Each square is a lesson: green heard, light started. Hover for details.</p>
           </section>
 
+          {d.flipCharts?.length > 0 && (
+            <section>
+              <div className="mb-1 text-[13px] font-semibold text-nc-dark">
+                Flip charts <span className="font-normal text-nc-muted">· {d.flipCharts.filter((c: any) => c.studied).length} of {d.flipCharts.length} studied</span>
+              </div>
+              <ul className="grid grid-cols-1 gap-x-4 gap-y-1 text-[12.5px] sm:grid-cols-2">
+                {d.flipCharts.map((c: any) => (
+                  <li key={c.key} className="flex items-center gap-2">
+                    {c.studied ? <CheckCircle2 className="h-3.5 w-3.5 flex-shrink-0 text-nc-green" /> : <span className="h-3.5 w-3.5 flex-shrink-0 rounded-full border border-border" />}
+                    <span className="w-5 flex-shrink-0 text-nc-muted">{c.number}</span>
+                    <span dir="rtl" lang="ur" className="urdu min-w-0 flex-1 truncate text-start leading-[1.9] text-nc-dark">{c.title}</span>
+                    <span className="flex-shrink-0 text-[11px] text-nc-muted">{c.seconds ? clock(c.seconds) : "—"}</span>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-1 text-[11px] text-nc-muted">A chart counts as studied after 20 seconds on screen. Times show how long it was viewed.</p>
+            </section>
+          )}
+
           <section>
             <div className="mb-1 text-[13px] font-semibold text-nc-dark">Assessment attempts</div>
             {d.attempts.length === 0 ? <div className="text-[12.5px] text-nc-muted">No attempts yet.</div> : (
@@ -504,6 +535,113 @@ function ReviewActions({ id, onDone }: { id: string; onDone: () => void }) {
       </button>
       <button className="btn-outline !py-1.5 text-[12px]" onClick={() => setRevising(true)}>Ask for a revision</button>
     </div>
+  );
+}
+
+// ── Flip charts ─────────────────────────────────────────────────────────────
+
+function FlipChartsTab({ report, outline }: { report: any; outline: any }) {
+  const [preview, setPreview] = useState<string | null>(null);
+  const [whoFor, setWhoFor] = useState<string | null>(null);
+  const charts: any[] = report?.flipCharts ?? [];
+  const rows: any[] = report?.rows ?? [];
+  const assigned = rows.length;
+  const lessonsByCode = useMemo(() => {
+    const m = new Map<string, any>();
+    for (const s of outline.sections) for (const l of s.lessons) m.set(l.code, l);
+    return m;
+  }, [outline]);
+  const allStudied = report?.stats?.flipChartsAllStudied ?? 0;
+
+  if (!charts.length) return <NcCard><div className="py-12 text-center text-[13px] text-nc-muted">No flip charts in this course.</div></NcCard>;
+  const shown = charts.find((c) => c.key === preview);
+  const who = charts.find((c) => c.key === whoFor);
+
+  return (
+    <NcCard className="p-4 sm:p-6">
+      <div className="mb-4 text-[12.5px] text-nc-muted">
+        The {charts.length} flip charts the audio refers to. Murabbis see each one with its lesson and in their Flip charts list;
+        a chart counts as studied after 20 seconds on screen. {assigned ? <><span className="font-semibold text-nc-dark">{allStudied}</span> of {assigned} assigned murabbis have studied all of them.</> : null}
+      </div>
+      <div className="-mx-4 overflow-x-auto sm:mx-0">
+        <table className="w-full min-w-[760px] text-[13px]">
+          <thead>
+            <tr className="border-b border-border text-left text-[11.5px] uppercase tracking-wide text-nc-muted">
+              <th className="px-3 py-2 font-medium">#</th>
+              <th className="px-3 py-2 font-medium">Flip chart</th>
+              <th className="px-3 py-2 font-medium">Lessons</th>
+              <th className="px-3 py-2 font-medium">Studied</th>
+              <th className="px-3 py-2 font-medium">Time viewed</th>
+              <th className="px-3 py-2 font-medium" />
+            </tr>
+          </thead>
+          <tbody>
+            {charts.map((c) => {
+              const pct = assigned ? Math.round((c.studied / assigned) * 100) : 0;
+              return (
+                <tr key={c.key} className="border-b border-border/60">
+                  <td className="px-3 py-3 font-semibold text-plum">{c.number}</td>
+                  <td className="px-3 py-3">
+                    <div dir="rtl" lang="ur" className="urdu text-start text-[15px] leading-[1.9] text-nc-dark">{c.title}</div>
+                    <div className="text-[11.5px] text-nc-muted">{c.module} · {c.subtitle}</div>
+                  </td>
+                  <td className="px-3 py-3 text-[12px] text-nc-muted">{c.lessonCodes.join(", ")}</td>
+                  <td className="px-3 py-3">
+                    <div className="h-2 w-28 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-plum" style={{ width: `${pct}%` }} /></div>
+                    <button className="mt-1 text-[11.5px] text-nc-muted hover:text-teal hover:underline" onClick={() => setWhoFor(c.key)} disabled={!assigned}>
+                      {c.studied}/{assigned} murabbis{c.opened > c.studied ? ` · ${c.opened - c.studied} glanced` : ""}
+                    </button>
+                  </td>
+                  <td className="px-3 py-3 text-nc-dark">{minutesLabel(c.minutes)}</td>
+                  <td className="px-3 py-3 text-right">
+                    <button className="inline-flex items-center gap-1 text-[12px] font-medium text-teal hover:underline" onClick={() => setPreview(c.key)}>
+                      <Eye className="h-3.5 w-3.5" /> View
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {who && (
+        <Modal open onClose={() => setWhoFor(null)} title={`Flip chart ${who.number}`} subtitle={`${who.module} · ${who.subtitle}`}>
+          {(["studied", "not"] as const).map((k) => {
+            const list = rows.filter((r) => (k === "studied") === who.studiedBy.includes(r.user._id));
+            return (
+              <div key={k} className="mb-4">
+                <div className="mb-1 text-[12.5px] font-semibold text-nc-dark">{k === "studied" ? "Studied" : "Not yet"} ({list.length})</div>
+                {list.length === 0 ? <div className="text-[12.5px] text-nc-muted">No one.</div> : (
+                  <ul className="flex flex-wrap gap-1.5">
+                    {list.map((r) => (
+                      <li key={r.user._id} className={cn("rounded-full px-2.5 py-1 text-[12px]", k === "studied" ? "bg-nc-green-lt text-nc-green" : "bg-muted text-nc-dark")}>
+                        {r.user.fullName}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            );
+          })}
+        </Modal>
+      )}
+
+      {shown && (
+        <div className="fixed inset-0 z-[200] flex items-start justify-center overflow-y-auto bg-black/50 p-3 sm:p-6" role="dialog" aria-modal="true"
+          onClick={(e) => { if (e.target === e.currentTarget) setPreview(null); }}>
+          <div className="relative w-full max-w-3xl">
+            <div className="mb-2 flex items-center justify-between text-white">
+              <span className="flex items-center gap-2 text-[13px] font-semibold"><Presentation className="h-4 w-4" /> Flip chart {shown.number} · {shown.module}</span>
+              <button className="flex h-8 w-8 items-center justify-center rounded-full bg-white/15 hover:bg-white/25" onClick={() => setPreview(null)} aria-label="Close">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <FlipChartSheet chartKey={shown.key} lessons={shown.lessonCodes.map((code: string) => lessonsByCode.get(code)).filter(Boolean)} />
+          </div>
+        </div>
+      )}
+    </NcCard>
   );
 }
 
