@@ -17,12 +17,14 @@ export default function ParentHome() {
   const [pwOpen, setPwOpen] = useState(false);
   const [mailOpen, setMailOpen] = useState(false);
   const load = useCallback(() => familyService.mine(), []);
+  const save = useCallback((dto: object) => familyService.saveMyProfile(dto), []);
 
   const btn = "inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-[12.5px] font-medium text-white hover:bg-white/20";
   return (
     <>
       <FamilyScreen
         load={load}
+        saveProfile={save}
         actions={
           <div className="flex gap-2">
             <button className={btn} onClick={() => setMailOpen(true)} aria-label="Email settings">

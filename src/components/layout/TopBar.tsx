@@ -6,6 +6,7 @@ const pageNames: Record<string, string> = {
   murabbis           : 'Murabbi Management',
   parents            : 'Parent Network',
   interest           : 'Interest Requests',
+  'parent-insights'  : 'Parent Insights',
   contributions      : 'Contributions',
   rewards            : 'Reward Pool',
   ratings            : 'Murabbi Ratings',

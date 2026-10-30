@@ -429,6 +429,17 @@ export const familyService = {
   view   : (token: string)    => API.get(`/family/${encodeURIComponent(token)}`),
   /** A signed-in parent's own family page. */
   mine   : ()                 => API.get('/family/me'),
+  /** "About your family" answers, from the private link or the parent's account. */
+  saveProfile  : (token: string, data: object) => API.put(`/family/${encodeURIComponent(token)}/profile`, data),
+  saveMyProfile: (data: object)                => API.put('/family/me/profile', data),
+};
+
+// ─────────────────────────────────────────────────────────────
+//  PARENT INSIGHTS (admin only; never shown to murabbis)
+// ─────────────────────────────────────────────────────────────
+export const insightsService = {
+  parents    : (params: Record<string, string>) => API.get('/insights/parents', { params }),
+  saveProfile: (familyId: string, data: object) => API.put(`/insights/families/${encodeURIComponent(familyId)}/profile`, data),
 };
 
 // ─────────────────────────────────────────────────────────────
