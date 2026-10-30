@@ -5,6 +5,7 @@ import { syllabusService } from "@/services/api.service";
 import NcCard, { CardHeader, CardTitle } from "@/components/shared/NcCard";
 import CircleSyllabusModal from "@/components/shared/CircleSyllabusModal";
 import CalendarList from "@/components/shared/CalendarList";
+import { titleProps, urduCls } from "@/lib/course";
 import { cn } from "@/lib/utils";
 import { apiError, apiMessage, unwrap } from "@/lib/finance";
 import { PARTS, STATUS_META, addDays, formatDay, lastMeetingDate, pkToday, scheduleLabel } from "@/lib/schedule";
@@ -137,9 +138,9 @@ function AgendaCard({ item, onSaved, onShowAll }: { item: any; onSaved: () => vo
           {/* Session + checklist */}
           <div className="p-4 sm:p-6">
             <div className="text-[11px] font-semibold uppercase tracking-wide text-gold-dim">Session {session.number} · {session.theme}</div>
-            <div className="mb-2 font-serif text-[21px] leading-snug text-nc-dark">{session.title}</div>
+            <div {...titleProps(session.title)} className={cn("mb-2 text-nc-dark", urduCls(session.title, "leading-[2]") ? "urdu text-[22px] leading-[2]" : "font-serif text-[21px] leading-snug")}>{session.title}</div>
             {session.objectives?.length > 0 && (
-              <ul className="mb-3 list-disc space-y-0.5 pl-5 text-[13px] text-nc-dark">
+              <ul {...titleProps(session.objectives[0])} className={cn("mb-3 list-disc space-y-0.5 ps-5 text-nc-dark", urduCls(session.objectives[0], "leading-[2.1] text-[15px]") || "text-[13px]")}>
                 {session.objectives.map((o: string, i: number) => <li key={i}>{o}</li>)}
               </ul>
             )}
@@ -165,14 +166,14 @@ function AgendaCard({ item, onSaved, onShowAll }: { item: any; onSaved: () => vo
                         <span className="text-[11px] font-semibold text-nc-muted">{i + 1}</span>
                         <span className="min-w-0 flex-1">
                           <span className="block text-[13px] font-medium text-nc-dark">{part.label}</span>
-                          {detail?.title && <span className="block truncate text-[11.5px] text-nc-muted">{detail.title}</span>}
+                          {detail?.title && <span {...titleProps(detail.title)} className={cn("block truncate text-nc-muted", urduCls(detail.title, "leading-[2] text-[13px]") || "text-[11.5px]")}>{detail.title}</span>}
                         </span>
                         {detail?.minutes ? <span className="text-[11.5px] text-nc-muted">{detail.minutes} min</span> : null}
                         <ChevronDown className={cn("h-4 w-4 text-nc-muted transition-transform", expanded && "rotate-180")} />
                       </button>
                     </div>
                     {expanded && (
-                      <div className="whitespace-pre-line border-t border-border/60 px-3 py-2.5 pl-10 text-[12.5px] text-nc-dark">
+                      <div dir="auto" className={cn("whitespace-pre-line border-t border-border/60 px-3 py-2.5 text-nc-dark", detail?.details && urduCls(detail.details) ? "urdu pe-3 ps-3 text-right text-[15px] leading-[2.2] sm:pe-10" : "pl-10 text-[12.5px]")}>
                         {detail?.details || <span className="text-nc-muted">No details written for this part yet.</span>}
                       </div>
                     )}
@@ -184,7 +185,10 @@ function AgendaCard({ item, onSaved, onShowAll }: { item: any; onSaved: () => vo
             {session.homeActivity && (
               <div className="mt-3 flex gap-2 rounded-lg bg-gold-lt/60 p-3 text-[12.5px] text-nc-dark">
                 <Home className="mt-0.5 h-4 w-4 flex-shrink-0 text-gold-dim" />
-                <span><span className="font-semibold">Home activity (families see this): </span>{session.homeActivity}</span>
+                <span>
+                  <span className="font-semibold">Home activity (families see this): </span>
+                  <span {...titleProps(session.homeActivity)} className={cn(urduCls(session.homeActivity) && "urdu mt-1 block text-right text-[14.5px] leading-[2.1]")}>{session.homeActivity}</span>
+                </span>
               </div>
             )}
 
@@ -229,7 +233,7 @@ function AgendaCard({ item, onSaved, onShowAll }: { item: any; onSaved: () => vo
                 {recent.map((r: any) => (
                   <div key={r._id} className="flex items-center gap-2 py-0.5 text-[12px] text-nc-muted">
                     <CheckCircle2 className="h-3.5 w-3.5 text-nc-green" />
-                    <span className="truncate">{r.session?.number}. {r.session?.title}</span>
+                    <span className="truncate">{r.session?.number}. <span {...titleProps(r.session?.title ?? "")} className={cn(urduCls(r.session?.title) && "urdu")}>{r.session?.title}</span></span>
                     <span className="ml-auto whitespace-nowrap">{formatDay(r.date)}</span>
                   </div>
                 ))}

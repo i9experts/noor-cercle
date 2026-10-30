@@ -38,3 +38,6 @@ export const hasUrdu = (s: string) => /[\u0600-\u06FF]/.test(s);
 
 /** Props for a lesson title: Urdu titles (even with an English word in them) read right to left. */
 export const titleProps = (s: string) => (hasUrdu(s) ? { dir: "rtl" as const, lang: "ur" } : {});
+
+/** Nastaleeq, right-aligned and with room for the script's height when the text is Urdu. */
+export const urduCls = (s: string | undefined | null, leading = "leading-[2.1]") => (s && hasUrdu(s) ? `urdu text-right ${leading}` : "");

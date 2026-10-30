@@ -361,6 +361,8 @@ export const rewardsService = {
 export const syllabusService = {
   tracks        : ()                              => API.get('/syllabus/tracks'),
   setupDefaults : ()                              => API.post('/syllabus/tracks/defaults'),
+  /** Fills sessions nobody has written yet with the Noor Circles written sessions. */
+  loadContent   : (trackId: string)                => API.post(`/syllabus/tracks/${trackId}/load-content`),
   updateTrack   : (id: string, data: object)      => API.patch(`/syllabus/tracks/${id}`, data),
   sessions      : (trackId: string)               => API.get(`/syllabus/tracks/${trackId}/sessions`),
   createSession : (trackId: string, data: object) => API.post(`/syllabus/tracks/${trackId}/sessions`, data),

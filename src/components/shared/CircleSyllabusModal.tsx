@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { CheckCircle2, CircleDashed, CircleDot } from "lucide-react";
 import Modal from "@/components/shared/Modal";
 import { syllabusService } from "@/services/api.service";
+import { titleProps, urduCls } from "@/lib/course";
 import { cn } from "@/lib/utils";
 import { apiError, unwrap } from "@/lib/finance";
 import { PARTS, STATUS_META, THEMES, formatDay, scheduleLabel } from "@/lib/schedule";
@@ -61,7 +62,7 @@ export default function CircleSyllabusModal({ circleId, onClose }: { circleId: s
                     <Icon className={cn("h-4 w-4 flex-shrink-0", s.state === "covered" ? "text-nc-green" : s.state === "partial" ? "text-gold-dim" : "text-pale")} />
                     <span className="w-6 text-[12px] font-semibold text-nc-muted">{s.number}</span>
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[13px] text-nc-dark">{s.title}</span>
+                      <span {...titleProps(s.title)} className={cn("block truncate text-nc-dark", urduCls(s.title) ? "urdu text-right text-[14px] leading-[2]" : "text-[13px]")}>{s.title}</span>
                       <span className="text-[11px] text-nc-muted">{THEMES[s.month - 1]}{s.coverage ? ` · ${formatDay(s.coverage.date, true)}` : ""}</span>
                     </span>
                     {s.state === "partial" && <span className="text-[11px] text-gold-dim">{done.length}/6 parts</span>}

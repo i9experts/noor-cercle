@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { Award, CalendarDays, Heart, Home, Lock, MessageCircleHeart, Pencil, Sparkles, Star, Users } from "lucide-react";
 import { familyService } from "@/services/api.service";
 import CalendarList from "@/components/shared/CalendarList";
+import { titleProps, urduCls } from "@/lib/course";
 import { cn } from "@/lib/utils";
 import { apiError, unwrap } from "@/lib/finance";
 import { formatDay, scheduleLabel } from "@/lib/schedule";
@@ -138,9 +139,9 @@ function ChildCard({ child: c }: { child: any }) {
           <div className="text-[11px] font-semibold uppercase tracking-wide text-gold-dim">
             This week · {c.thisWeek.theme} · {formatDay(c.thisWeek.date)}
           </div>
-          <div className="mt-1 font-serif text-[20px] leading-snug text-nc-dark">{c.thisWeek.title}</div>
+          <div {...titleProps(c.thisWeek.title)} className={cn("mt-1 text-nc-dark", urduCls(c.thisWeek.title) ? "urdu text-[22px] leading-[2]" : "font-serif text-[20px] leading-snug")}>{c.thisWeek.title}</div>
           {c.thisWeek.objectives?.length > 0 && (
-            <ul className="mt-2 list-disc space-y-0.5 pl-5 text-[13.5px] text-nc-dark">
+            <ul {...titleProps(c.thisWeek.objectives[0])} className={cn("mt-2 list-disc space-y-0.5 ps-5 text-nc-dark", urduCls(c.thisWeek.objectives[0]) ? "urdu text-right text-[15px] leading-[2.1]" : "text-[13.5px]")}>
               {c.thisWeek.objectives.map((o: string, i: number) => <li key={i}>{o}</li>)}
             </ul>
           )}
@@ -149,7 +150,7 @@ function ChildCard({ child: c }: { child: any }) {
               <Home className="mt-0.5 h-5 w-5 flex-shrink-0 text-plum" />
               <div>
                 <div className="text-[12px] font-semibold uppercase tracking-wide text-plum">Try at home together</div>
-                <p className="mt-0.5 text-[14px] text-nc-dark">{c.thisWeek.homeActivity}</p>
+                <p {...titleProps(c.thisWeek.homeActivity)} className={cn("mt-0.5 text-nc-dark", urduCls(c.thisWeek.homeActivity) ? "urdu text-right text-[16px] leading-[2.2]" : "text-[14px]")}>{c.thisWeek.homeActivity}</p>
               </div>
             </div>
           )}
@@ -165,7 +166,7 @@ function ChildCard({ child: c }: { child: any }) {
         <div className="flex items-center gap-3 border-b border-border px-4 py-3 sm:px-6">
           <CalendarDays className="h-5 w-5 flex-shrink-0 text-plum" />
           <div className="text-[13.5px] text-nc-dark">
-            <span className="font-semibold">Next{c.next.date ? `, ${formatDay(c.next.date)}` : ""}:</span> {c.next.title}
+            <span className="font-semibold">Next{c.next.date ? `, ${formatDay(c.next.date)}` : ""}:</span> <span {...titleProps(c.next.title)} className={cn(urduCls(c.next.title) && "urdu")}>{c.next.title}</span>
             <span className="text-nc-muted"> ({c.next.theme})</span>
           </div>
         </div>
