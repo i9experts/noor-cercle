@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   Award, BarChart3, BookMarked, CalendarDays, Gift, HandCoins, ListChecks, Star, BookOpen, CircleDot, ClipboardCheck, Globe2, GraduationCap,
-  Headphones, HeartHandshake, AudioLines, Inbox, PieChart, Mail, LayoutDashboard, MapPin, School, Settings, TrendingUp, Users,
+  Headphones, HeartHandshake, AudioLines, Inbox, PieChart, Mail, LayoutDashboard, MapPin, Network, School, Settings, TrendingUp, Users,
 } from "lucide-react";
 import { adminService, contributionsService, interestService } from "@/services/api.service";
 import AppSidebar, { SidebarNavGroup } from "./AppSidebar";
@@ -57,6 +57,7 @@ const navGroups: SidebarNavGroup[] = [
       { icon: Headphones, label: "Asaas Training",     page: "asaas"          },
       { icon: AudioLines, label: "Parent Asaas",       page: "parent-asaas"   },
       { icon: MapPin,    label: "Neighbourhoods",      page: "neighbourhoods" },
+      { icon: Network,   label: "Clusters",            page: "clusters"       },
       { icon: BarChart3, label: "Reports & Analytics", page: "reports"        },
     ],
   },

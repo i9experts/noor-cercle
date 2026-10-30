@@ -494,6 +494,50 @@ export const accountService = {
 };
 
 // ─────────────────────────────────────────────────────────────
+//  CLUSTERS (admin) and the CLUSTER SUPERVISOR portal
+// ─────────────────────────────────────────────────────────────
+export const clustersService = {
+  list            : ()                         => API.get('/clusters'),
+  create          : (data: object)             => API.post('/clusters', data),
+  update          : (id: string, data: object) => API.patch(`/clusters/${id}`, data),
+  remove          : (id: string)               => API.delete(`/clusters/${id}`),
+  dashboard       : (id: string)               => API.get(`/clusters/${id}/dashboard`),
+  createSupervisor: (data: object)             => API.post('/clusters/supervisors', data),
+  visits          : (params: Record<string, string> = {}) => API.get('/clusters/visits', { params }),
+  followUp        : (id: string, fid: string, done: boolean) => API.patch(`/clusters/visits/${id}/follow-ups/${fid}`, { done }),
+  deleteVisit     : (id: string)               => API.delete(`/clusters/visits/${id}`),
+};
+
+export const supervisorService = {
+  clusters     : ()                                   => API.get('/supervisor/clusters'),
+  dashboard    : (clusterId?: string)                 => API.get('/supervisor/dashboard', { params: clusterId ? { clusterId } : {} }),
+  checklist    : ()                                   => API.get('/supervisor/checklist'),
+  visits       : (params: Record<string, string> = {}) => API.get('/supervisor/visits', { params }),
+  createVisit  : (data: object)                       => API.post('/supervisor/visits', data),
+  followUp     : (id: string, fid: string, done: boolean) => API.patch(`/supervisor/visits/${id}/follow-ups/${fid}`, { done }),
+  deleteVisit  : (id: string)                         => API.delete(`/supervisor/visits/${id}`),
+  circleOptions: ()                                   => API.get('/supervisor/circle-options'),
+  createCircle : (data: object)                       => API.post('/supervisor/circles', data),
+  updateCircle : (id: string, data: object)           => API.patch(`/supervisor/circles/${id}`, data),
+  murabbis     : ()                                   => API.get('/supervisor/murabbis'),
+  students     : (circleId?: string)                  => API.get('/supervisor/students', { params: circleId ? { circleId } : {} }),
+  enrol        : (data: object)                       => API.post('/supervisor/students', data),
+  updateStudent: (id: string, data: object)           => API.patch(`/supervisor/students/${id}`, data),
+  moveStudent  : (id: string, circleId: string)       => API.patch(`/supervisor/students/${id}/circle`, { circleId }),
+  setActive    : (id: string, active: boolean)        => API.patch(`/supervisor/students/${id}/active`, { active }),
+  interest     : ()                                   => API.get('/supervisor/interest'),
+  updateInterest: (id: string, data: object)          => API.patch(`/supervisor/interest/${id}`, data),
+  convertInterest: (id: string, data: object = {})    => API.post(`/supervisor/interest/${id}/account`, data),
+  calendar     : (from?: string, to?: string)         => API.get('/supervisor/calendar', { params: { from, to } }),
+  createEvent  : (data: object)                       => API.post('/supervisor/events', data),
+  updateEvent  : (id: string, data: object)           => API.patch(`/supervisor/events/${id}`, data),
+  deleteEvent  : (id: string)                         => API.delete(`/supervisor/events/${id}`),
+  audience     : (data: object)                       => API.post('/supervisor/messages/audience', data),
+  send         : (data: object)                       => API.post('/supervisor/messages', data),
+  messages     : ()                                   => API.get('/supervisor/messages'),
+};
+
+// ─────────────────────────────────────────────────────────────
 //  LIVE SESSIONS (Zoom meetings)
 // ─────────────────────────────────────────────────────────────
 export const liveSessionsService = {

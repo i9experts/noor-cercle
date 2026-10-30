@@ -22,6 +22,7 @@ const ParentCoursePage   = lazy(() => import('./pages/ParentCoursePage.tsx'));
 const SetPasswordPage    = lazy(() => import('./pages/SetPasswordPage.tsx'));
 const WelcomePage        = lazy(() => import('./pages/WelcomePage.tsx'));
 const UnsubscribePage    = lazy(() => import('./pages/UnsubscribePage.tsx'));
+const SupervisorIndex    = lazy(() => import('./pages/supervisor/SupervisorIndex.tsx'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -38,7 +39,7 @@ const storedUser = (): { role?: string; mustChangePassword?: boolean } => {
   }
 };
 
-function ProtectedRoute({ children, role }: { children: JSX.Element; role?: 'admin' | 'murabbi' | 'parent' }) {
+function ProtectedRoute({ children, role }: { children: JSX.Element; role?: 'admin' | 'murabbi' | 'parent' | 'supervisor' }) {
   if (!isLoggedIn()) return <Navigate to="/signin" replace />;
   const u = storedUser();
   // A temporary password must be replaced before anything else.
@@ -94,6 +95,10 @@ const App = () => (
               <Route path="/parent"   element={<ProtectedRoute role="parent"><ParentHome /></ProtectedRoute>} />
               <Route path="/parent/asaas" element={<ProtectedRoute role="parent"><ParentCoursePage /></ProtectedRoute>} />
               <Route path="/parent/*" element={<ProtectedRoute role="parent"><ParentHome /></ProtectedRoute>} />
+
+              {/* ── Cluster supervisor routes ── */}
+              <Route path="/supervisor"   element={<ProtectedRoute role="supervisor"><SupervisorIndex /></ProtectedRoute>} />
+              <Route path="/supervisor/*" element={<ProtectedRoute role="supervisor"><SupervisorIndex /></ProtectedRoute>} />
 
               {/* ── Murabbi routes ── */}
               <Route path="/murabbi"   element={<ProtectedRoute role="murabbi"><MurabbiIndex /></ProtectedRoute>} />

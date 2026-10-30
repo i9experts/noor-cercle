@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Eye, Mail, RotateCcw, Send, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { circlesService, emailService, neighbourhoodsService } from "@/services/api.service";
+import { circlesService, clustersService, emailService, neighbourhoodsService } from "@/services/api.service";
 import StatCard from "@/components/shared/StatCard";
 import NcCard from "@/components/shared/NcCard";
 import { cn } from "@/lib/utils";
@@ -22,7 +22,10 @@ const AUDIENCES = [
   { type: "parents",               label: "All parents (with an email)" },
   { type: "parents-circle",        label: "Parents in chosen circles" },
   { type: "parents-neighbourhood", label: "Parents in chosen neighbourhoods" },
+  { type: "cluster-parents",       label: "Parents in chosen clusters" },
+  { type: "cluster-murabbis",      label: "Murabbis in chosen clusters" },
 ];
+const NEEDS_IDS = ["parents-circle", "parents-neighbourhood", "cluster-parents", "cluster-murabbis"];
 
 const STATUS_CLS: Record<string, string> = {
   sent: "bg-nc-green-lt text-nc-green",
@@ -118,6 +121,7 @@ function ComposeTab({ onSent }: { onSent: () => void }) {
   const [ids, setIds] = useState<string[]>([]);
   const [circles, setCircles] = useState<any[]>([]);
   const [areas, setAreas] = useState<any[]>([]);
+  const [clusters, setClusters] = useState<any[]>([]);
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [schedule, setSchedule] = useState(false);
@@ -130,15 +134,16 @@ function ComposeTab({ onSent }: { onSent: () => void }) {
   useEffect(() => {
     circlesService.getAll().then((r) => setCircles(unwrap<any>(r)?.circles ?? unwrap<any[]>(r) ?? [])).catch(() => {});
     neighbourhoodsService.getAll().then((r) => setAreas(unwrap<any>(r)?.neighbourhoods ?? unwrap<any[]>(r) ?? [])).catch(() => {});
+    clustersService.list().then((r) => setClusters(unwrap<any>(r).clusters)).catch(() => {});
   }, []);
 
   const audience = useMemo(() => ({
     type,
     ...(type === "murabbis-tier" && { tier }),
     ...(type === "murabbis-training" && { status }),
-    ...((type === "parents-circle" || type === "parents-neighbourhood") && { ids }),
+    ...(NEEDS_IDS.includes(type) && { ids }),
   }), [type, tier, status, ids]);
-  const needsIds = type === "parents-circle" || type === "parents-neighbourhood";
+  const needsIds = NEEDS_IDS.includes(type);
 
   useEffect(() => {
     setReach(null);
@@ -150,7 +155,7 @@ function ComposeTab({ onSent }: { onSent: () => void }) {
     return () => clearTimeout(t);
   }, [audience, needsIds, ids.length]);
 
-  const list = type === "parents-circle" ? circles : areas;
+  const list = type === "parents-circle" ? circles : type.startsWith("cluster-") ? clusters : areas;
   const ready = subject.trim() && body.trim() && (!needsIds || ids.length) && (!schedule || at);
 
   async function doPreview() {

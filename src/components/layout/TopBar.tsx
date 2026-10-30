@@ -26,6 +26,15 @@ const pageNames: Record<string, string> = {
   neighbourhoods     : 'Neighbourhoods',
   reports            : 'Reports & Analytics',
   settings           : 'System Settings',
+  clusters           : 'Clusters',
+  'supervisor-dashboard': 'Cluster Dashboard',
+  'supervisor-circles'  : 'Circles',
+  'supervisor-children' : 'Children',
+  'supervisor-murabbis' : 'Murabbis',
+  'supervisor-interest' : 'Interest Requests',
+  'supervisor-calendar' : 'Calendar',
+  'supervisor-visits'   : 'Visits',
+  'supervisor-messages' : 'Messages',
   'murabbi-dashboard': 'Dashboard',
   'murabbi-students' : 'My Students',
   'murabbi-circles'  : 'My Circles',
@@ -62,7 +71,8 @@ interface TopBarProps {
 export default function TopBar({ activePage, onEnroll, onMenu, onAdminNav, onMurabbiNav, onApproveDeleteRequest }: TopBarProps) {
   const title = pageNames[activePage] || activePage;
   const { user, logout } = useAuth();
-  const isMurabbiPanel = window.location.pathname.includes('/murabbi');
+  const isSupervisorPanel = window.location.pathname.startsWith('/supervisor');
+  const isMurabbiPanel = window.location.pathname.includes('/murabbi') || isSupervisorPanel;
 
   const getInitials = (name: string) => {
     if (!name) return "??";
@@ -126,11 +136,13 @@ export default function TopBar({ activePage, onEnroll, onMenu, onAdminNav, onMur
             <DropdownMenuSeparator />
             {isMurabbiPanel ? (
               <>
-                <DropdownMenuItem className="cursor-pointer" onClick={() => onMurabbiNav?.('murabbi-profile')}>
-                  <User className="mr-2 h-4 w-4" />
-                  <span>Profile</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer" onClick={() => onMurabbiNav?.('murabbi-dashboard')}>
+                {!isSupervisorPanel && (
+                  <DropdownMenuItem className="cursor-pointer" onClick={() => onMurabbiNav?.('murabbi-profile')}>
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Profile</span>
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuItem className="cursor-pointer" onClick={() => onMurabbiNav?.(isSupervisorPanel ? 'supervisor-dashboard' : 'murabbi-dashboard')}>
                   <LayoutDashboard className="mr-2 h-4 w-4" />
                   <span>Dashboard</span>
                 </DropdownMenuItem>
