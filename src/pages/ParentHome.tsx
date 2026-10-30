@@ -1,5 +1,5 @@
 import { FormEvent, useCallback, useState } from "react";
-import { KeyRound, LogOut } from "lucide-react";
+import { KeyRound, LogOut, Mail } from "lucide-react";
 import { familyService, usersService } from "@/services/api.service";
 import { authService } from "@/services/auth.service";
 import { useAuth } from "@/context/AuthContext";
@@ -9,11 +9,13 @@ import PasswordInput from "@/components/shared/PasswordInput";
 import { PasswordRules, isPasswordValid } from "@/components/shared/PasswordRules";
 import { apiError, unwrap } from "@/lib/finance";
 import { FamilyScreen } from "./FamilyPage";
+import EmailPreferences from "@/components/shared/EmailPreferences";
 
 /** A signed-in parent's home: their family page, plus account actions. */
 export default function ParentHome() {
   const { logout } = useAuth();
   const [pwOpen, setPwOpen] = useState(false);
+  const [mailOpen, setMailOpen] = useState(false);
   const load = useCallback(() => familyService.mine(), []);
 
   const btn = "inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-[12.5px] font-medium text-white hover:bg-white/20";
@@ -23,6 +25,9 @@ export default function ParentHome() {
         load={load}
         actions={
           <div className="flex gap-2">
+            <button className={btn} onClick={() => setMailOpen(true)} aria-label="Email settings">
+              <Mail className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Emails</span>
+            </button>
             <button className={btn} onClick={() => setPwOpen(true)} aria-label="Change password">
               <KeyRound className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Password</span>
             </button>
@@ -33,6 +38,11 @@ export default function ParentHome() {
         }
       />
       {pwOpen && <ChangePasswordModal onClose={() => setPwOpen(false)} />}
+      {mailOpen && (
+        <Modal open onClose={() => setMailOpen(false)} title="Email settings">
+          <EmailPreferences only={["announcements"]} />
+        </Modal>
+      )}
     </>
   );
 }

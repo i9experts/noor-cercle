@@ -6,6 +6,7 @@ import { PasswordRules, isPasswordValid } from '@/components/shared/PasswordRule
 import { usersService, uploadService } from '@/services/api.service';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
+import EmailPreferences from '@/components/shared/EmailPreferences';
 import { User, Lock, Bell, Camera, Loader2 } from 'lucide-react';
 
 function getApiError(error: unknown): string | null {
@@ -28,8 +29,6 @@ export default function MurabbiSettings() {
   const [pwTouched, setPwTouched] = useState(false);
   const [pwSaving,  setPwSaving]  = useState(false);
 
-  // Notifications (UI-only toggles — stored locally)
-  const [notifs, setNotifs] = useState({ emailNotifications: true, weeklyReminders: true, sessionAlerts: true });
 
   useEffect(() => {
     usersService.getMe().then((res) => {
@@ -264,35 +263,11 @@ export default function MurabbiSettings() {
             <div className="flex items-center justify-center w-8 h-8 rounded-md bg-secondary">
               <Bell className="h-4 w-4 text-primary" />
             </div>
-            <CardTitle sub="Choose which notifications you receive">Notification Preferences</CardTitle>
+            <CardTitle sub="Choose which optional emails you receive">Email Preferences</CardTitle>
           </div>
         </CardHeader>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {([
-            { key: 'emailNotifications', label: 'Email Notifications', desc: 'Receive updates and reminders via email'    },
-            { key: 'weeklyReminders',    label: 'Weekly Reminders',     desc: 'Get a weekly summary of your circles'      },
-            { key: 'sessionAlerts',      label: 'Session Alerts',       desc: 'Alerts before your scheduled sessions'     },
-          ] as const).map(({ key, label, desc }) => (
-            <div key={key} className="flex items-start justify-between gap-4 p-4 rounded-lg border border-border bg-card hover:border-teal/30 transition-colors">
-              <div className="min-w-0">
-                <p className="text-[13px] font-semibold text-foreground leading-tight">{label}</p>
-                <p className="text-[11px] text-nc-muted mt-0.5 leading-relaxed">{desc}</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setNotifs((n) => ({ ...n, [key]: !n[key] }))}
-                className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
-                  notifs[key] ? 'bg-teal' : 'bg-border'
-                }`}
-              >
-                <span className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow transform transition duration-200 ${
-                  notifs[key] ? 'translate-x-4' : 'translate-x-0'
-                }`} />
-              </button>
-            </div>
-          ))}
-        </div>
+        <EmailPreferences />
       </NcCard>
     </div>
   );
