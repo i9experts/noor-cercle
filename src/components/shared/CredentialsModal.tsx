@@ -16,7 +16,7 @@ export function credentialsMessage({ account, credentials }: IssuedCredentials) 
   return [
     `Assalam-o-Alaikum ${first},`,
     "",
-    `Your Noor Circles ${account.role === "parent" ? "parent" : "murabbi"} account is ready.`,
+    `Your Noor Circles ${account.role === "parent" ? "parent" : account.role === "supervisor" ? "cluster supervisor" : "murabbi"} account is ready.`,
     "",
     `Sign in: ${credentials.loginUrl}`,
     `Email: ${credentials.email}`,
