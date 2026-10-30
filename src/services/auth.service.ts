@@ -15,6 +15,12 @@ export const authService = {
 
   logoutAll: () => API.post('/auth/logout-all'),
 
+  /** Who an emailed "set your password" link is for. */
+  setPasswordInfo: (token: string) => API.get(`/auth/set-password/${encodeURIComponent(token)}`),
+
+  /** Choose a password from an emailed link; returns tokens (signs in). */
+  setPassword: (token: string, newPassword: string) => API.post('/auth/set-password', { token, newPassword }),
+
   forgotPassword: (data: { email: string }) =>
     API.post('/auth/forgot-password', data),
 

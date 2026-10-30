@@ -6,6 +6,8 @@ import { whatsappLink } from "@/lib/contact";
 export interface IssuedCredentials {
   account: { fullName: string; email: string; role: string; phone?: string | null };
   credentials: { email: string; password: string; loginUrl: string };
+  /** A welcome / reset email with a set-password link went out too. */
+  emailed?: boolean;
 }
 
 /** The message an admin sends the person, in English and Urdu. */
@@ -60,6 +62,11 @@ export default function CredentialsModal({ issued, title, onClose }: { issued: I
         <KeyRound className="mt-0.5 h-4 w-4 flex-shrink-0 text-gold-dim" />
         <span>This password is shown only now. They’ll choose their own password the first time they sign in. If it’s lost, use “Reset password”.</span>
       </div>
+      {issued.emailed && (
+        <p className="mb-3 rounded-md bg-nc-green-lt px-3.5 py-2 text-[12.5px] text-nc-dark">
+          We’ve also emailed <span className="font-semibold">{issued.credentials.email}</span> a link to choose their own password, so they can use either.
+        </p>
+      )}
       <div className="mb-5 rounded-md border border-border px-4">
         <CopyRow label="Sign-in page" value={issued.credentials.loginUrl} />
         <CopyRow label="Email" value={issued.credentials.email} />

@@ -20,6 +20,7 @@ const pageNames: Record<string, string> = {
   incentives         : 'Incentives & Awards',
   training           : 'Murabbi Training',
   asaas              : 'Asaas Training',
+  emails             : 'Emails',
   neighbourhoods     : 'Neighbourhoods',
   reports            : 'Reports & Analytics',
   settings           : 'System Settings',

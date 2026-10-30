@@ -432,6 +432,24 @@ export const familyService = {
 };
 
 // ─────────────────────────────────────────────────────────────
+//  EMAIL (queue, group emails, preferences)
+// ─────────────────────────────────────────────────────────────
+export const emailService = {
+  preferences   : ()                                   => API.get('/email/preferences'),
+  setPreferences: (on: Record<string, boolean>)        => API.put('/email/preferences', { on }),
+  unsubscribe   : (token: string, subscribe = false)   => API.post('/email/unsubscribe', { token, subscribe }),
+  samples       : ()                                   => API.get('/email/samples'),
+  audience      : (audience: object)                   => API.post('/email/audience', audience),
+  preview       : (data: { subject: string; body: string }) => API.post('/email/preview', data),
+  send          : (data: object)                       => API.post('/email/campaigns', data),
+  campaigns     : ()                                   => API.get('/email/campaigns'),
+  cancel        : (id: string)                         => API.post(`/email/campaigns/${id}/cancel`),
+  logs          : (params: object)                     => API.get('/email/logs', { params }),
+  log           : (id: string)                         => API.get(`/email/logs/${id}`),
+  retry         : (id: string)                         => API.post(`/email/logs/${id}/retry`),
+};
+
+// ─────────────────────────────────────────────────────────────
 //  PORTAL ACCOUNTS (admin-created, temporary password shown once)
 // ─────────────────────────────────────────────────────────────
 export const accountService = {

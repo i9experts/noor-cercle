@@ -19,6 +19,8 @@ const NotFound           = lazy(() => import('./pages/NotFound.tsx'));
 const FamilyPage         = lazy(() => import('./pages/FamilyPage.tsx'));
 const ParentHome         = lazy(() => import('./pages/ParentHome.tsx'));
 const SetPasswordPage    = lazy(() => import('./pages/SetPasswordPage.tsx'));
+const WelcomePage        = lazy(() => import('./pages/WelcomePage.tsx'));
+const UnsubscribePage    = lazy(() => import('./pages/UnsubscribePage.tsx'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -78,6 +80,10 @@ const App = () => (
 
               {/* ── Family page: public, opened from the link the team shares ── */}
               <Route path="/family/:token" element={<FamilyPage />} />
+
+              {/* ── Links from emails: choose a password; unsubscribe ── */}
+              <Route path="/welcome/:token"    element={<WelcomePage />} />
+              <Route path="/email/unsubscribe" element={<UnsubscribePage />} />
 
               {/* ── Admin routes ── */}
               <Route path="/"  element={<ProtectedRoute role="admin"><Index /></ProtectedRoute>} />
