@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { BookOpenCheck, CheckCircle2, Home, Plus, Sparkles } from "lucide-react";
+import { BookOpenCheck, CheckCircle2, Download, Home, Plus, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { syllabusService } from "@/services/api.service";
 import NcCard from "@/components/shared/NcCard";
@@ -8,13 +8,14 @@ import DeleteConfirmModal from "@/components/shared/DeleteConfirmModal";
 import { cn } from "@/lib/utils";
 import { apiError, apiMessage, unwrap } from "@/lib/finance";
 import { PARTS, THEMES } from "@/lib/schedule";
+import { hasUrdu, titleProps, urduCls } from "@/lib/course";
 
 interface Part { key: string; title: string; details: string; minutes: number }
 interface Session {
   _id: string; number: number; month: number; title: string; objectives: string[];
   parts: Part[]; homeActivity: string;
 }
-interface Track { _id: string; name: string; ageGroup: string; description: string; sessionCount: number; circleCount: number }
+interface Track { _id: string; name: string; ageGroup: string; description: string; sessionCount: number; circleCount: number; writtenContent?: number }
 
 /** How much of a session has been written (for the at-a-glance dots). */
 function completeness(s: Session) {
@@ -66,6 +67,21 @@ export default function SyllabusPage() {
       await loadTracks();
     } catch (err) {
       toast({ variant: "destructive", title: apiError(err, "Could not set up the syllabus.") });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function loadContent() {
+    if (!track) return;
+    if (!window.confirm(`Fill ${track.name} with the Noor Circles written sessions (Urdu)?\n\nOnly sessions nobody has written yet are filled. Anything you’ve written stays exactly as it is.`)) return;
+    setBusy(true);
+    try {
+      const r = await syllabusService.loadContent(track._id);
+      toast({ title: apiMessage(r) });
+      await Promise.all([loadSessions(), loadTracks()]);
+    } catch (err) {
+      toast({ variant: "destructive", title: apiError(err, "Could not load the sessions.") });
     } finally {
       setBusy(false);
     }
@@ -131,9 +147,16 @@ export default function SyllabusPage() {
                 <span className="ml-2 inline-flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-full bg-plum" /> part written</span>
                 <span className="ml-2 inline-flex items-center gap-1"><Home className="h-3 w-3 text-gold-dim" /> home activity</span>
               </div>
-              <button className="btn-outline inline-flex items-center gap-1.5 !py-2 text-[12.5px]" onClick={() => setEditing("new")} disabled={!track}>
-                <Plus className="h-4 w-4" /> Add session
-              </button>
+              <div className="flex flex-wrap gap-2">
+                {!!track?.writtenContent && !loading && written < track.writtenContent && (
+                  <button className="btn-primary inline-flex items-center gap-1.5 !py-2 text-[12.5px]" onClick={loadContent} disabled={busy}>
+                    <Download className="h-4 w-4" /> {busy ? "Loading…" : `Load the ${track.writtenContent} written sessions (Urdu)`}
+                  </button>
+                )}
+                <button className="btn-outline inline-flex items-center gap-1.5 !py-2 text-[12.5px]" onClick={() => setEditing("new")} disabled={!track}>
+                  <Plus className="h-4 w-4" /> Add session
+                </button>
+              </div>
             </div>
 
             {loading ? (
@@ -157,7 +180,7 @@ export default function SyllabusPage() {
                           >
                             <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-plum-lt text-[12px] font-bold text-plum">{s.number}</span>
                             <span className="min-w-0 flex-1">
-                              <span className="block truncate text-[13.5px] font-medium text-nc-dark">{s.title}</span>
+                              <span {...titleProps(s.title)} className={cn("block truncate font-medium text-nc-dark", urduCls(s.title) ? "urdu text-right text-[15px] leading-[2]" : "text-[13.5px]")}>{s.title}</span>
                               <span className="mt-1 flex items-center gap-1">
                                 {s.parts.map((p) => (
                                   <span key={p.key} title={PARTS.find((x) => x.key === p.key)?.label}
@@ -269,10 +292,10 @@ function SessionEditor({ session, trackId, nextNumber, onClose, onSaved }: {
           </FormGroup>
         </FormRow>
         <FormGroup label="Title" required>
-          <FormInput value={f.title} maxLength={150} onChange={(e) => setF((x) => ({ ...x, title: e.target.value }))} placeholder="e.g. Who am I? My name and my faith" />
+          <FormInput dir="auto" value={f.title} maxLength={150} onChange={(e) => setF((x) => ({ ...x, title: e.target.value }))} placeholder="e.g. Who am I? My name and my faith" className={urduCls(f.title, "leading-[2] !text-[15px]")} />
         </FormGroup>
         <FormGroup label="Learning objectives (one per line)">
-          <FormTextarea rows={3} value={f.objectives} onChange={(e) => setF((x) => ({ ...x, objectives: e.target.value }))} placeholder={"Know the meaning of their own name\nName three blessings of being Muslim"} />
+          <FormTextarea dir="auto" rows={hasUrdu(f.objectives) ? 4 : 3} className={urduCls(f.objectives, "leading-[2.1] !text-[15px]")} value={f.objectives} onChange={(e) => setF((x) => ({ ...x, objectives: e.target.value }))} placeholder={"Know the meaning of their own name\nName three blessings of being Muslim"} />
         </FormGroup>
 
         <div className="mb-[18px] space-y-3">
@@ -287,15 +310,16 @@ function SessionEditor({ session, trackId, nextNumber, onClose, onSaved }: {
                     className="h-8 w-16 rounded-md border border-input bg-card px-2 text-right text-[12.5px] focus:border-primary focus:outline-none" aria-label={`${p.label} minutes`} />
                   <span className="text-[11.5px] text-nc-muted">min</span>
                 </div>
-                <FormInput value={part.title} maxLength={150} onChange={(e) => setPart(p.key, "title", e.target.value)} placeholder="Short title (optional)" className="mb-2" />
-                <FormTextarea rows={2} value={part.details} onChange={(e) => setPart(p.key, "details", e.target.value)} placeholder="What the Murabbi does in this part" />
+                <FormInput dir="auto" value={part.title} maxLength={150} onChange={(e) => setPart(p.key, "title", e.target.value)} placeholder="Short title (optional)" className={cn("mb-2", urduCls(part.title, "leading-[2] !text-[15px]"))} />
+                <FormTextarea dir="auto" rows={part.details.length > 200 ? 9 : 2} maxLength={2000} value={part.details} onChange={(e) => setPart(p.key, "details", e.target.value)} placeholder="What the Murabbi does in this part"
+                  className={urduCls(part.details, "leading-[2.1] !text-[15px]")} />
               </div>
             );
           })}
         </div>
 
         <FormGroup label="Home activity for families">
-          <FormTextarea rows={2} value={f.homeActivity} maxLength={1000} onChange={(e) => setF((x) => ({ ...x, homeActivity: e.target.value }))}
+          <FormTextarea dir="auto" rows={f.homeActivity.length > 150 ? 4 : 2} className={urduCls(f.homeActivity, "leading-[2.1] !text-[15px]")} value={f.homeActivity} maxLength={1000} onChange={(e) => setF((x) => ({ ...x, homeActivity: e.target.value }))}
             placeholder="Something parents and children can do together this week" />
         </FormGroup>
 
