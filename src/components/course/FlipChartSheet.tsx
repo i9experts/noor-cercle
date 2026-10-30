@@ -1,18 +1,27 @@
 import { useEffect, useRef } from "react";
 import { Headphones, Lock } from "lucide-react";
 import { FLIP_CHART_CSS, FLIP_CHART_SHEETS } from "@/content/flipCharts";
+import { PARENT_FLIP_CHART_CSS, PARENT_FLIP_CHART_SHEETS } from "@/content/parentFlipCharts";
 import { courseService } from "@/services/api.service";
 import { clock } from "@/lib/course";
 
-/** Adds the flip-chart styles to the page once. */
-function useFlipChartStyles() {
+/** The murabbis' Asaas charts and the parents' charts: same paper, their own drawings. */
+const SETS = {
+  murabbi: { css: FLIP_CHART_CSS, sheets: FLIP_CHART_SHEETS, scope: "fc-scope", styleId: "fc-styles" },
+  parent:  { css: PARENT_FLIP_CHART_CSS, sheets: PARENT_FLIP_CHART_SHEETS, scope: "pfc-scope", styleId: "pfc-styles" },
+} as const;
+export type FlipChartSet = keyof typeof SETS;
+
+/** Adds a set's flip-chart styles to the page once. */
+function useFlipChartStyles(set: FlipChartSet) {
   useEffect(() => {
-    if (document.getElementById("fc-styles")) return;
+    const { css, styleId } = SETS[set];
+    if (document.getElementById(styleId)) return;
     const el = document.createElement("style");
-    el.id = "fc-styles";
-    el.textContent = FLIP_CHART_CSS;
+    el.id = styleId;
+    el.textContent = css;
     document.head.appendChild(el);
-  }, []);
+  }, [set]);
 }
 
 /**
@@ -68,25 +77,28 @@ export interface FlipChartLesson { _id: string; code: string; title: string; dur
  * One flip chart drawn as paper, with the lessons that explain it. Pass
  * `courseKey` to track time on screen (murabbis); leave it out for previews.
  */
-export default function FlipChartSheet({ chartKey, lessons = [], courseKey = null, onOpenLesson, lockedLessons, onReport }: {
+export default function FlipChartSheet({ chartKey, lessons = [], courseKey = null, onOpenLesson, lockedLessons, onReport, set = "murabbi", lessonsLabel = "Explained in", listenLabel = "Listen" }: {
   chartKey: string;
+  set?: FlipChartSet;
+  lessonsLabel?: string;
+  listenLabel?: string;
   lessons?: FlipChartLesson[];
   courseKey?: string | null;
   onOpenLesson?: (lessonId: string) => void;
   lockedLessons?: Set<string>;
   onReport?: (r: { studied: boolean; justStudied?: boolean }) => void;
 }) {
-  useFlipChartStyles();
+  useFlipChartStyles(set);
   const ref = useFlipChartTracking(courseKey, chartKey, onReport);
-  const html = FLIP_CHART_SHEETS[chartKey];
+  const html = SETS[set].sheets[chartKey];
   if (!html) return null;
 
   return (
-    <div className="fc-scope" ref={ref}>
+    <div className={SETS[set].scope} ref={ref}>
       <article className="sheet" dangerouslySetInnerHTML={{ __html: html }} />
       {lessons.length > 0 && (
         <div className="mt-3 rounded-lg border border-border bg-card px-4 py-3">
-          <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-nc-muted">Explained in</div>
+          <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-nc-muted">{lessonsLabel}</div>
           <ul className="space-y-1.5">
             {lessons.map((l) => {
               const locked = lockedLessons?.has(l._id);
@@ -100,7 +112,7 @@ export default function FlipChartSheet({ chartKey, lessons = [], courseKey = nul
                       ? <Lock className="h-3.5 w-3.5 text-nc-muted" aria-label="Locked" />
                       : (
                         <button className="inline-flex items-center gap-1 text-[12px] font-medium text-teal hover:underline" onClick={() => onOpenLesson(l._id)}>
-                          <Headphones className="h-3.5 w-3.5" /> Listen
+                          <Headphones className="h-3.5 w-3.5" /> {listenLabel}
                         </button>
                       )
                   )}

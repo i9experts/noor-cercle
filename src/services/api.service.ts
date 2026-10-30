@@ -423,6 +423,27 @@ export const courseService = {
 };
 
 // ─────────────────────────────────────────────────────────────
+//  ASAAS FOR PARENTS (parents' audio course; progress is admin-only)
+//  Clips, audio and flip-chart time use courseService (play, heartbeat,
+//  flipChartView) with the key PARENT_COURSE_KEY.
+// ─────────────────────────────────────────────────────────────
+export const PARENT_COURSE_KEY = 'asaas-parents';
+export const parentCourseService = {
+  me         : ()                                   => API.get('/parent-course/me'),
+  quiz       : (key: string)                        => API.get(`/parent-course/quiz/${key}`),
+  submitQuiz : (key: string, answers: number[])     => API.post(`/parent-course/quiz/${key}`, { answers }),
+  selfCheck  : (stage: 'start' | 'end', answers: number[]) => API.post(`/parent-course/self-check/${stage}`, { answers }),
+  tick       : (module: number, slot: number, on: boolean) => API.put(`/parent-course/targets/${module}`, { slot, on }),
+  lighter    : (module: number, lighter: boolean)   => API.patch(`/parent-course/targets/${module}/lighter`, { lighter }),
+  // admin
+  progress   : ()                                   => API.get('/parent-course/admin/progress'),
+  detail     : (userId: string)                     => API.get(`/parent-course/admin/parents/${userId}`),
+  assign     : (data: { all?: boolean; userIds?: string[] }) => API.post('/parent-course/admin/assign', data),
+  setAccess  : (userId: string, allOpen: boolean)   => API.patch(`/parent-course/admin/parents/${userId}`, { allOpen }),
+  unassign   : (userId: string)                     => API.delete(`/parent-course/admin/parents/${userId}`),
+};
+
+// ─────────────────────────────────────────────────────────────
 //  FAMILY LINKS (private, password-free page per family)
 // ─────────────────────────────────────────────────────────────
 export const familyService = {

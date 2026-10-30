@@ -18,6 +18,7 @@ const ResetSuccessPage   = lazy(() => import('./pages/ResetSuccessPage.tsx'));
 const NotFound           = lazy(() => import('./pages/NotFound.tsx'));
 const FamilyPage         = lazy(() => import('./pages/FamilyPage.tsx'));
 const ParentHome         = lazy(() => import('./pages/ParentHome.tsx'));
+const ParentCoursePage   = lazy(() => import('./pages/ParentCoursePage.tsx'));
 const SetPasswordPage    = lazy(() => import('./pages/SetPasswordPage.tsx'));
 const WelcomePage        = lazy(() => import('./pages/WelcomePage.tsx'));
 const UnsubscribePage    = lazy(() => import('./pages/UnsubscribePage.tsx'));
@@ -91,6 +92,7 @@ const App = () => (
 
               {/* ── Parent routes ── */}
               <Route path="/parent"   element={<ProtectedRoute role="parent"><ParentHome /></ProtectedRoute>} />
+              <Route path="/parent/asaas" element={<ProtectedRoute role="parent"><ParentCoursePage /></ProtectedRoute>} />
               <Route path="/parent/*" element={<ProtectedRoute role="parent"><ParentHome /></ProtectedRoute>} />
 
               {/* ── Murabbi routes ── */}

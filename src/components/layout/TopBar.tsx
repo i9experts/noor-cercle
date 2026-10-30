@@ -21,6 +21,7 @@ const pageNames: Record<string, string> = {
   incentives         : 'Incentives & Awards',
   training           : 'Murabbi Training',
   asaas              : 'Asaas Training',
+  'parent-asaas'     : 'Asaas for Parents',
   emails             : 'Emails',
   neighbourhoods     : 'Neighbourhoods',
   reports            : 'Reports & Analytics',
