@@ -1,24 +1,31 @@
 import { ReactNode, useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { Award, CalendarDays, Heart, Home, Lock, MessageCircleHeart, Sparkles, Star } from "lucide-react";
+import { Award, CalendarDays, Heart, Home, Lock, MessageCircleHeart, Pencil, Sparkles, Star, Users } from "lucide-react";
 import { familyService } from "@/services/api.service";
 import CalendarList from "@/components/shared/CalendarList";
 import { cn } from "@/lib/utils";
 import { apiError, unwrap } from "@/lib/finance";
 import { formatDay, scheduleLabel } from "@/lib/schedule";
+import FamilyProfileForm from "@/components/shared/FamilyProfileForm";
+import { FamilyProfile, summarise } from "@/lib/familyProfile";
 
 /** Public, password-free family page: /family/:token (link shared by the Noor team). */
 export default function FamilyPage() {
   const { token = "" } = useParams();
   const load = useCallback(() => familyService.view(token), [token]);
-  return <FamilyScreen load={load} />;
+  const save = useCallback((dto: object) => familyService.saveProfile(token, dto), [token]);
+  return <FamilyScreen load={load} saveProfile={save} />;
 }
 
 /**
  * The family page itself, for the private link and for a parent signed in
  * with their own account (who gets `actions` in the header).
  */
-export function FamilyScreen({ load, actions }: { load: () => Promise<{ data: any }>; actions?: ReactNode }) {
+export function FamilyScreen({ load, actions, saveProfile }: {
+  load: () => Promise<{ data: any }>;
+  actions?: ReactNode;
+  saveProfile?: (dto: object) => Promise<unknown>;
+}) {
   const [data, setData]   = useState<any>(null);
   const [error, setError] = useState("");
 
@@ -85,6 +92,17 @@ export function FamilyScreen({ load, actions }: { load: () => Promise<{ data: an
               <p className="mb-4 text-[12.5px] text-nc-muted">Circle meetings and events for the next eight weeks.</p>
               <CalendarList items={data.calendar} showCircle={new Set(data.children.map((c: any) => c.circle?.name)).size > 1} compact />
             </section>
+
+            {saveProfile && (
+              <AboutFamily profile={data.family.profile} save={async (dto) => {
+                try {
+                  await saveProfile(dto);
+                  setData((d: any) => ({ ...d, family: { ...d.family, profile: { ...dto, updatedAt: new Date().toISOString() } } }));
+                } catch (err) {
+                  throw new Error(apiError(err, "We couldn’t save your answers. Please try again."));
+                }
+              }} />
+            )}
 
             <footer className="pt-2 text-center text-[11.5px] text-nc-muted">
               <Lock className="mr-1 inline h-3 w-3" />
@@ -203,6 +221,46 @@ function ChildCard({ child: c }: { child: any }) {
 
       {c.thisWeek == null && c.notes.length === 0 && c.attendance.total === 0 && (
         <div className="border-t border-border p-4 text-center text-[12.5px] text-nc-muted"><Heart className="mr-1 inline h-3.5 w-3.5" /> More will appear here week by week.</div>
+      )}
+    </section>
+  );
+}
+
+/** Optional "about your family" answers; only the Noor Circles team sees them. */
+function AboutFamily({ profile, save }: { profile: FamilyProfile | null; save: (dto: object) => Promise<void> }) {
+  const [editing, setEditing] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const rows = summarise(profile);
+  return (
+    <section className="rounded-xl border border-border bg-card p-4 shadow-nc sm:p-6">
+      <div className="mb-1 flex items-start justify-between gap-3">
+        <h2 className="flex items-center gap-2 font-serif text-[20px] text-nc-dark"><Users className="h-5 w-5 text-plum" /> About your family</h2>
+        {profile && !editing && (
+          <button className="inline-flex items-center gap-1 text-[12.5px] font-medium text-plum hover:underline" onClick={() => { setEditing(true); setSaved(false); }}>
+            <Pencil className="h-3.5 w-3.5" /> Edit
+          </button>
+        )}
+      </div>
+      <p className="mb-4 text-[12.5px] text-nc-muted">
+        Optional. It helps us plan the right day, time and support for your child. Only the Noor Circles team sees it.
+      </p>
+      {editing ? (
+        <FamilyProfileForm initial={profile} onCancel={() => setEditing(false)}
+          onSave={async (dto) => { await save(dto); setEditing(false); setSaved(true); }} />
+      ) : profile ? (
+        <>
+          {saved && <p role="status" className="mb-3 rounded-md bg-nc-green-lt px-3 py-2 text-[12.5px] text-nc-dark">JazakAllah khair, your answers are saved.</p>}
+          <dl className="grid grid-cols-1 gap-x-6 gap-y-2 text-[13px] sm:grid-cols-2">
+            {rows.map(([k, v]) => (
+              <div key={k} className="min-w-0">
+                <dt className="text-[11px] uppercase tracking-wide text-nc-muted">{k}</dt>
+                <dd className="break-words text-nc-dark">{v}</dd>
+              </div>
+            ))}
+          </dl>
+        </>
+      ) : (
+        <button className="btn-primary" onClick={() => setEditing(true)}>Tell us a bit more (2 minutes)</button>
       )}
     </section>
   );

@@ -26,6 +26,7 @@ import SyllabusProgressPage from "@/pages/SyllabusProgressPage";
 import CalendarPage from "@/pages/CalendarPage";
 import AsaasTrainingPage from "@/pages/AsaasTrainingPage";
 import EmailsPage from "@/pages/EmailsPage";
+import ParentInsightsPage from "@/pages/ParentInsightsPage";
 import {
   EnrollModal,
   NewCircleModal,
@@ -123,6 +124,7 @@ const Index = () => {
       case "neighbourhoods": return <NeighbourhoodsPage />;
       case "reports":        return <ReportsPage />;
       case "interest":       return <InterestPage />;
+      case "parent-insights": return <ParentInsightsPage />;
       case "contributions":  return <ContributionsPage />;
       case "rewards":        return <RewardsPage />;
       case "ratings":        return <MurabbiRatingsPage />;

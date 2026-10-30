@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   Award, BarChart3, BookMarked, CalendarDays, Gift, HandCoins, ListChecks, Star, BookOpen, CircleDot, ClipboardCheck, Globe2, GraduationCap,
-  Headphones, HeartHandshake, Inbox, Mail, LayoutDashboard, MapPin, School, Settings, TrendingUp, Users,
+  Headphones, HeartHandshake, Inbox, PieChart, Mail, LayoutDashboard, MapPin, School, Settings, TrendingUp, Users,
 } from "lucide-react";
 import { adminService, contributionsService, interestService } from "@/services/api.service";
 import AppSidebar, { SidebarNavGroup } from "./AppSidebar";
@@ -21,6 +21,7 @@ const navGroups: SidebarNavGroup[] = [
       { icon: Users,          label: "Murabbis", page: "murabbis", badgeKey: "murabbis" },
       { icon: HeartHandshake, label: "Parents",  page: "parents" },
       { icon: Inbox,          label: "Interest Requests", page: "interest", badgeKey: "interest" },
+      { icon: PieChart,       label: "Parent Insights",   page: "parent-insights" },
     ],
   },
   {
