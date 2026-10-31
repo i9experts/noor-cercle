@@ -204,10 +204,13 @@ export default function DashboardPage() {
       />
 
       {/* ── Stat Cards ──────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 2xl:grid-cols-6 mb-6">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 2xl:grid-cols-7 mb-6">
         <StatCard label="Total Students"     value={stats?.totalStudents     ?? "—"} meta="Enrolled students"    color="teal"   />
         <StatCard label="Active Circles"     value={stats?.activeCircles     ?? "—"} meta="Across neighbourhoods" color="gold"  />
-        <StatCard label="Certified Murabbis" value={stats?.totalMurabbis     ?? "—"} meta="Registered murabbis"  color="green"  />
+        <StatCard label="In Asaas Training"  value={stats?.asaasEnrolled     ?? "—"}
+          meta={stats ? `of ${stats.totalMurabbis ?? 0} murabbis enrolled` : "Murabbis enrolled"} color="purple" />
+        <StatCard label="Certified Murabbis" value={stats?.asaasCertified    ?? "—"}
+          meta={stats ? `${Math.max(0, (stats.asaasEnrolled ?? 0) - (stats.asaasCertified ?? 0))} still in training` : "Asaas certified"} color="green" />
         <StatCard label="Avg. Attendance"    value={stats ? `${stats.avgAttendanceRate ?? 0}%` : "—"} meta="All circles" color="purple" />
         <StatCard label="Sessions Completed" value={stats?.sessionsCompleted ?? "—"} meta="Year 1"               color="teal"   />
         <StatCard label="Parent Engagement"  value={stats ? `${stats.parentEngagement  ?? 0}%` : "—"} meta="This month" color="gold" />
