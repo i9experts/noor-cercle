@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Star, AlertTriangle, Bell, Calendar, GraduationCap, Heart, Info, CalendarDays, Headphones } from "lucide-react";
+import { Star, AlertTriangle, Bell, Calendar, GraduationCap, Heart, Info, CalendarDays, Headphones, IdCard } from "lucide-react";
 import CertifiedBadge from "@/components/course/CertifiedBadge";
 import StatCard from "@/components/shared/StatCard";
 import QuranBox from "@/components/shared/QuranBox";
@@ -7,7 +7,7 @@ import NcCard, { CardHeader, CardTitle } from "@/components/shared/NcCard";
 import NcBadge from "@/components/shared/NcBadge";
 import SectionTitle from "@/components/shared/SectionTitle";
 import MyEngagementCard from "@/components/shared/MyEngagementCard";
-import { murabbisService, performanceService, announcementsService, trainingService, courseService } from "@/services/api.service";
+import { murabbisService, performanceService, announcementsService, trainingService, courseService, murabbiProfileService } from "@/services/api.service";
 import { useToast } from "@/hooks/use-toast";
 
 const ICON_MAP: Record<string, { Icon: React.ElementType; bg: string; text: string }> = {
@@ -41,6 +41,7 @@ export default function MurabbiDashboard({ onNavigate }: { onNavigate?: (page: s
   const [activeBatch, setActiveBatch]     = useState<any>(null);
   const [announcements, setAnnouncements] = useState<any[]>([]);
   const [courses, setCourses]             = useState<any[]>([]);
+  const [introPct, setIntroPct]           = useState<number | null>(null);
   const user = JSON.parse(localStorage.getItem("user") || "{}");
 
   useEffect(() => {
@@ -59,6 +60,10 @@ export default function MurabbiDashboard({ onNavigate }: { onNavigate?: (page: s
 
     courseService.my()
       .then((res) => setCourses(res.data.data || []))
+      .catch(() => {});
+
+    murabbiProfileService.me()
+      .then((res) => setIntroPct((res.data.data ?? res.data)?.completeness ?? 0))
       .catch(() => {});
 
     announcementsService.getAll()
@@ -87,6 +92,30 @@ export default function MurabbiDashboard({ onNavigate }: { onNavigate?: (page: s
         translation='"Read in the name of your Lord who created."'
         reference="SURAH AL-ALAQ · 96:1"
       />
+
+      {/* Introduction reminder (until it is complete) */}
+      {introPct !== null && introPct < 100 && (
+        <div className="rounded-xl border border-gold/30 bg-gold/[0.06] p-4 mb-6 flex flex-wrap items-center gap-4">
+          <div className="w-10 h-10 rounded-lg bg-gold/15 flex items-center justify-center flex-shrink-0">
+            <IdCard className="h-5 w-5 text-gold-dim" />
+          </div>
+          <div className="flex-1 min-w-[200px]">
+            <p className="flex flex-wrap items-baseline gap-x-2 font-semibold text-[13.5px]">
+              Complete your introduction
+              <span dir="rtl" lang="ur" className="urdu font-normal text-[13px] leading-[2] text-nc-muted">اپنا تعارف مکمل کریں</span>
+            </p>
+            <div className="mt-1.5 h-1.5 max-w-xs overflow-hidden rounded-full bg-muted">
+              <div className="h-full rounded-full bg-gold" style={{ width: `${introPct}%` }} />
+            </div>
+            <p className="text-[11.5px] text-nc-muted mt-1">{introPct}% done · tell the Noor Circles team about yourself (only admins see it)</p>
+          </div>
+          {onNavigate && (
+            <button className="btn-primary !py-2 text-[12.5px]" onClick={() => onNavigate("murabbi-introduction")}>
+              {introPct ? "Continue" : "Start"}
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Asaas audio training */}
       {courses.map((c) => {

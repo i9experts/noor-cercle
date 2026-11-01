@@ -28,6 +28,7 @@ import AsaasTrainingPage from "@/pages/AsaasTrainingPage";
 import EmailsPage from "@/pages/EmailsPage";
 import ParentAsaasPage from "@/pages/ParentAsaasPage";
 import ParentInsightsPage from "@/pages/ParentInsightsPage";
+import MurabbiProfilesPage from "@/pages/MurabbiProfilesPage";
 import ClustersPage from "@/pages/ClustersPage";
 import TrainingsPage from "@/pages/TrainingsPage";
 import ParentRatingsPage from "@/pages/ParentRatingsPage";
@@ -130,6 +131,7 @@ const Index = () => {
       case "reports":        return <ReportsPage />;
       case "interest":       return <InterestPage />;
       case "parent-insights": return <ParentInsightsPage />;
+      case "murabbi-profiles": return <MurabbiProfilesPage />;
       case "clusters": return <ClustersPage />;
       case "trainings": return <TrainingsPage />;
       case "parent-ratings": return <ParentRatingsPage />;
