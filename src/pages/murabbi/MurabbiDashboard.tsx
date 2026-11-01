@@ -116,7 +116,7 @@ export default function MurabbiDashboard({ onNavigate }: { onNavigate?: (page: s
               )}
             </div>
             {onNavigate && (
-              <button className="btn-primary !py-2 text-[12.5px]" onClick={() => onNavigate("murabbi-course")}>
+              <button className="btn-primary !py-2 text-[12.5px]" onClick={() => onNavigate(c.key === "asaas-tier1" ? "murabbi-course" : "murabbi-trainings")}>
                 {c.certifiedAt ? "View" : c.lessonsCompleted ? "Continue listening" : "Start listening"}
               </button>
             )}

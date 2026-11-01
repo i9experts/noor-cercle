@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import {
-  CheckCircle2, Eye, Headphones, Pencil, Plus, Presentation, Search, Trash2, Upload, UserPlus, X,
+  ArrowLeft, CheckCircle2, Eye, Headphones, Pencil, Plus, Presentation, Search, Trash2, Upload, UserPlus, X,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { courseService, murabbisService } from "@/services/api.service";
+import { courseService, murabbisService, parentsService } from "@/services/api.service";
 import StatCard from "@/components/shared/StatCard";
 import NcCard from "@/components/shared/NcCard";
 import Modal, { FormGroup, FormInput, FormTextarea } from "@/components/shared/Modal";
@@ -12,6 +12,13 @@ import FlipChartSheet from "@/components/course/FlipChartSheet";
 import { cn } from "@/lib/utils";
 import { apiError, apiMessage, downloadCsv, formatDate, unwrap } from "@/lib/finance";
 import { ASAAS_KEY, BAND_META, STATUS_META, clock, hasUrdu, minutesLabel, practicalBand, titleProps } from "@/lib/course";
+import CourseBuilder from "@/components/training-admin/CourseBuilder";
+import MarketplaceSettings from "@/components/training-admin/MarketplaceSettings";
+
+/** Which training this page manages, and who takes it. */
+interface CourseCtx { key: string; audience: "murabbi" | "parent"; who: string; Who: string }
+const Course = createContext<CourseCtx>({ key: ASAAS_KEY, audience: "murabbi", who: "murabbis", Who: "Murabbi" });
+const useCourse = () => useContext(Course);
 
 type Tab = "progress" | "flipcharts" | "reflections" | "content" | "questions" | "settings";
 const TABS: { key: Tab; label: string }[] = [
@@ -23,7 +30,8 @@ const TABS: { key: Tab; label: string }[] = [
   { key: "settings",    label: "Settings" },
 ];
 
-export default function AsaasTrainingPage() {
+/** Manages one training: the Asaas murabbi course by default, or any marketplace training. */
+export default function AsaasTrainingPage({ courseKey = ASAAS_KEY, onBack }: { courseKey?: string; onBack?: () => void }) {
   const { toast } = useToast();
   const [tab, setTab]           = useState<Tab>("progress");
   const [outline, setOutline]   = useState<any>(null);
@@ -32,7 +40,7 @@ export default function AsaasTrainingPage() {
 
   async function load() {
     try {
-      const [o, r] = await Promise.all([courseService.outline(ASAAS_KEY), courseService.progress(ASAAS_KEY)]);
+      const [o, r] = await Promise.all([courseService.outline(courseKey), courseService.progress(courseKey)]);
       setOutline(unwrap(o));
       setReport(unwrap(r));
     } catch (err) {
@@ -42,20 +50,53 @@ export default function AsaasTrainingPage() {
     }
   }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [courseKey]);
 
   const s = report?.stats;
   const st = outline?.stats;
+  const isAsaas = courseKey === ASAAS_KEY;
+  const audience: "murabbi" | "parent" = outline?.course.audience === "parent" ? "parent" : "murabbi";
+  const ctx = useMemo<CourseCtx>(() => ({
+    key: courseKey, audience, who: audience === "parent" ? "parents" : "murabbis", Who: audience === "parent" ? "Parent" : "Murabbi",
+  }), [courseKey, audience]);
+  const tabs = TABS
+    .filter((t) => t.key !== "flipcharts" || !outline || isAsaas || outline.course.flipCharts?.length)
+    .map((t) => (t.key === "progress" ? { ...t, label: `${ctx.Who}s & progress` } : t));
 
   return (
+    <Course.Provider value={ctx}>
     <div className="page-animate">
+      {onBack && (
+        <button className="mb-3 flex items-center gap-1 text-[13px] text-nc-muted hover:text-nc-dark" onClick={onBack}>
+          <ArrowLeft className="h-4 w-4" /> All trainings
+        </button>
+      )}
       <div className="mb-6">
-        <h2 className="font-serif text-[26px] text-nc-dark">Asaas Training</h2>
-        <p className="mt-1 max-w-2xl text-[13.5px] text-nc-muted">
-          The Asaas Murabbi audio course{outline?.course.trainer ? ` by ${outline.course.trainer}` : ""}. Assign it to murabbis,
-          follow their listening, review reflections and enter practical scores. Completing everything issues the Tier 1
-          certificate and the <span className="font-semibold text-nc-dark">{outline?.course.badge ?? "Certified Asaas Murabbi"}</span> badge.
-        </p>
+        {isAsaas ? (
+          <>
+            <h2 className="font-serif text-[26px] text-nc-dark">Asaas Training</h2>
+            <p className="mt-1 max-w-2xl text-[13.5px] text-nc-muted">
+              The Asaas Murabbi audio course{outline?.course.trainer ? ` by ${outline.course.trainer}` : ""}. Assign it to murabbis,
+              follow their listening, review reflections and enter practical scores. Completing everything issues the Tier 1
+              certificate and the <span className="font-semibold text-nc-dark">{outline?.course.badge ?? "Certified Asaas Murabbi"}</span> badge.
+            </p>
+          </>
+        ) : (
+          <>
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="font-serif text-[26px] text-nc-dark">{outline?.course.title ?? "Training"}</h2>
+              {outline && (
+                <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-semibold", outline.course.published ? "bg-nc-green-lt text-nc-green" : "bg-muted text-nc-muted")}>
+                  {outline.course.published ? "Published" : "Draft"}
+                </span>
+              )}
+            </div>
+            {outline?.course.titleUr && <div dir="rtl" lang="ur" className="urdu text-[17px] leading-[2] text-nc-muted">{outline.course.titleUr}</div>}
+            <p className="mt-1 max-w-2xl text-[13.5px] text-nc-muted">
+              {outline?.course.summary || `A training for ${ctx.who}.`} Build its modules and lessons, upload the audio, then publish it under Settings.
+            </p>
+          </>
+        )}
       </div>
 
       <div className="mb-6 grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-3 sm:gap-4">
@@ -74,7 +115,7 @@ export default function AsaasTrainingPage() {
       )}
 
       <div className="mb-4 flex gap-1 overflow-x-auto border-b border-border" role="tablist">
-        {TABS.map((t) => (
+        {tabs.map((t) => (
           <button key={t.key} role="tab" aria-selected={tab === t.key} onClick={() => setTab(t.key)}
             className={cn("-mb-px whitespace-nowrap border-b-2 px-3.5 py-2 text-[13px] font-medium transition-colors",
               tab === t.key ? "border-teal text-teal" : "border-transparent text-nc-muted hover:text-nc-dark")}>
@@ -102,12 +143,15 @@ export default function AsaasTrainingPage() {
         <SettingsTab outline={outline} onChanged={load} />
       )}
     </div>
+    </Course.Provider>
   );
 }
 
 // ── Progress ────────────────────────────────────────────────────────────────
 
 function ProgressTab({ report, outline, onChanged }: { report: any; outline: any; onChanged: () => void }) {
+  const c = useCourse();
+  const hasCharts = (outline.course.flipCharts?.length ?? 0) > 0;
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
   const [assignOpen, setAssignOpen] = useState(false);
@@ -121,8 +165,8 @@ function ProgressTab({ report, outline, onChanged }: { report: any; outline: any
     });
 
   function exportCsv() {
-    downloadCsv("asaas-training-progress.csv", [
-      ["Murabbi", "Email", "Status", "Lessons heard", "Lessons total", "% heard", "Minutes listened", "Last active", "Due", "Best score", "Attempts", "Reflection", "Practical", "Flip charts studied", "Certificate"],
+    downloadCsv(`${c.key}-progress.csv`, [
+      [c.Who, "Email", "Status", "Lessons heard", "Lessons total", "% heard", "Minutes listened", "Last active", "Due", "Best score", "Attempts", "Reflection", "Practical", "Flip charts studied", "Certificate"],
       ...rows.map((r) => [
         r.user.fullName, r.user.email, STATUS_META[r.status]?.label ?? r.status, r.lessonsCompleted, r.lessonsTotal, r.percentHeard,
         r.listenMinutes, r.lastActive ? formatDate(r.lastActive) : "", r.dueDate ?? "", r.assessment?.best ?? "", r.assessment?.attempts ?? 0,
@@ -136,7 +180,7 @@ function ProgressTab({ report, outline, onChanged }: { report: any; outline: any
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <div className="relative">
           <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-nc-muted" />
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Name or email…" aria-label="Search murabbis"
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Name or email…" aria-label={`Search ${c.who}`}
             className="h-9 w-52 rounded-md border border-input bg-card pl-8 pr-3 text-[13px] focus:border-primary focus:outline-none" />
         </div>
         <select value={status} onChange={(e) => setStatus(e.target.value)} aria-label="Status"
@@ -148,7 +192,7 @@ function ProgressTab({ report, outline, onChanged }: { report: any; outline: any
         <div className="ml-auto flex gap-2">
           <button className="btn-outline !py-2 text-[12.5px]" onClick={exportCsv} disabled={!rows.length}>Export CSV</button>
           <button className="btn-primary flex items-center gap-1.5 !py-2 text-[12.5px]" onClick={() => setAssignOpen(true)}>
-            <UserPlus className="h-3.5 w-3.5" /> Assign murabbis
+            <UserPlus className="h-3.5 w-3.5" /> Assign {c.who}
           </button>
         </div>
       </div>
@@ -157,20 +201,20 @@ function ProgressTab({ report, outline, onChanged }: { report: any; outline: any
         <div className="py-14 text-center">
           <Headphones className="mx-auto mb-3 h-9 w-9 text-pale" strokeWidth={1.5} />
           <div className="text-sm font-medium text-nc-dark">No one has been assigned the training yet</div>
-          <div className="mt-1 text-[12.5px] text-nc-muted">Assign murabbis and they’ll see it under Training when they sign in.</div>
+          <div className="mt-1 text-[12.5px] text-nc-muted">Assign {c.who} and they’ll see it under Trainings when they sign in.</div>
         </div>
       ) : rows.length === 0 ? (
-        <div className="py-14 text-center text-[13px] text-nc-muted">No murabbis match.</div>
+        <div className="py-14 text-center text-[13px] text-nc-muted">No {c.who} match.</div>
       ) : (
         <div className="-mx-4 overflow-x-auto sm:mx-0">
           <table className="w-full min-w-[880px] text-[13px]">
             <thead>
               <tr className="border-b border-border text-left text-[11.5px] uppercase tracking-wide text-nc-muted">
-                <th className="px-3 py-2 font-medium">Murabbi</th>
+                <th className="px-3 py-2 font-medium">{c.Who}</th>
                 <th className="px-3 py-2 font-medium">Listening</th>
                 <th className="px-3 py-2 font-medium">Assessment</th>
                 <th className="px-3 py-2 font-medium">Reflection</th>
-                <th className="px-3 py-2 font-medium">Flip charts</th>
+                {hasCharts && <th className="px-3 py-2 font-medium">Flip charts</th>}
                 {outline.course.requirePractical && <th className="px-3 py-2 font-medium">Practical</th>}
                 <th className="px-3 py-2 font-medium">Status</th>
                 <th className="px-3 py-2 font-medium">Due</th>
@@ -197,13 +241,15 @@ function ProgressTab({ report, outline, onChanged }: { report: any; outline: any
                       ) : <span className="text-nc-muted">—</span>}
                     </td>
                     <td className="px-3 py-3"><ReflectionChip status={r.reflection} /></td>
+                    {hasCharts && (
                     <td className="whitespace-nowrap px-3 py-3 text-nc-dark">
-                      {r.flipCharts?.total ? (
-                        <span className={cn(r.flipCharts.studied === r.flipCharts.total && "font-semibold text-nc-green")}>
-                          {r.flipCharts.studied}/{r.flipCharts.total}
-                        </span>
-                      ) : <span className="text-nc-muted">—</span>}
-                    </td>
+                        {r.flipCharts?.total ? (
+                          <span className={cn(r.flipCharts.studied === r.flipCharts.total && "font-semibold text-nc-green")}>
+                            {r.flipCharts.studied}/{r.flipCharts.total}
+                          </span>
+                        ) : <span className="text-nc-muted">—</span>}
+                      </td>
+                    )}
                     {outline.course.requirePractical && (
                       <td className="px-3 py-3">
                         {r.practical ? (
@@ -252,6 +298,7 @@ function ReflectionChip({ status }: { status: string | null }) {
 
 function AssignModal({ open, assigned, onClose, onDone }: { open: boolean; assigned: Set<string>; onClose: () => void; onDone: () => void }) {
   const { toast } = useToast();
+  const c = useCourse();
   const [murabbis, setMurabbis] = useState<any[]>([]);
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState("");
@@ -262,9 +309,13 @@ function AssignModal({ open, assigned, onClose, onDone }: { open: boolean; assig
   useEffect(() => {
     if (!open) return;
     setPicked(new Set());
-    murabbisService.getAll()
-      .then((r) => setMurabbis((unwrap<any[]>(r) || []).filter((m) => m.isActive !== false)))
-      .catch((err) => toast({ variant: "destructive", title: apiError(err, "Could not load murabbis.") }));
+    // Parents are assigned by their portal account (families without one can't be assigned).
+    const people = c.audience === "parent"
+      ? parentsService.getAll().then((r) => (unwrap<any[]>(r) || []).filter((p) => p.account?._id && p.account.isActive !== false)
+        .map((p) => ({ _id: p.account._id, fullName: p.fullName, email: p.account.email })))
+      : murabbisService.getAll().then((r) => (unwrap<any[]>(r) || []).filter((m) => m.isActive !== false));
+    people.then(setMurabbis)
+      .catch((err) => toast({ variant: "destructive", title: apiError(err, `Could not load ${c.who}.`) }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
@@ -283,7 +334,7 @@ function AssignModal({ open, assigned, onClose, onDone }: { open: boolean; assig
   async function save() {
     setSaving(true);
     try {
-      const r = await courseService.assign(ASAAS_KEY, { userIds: [...picked], dueDate: dueDate || undefined, note: note.trim() || undefined });
+      const r = await courseService.assign(c.key, { userIds: [...picked], dueDate: dueDate || undefined, note: note.trim() || undefined });
       toast({ title: apiMessage(r, "Training assigned.") });
       onDone();
     } catch (err) {
@@ -294,11 +345,12 @@ function AssignModal({ open, assigned, onClose, onDone }: { open: boolean; assig
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="Assign the Asaas training" subtitle="Each murabbi gets a notification and finds the course under Training.">
+    <Modal open={open} onClose={onClose} title={c.key === ASAAS_KEY ? "Assign the Asaas training" : "Assign this training"}
+      subtitle={`Each person gets a notification and email, and finds it under Trainings.${c.audience === "parent" ? " Only parents with a portal account are listed." : ""}`}>
       <div className="mb-2 flex items-center gap-2">
         <div className="relative flex-1">
           <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-nc-muted" />
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search murabbis…" aria-label="Search murabbis"
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={`Search ${c.who}…`} aria-label={`Search ${c.who}`}
             className="h-9 w-full rounded-md border border-input bg-card pl-8 pr-3 text-[13px] focus:border-primary focus:outline-none" />
         </div>
         <button className="btn-outline !py-1.5 text-[12px]" onClick={() => setPicked(new Set(unassigned.map((m) => m._id)))} disabled={!unassigned.length}>
@@ -307,7 +359,7 @@ function AssignModal({ open, assigned, onClose, onDone }: { open: boolean; assig
       </div>
       <div className="mb-4 max-h-[260px] divide-y divide-border overflow-y-auto rounded-md border border-border">
         {list.length === 0 ? (
-          <div className="py-8 text-center text-[12.5px] text-nc-muted">No murabbis found.</div>
+          <div className="py-8 text-center text-[12.5px] text-nc-muted">No {c.who} found.</div>
         ) : list.map((m) => (
           <label key={m._id} className="flex cursor-pointer items-center gap-3 px-3 py-2 hover:bg-muted/40">
             <input type="checkbox" checked={picked.has(m._id)} onChange={() => toggle(m._id)} className="accent-[hsl(var(--teal))]" />
@@ -322,18 +374,19 @@ function AssignModal({ open, assigned, onClose, onDone }: { open: boolean; assig
       <FormGroup label="Complete by (optional)">
         <FormInput type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
       </FormGroup>
-      <FormGroup label="Note to murabbis (optional)">
+      <FormGroup label={`Note to ${c.who} (optional)`}>
         <FormTextarea value={note} onChange={(e) => setNote(e.target.value)} maxLength={500} placeholder="e.g. Please finish before the new term starts." />
       </FormGroup>
       <p className="mb-4 text-[11.5px] text-nc-muted">Choosing someone who already has the training updates their due date and note.</p>
       <button className="btn-primary w-full" disabled={saving || !picked.size} onClick={save}>
-        {saving ? "Assigning…" : `Assign to ${picked.size || ""} murabbi${picked.size === 1 ? "" : "s"}`}
+        {saving ? "Assigning…" : `Assign to ${picked.size || ""} ${picked.size === 1 ? c.Who.toLowerCase() : c.who}`}
       </button>
     </Modal>
   );
 }
 
 function DetailModal({ userId, requirePractical, onClose, onChanged }: { userId: string; requirePractical: boolean; onClose: () => void; onChanged: () => void }) {
+  const { key: courseKey } = useCourse();
   const { toast } = useToast();
   const [d, setD] = useState<any>(null);
   const [scores, setScores] = useState<number[]>([0, 0, 0, 0, 0, 0]);
@@ -342,7 +395,7 @@ function DetailModal({ userId, requirePractical, onClose, onChanged }: { userId:
 
   async function load() {
     try {
-      const r = unwrap(await courseService.userDetail(ASAAS_KEY, userId));
+      const r = unwrap(await courseService.userDetail(courseKey, userId));
       setD(r);
       if (r.practical) { setScores(r.practical.scores); setNotes(r.practical.notes ?? ""); }
     } catch (err) {
@@ -356,7 +409,7 @@ function DetailModal({ userId, requirePractical, onClose, onChanged }: { userId:
   async function savePractical() {
     setSaving(true);
     try {
-      const r = await courseService.practical(ASAAS_KEY, userId, { scores, notes: notes.trim() || undefined });
+      const r = await courseService.practical(courseKey, userId, { scores, notes: notes.trim() || undefined });
       const data = unwrap(r);
       toast({ title: apiMessage(r, "Practical score saved."), description: data?.certificate ? `Certified: ${data.certificate.number}` : undefined });
       await load();
@@ -371,7 +424,7 @@ function DetailModal({ userId, requirePractical, onClose, onChanged }: { userId:
   async function unassign() {
     if (!window.confirm(`Remove the training from ${d.user.fullName}? Their listening history is kept.`)) return;
     try {
-      const r = await courseService.unassign(ASAAS_KEY, userId);
+      const r = await courseService.unassign(courseKey, userId);
       toast({ title: apiMessage(r, "Training unassigned.") });
       onChanged();
       onClose();
@@ -456,6 +509,7 @@ function DetailModal({ userId, requirePractical, onClose, onChanged }: { userId:
             ) : <div className="text-[12.5px] text-nc-muted">Not submitted yet.</div>}
           </section>
 
+          {(courseKey === ASAAS_KEY || requirePractical) && (
           <section>
             <div className="mb-1 text-[13px] font-semibold text-nc-dark">
               Practical score {requirePractical ? "(required for the certificate)" : "(optional)"}
@@ -488,6 +542,7 @@ function DetailModal({ userId, requirePractical, onClose, onChanged }: { userId:
               </button>
             </div>
           </section>
+          )}
 
           <div className="border-t border-border pt-4">
             <button className="flex items-center gap-1.5 text-[12.5px] font-medium text-nc-red hover:underline" onClick={unassign}>
@@ -648,13 +703,14 @@ function FlipChartsTab({ report, outline }: { report: any; outline: any }) {
 // ── Reflections queue ───────────────────────────────────────────────────────
 
 function ReflectionsTab({ onChanged }: { onChanged: () => void }) {
+  const { key: courseKey } = useCourse();
   const { toast } = useToast();
   const [status, setStatus] = useState("submitted");
   const [items, setItems] = useState<any[] | null>(null);
 
   async function load() {
     try {
-      setItems(unwrap(await courseService.reflections(ASAAS_KEY, status || undefined)) || []);
+      setItems(unwrap(await courseService.reflections(courseKey, status || undefined)) || []);
     } catch (err) {
       toast({ variant: "destructive", title: apiError(err, "Could not load reflections.") });
     }
@@ -699,6 +755,7 @@ function ReflectionsTab({ onChanged }: { onChanged: () => void }) {
 // ── Lessons and audio ───────────────────────────────────────────────────────
 
 function ContentTab({ outline, onChanged }: { outline: any; onChanged: () => void }) {
+  const { key: courseKey } = useCourse();
   const { toast } = useToast();
   const input = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState<number | null>(null);
@@ -724,7 +781,7 @@ function ContentTab({ outline, onChanged }: { outline: any; onChanged: () => voi
     setUploading(0);
     try {
       for (let i = 0; i < batches.length; i++) {
-        const r = unwrap(await courseService.uploadAudio(ASAAS_KEY, batches[i], (p) => setUploading(Math.round(((i + p / 100) / batches.length) * 100))));
+        const r = unwrap(await courseService.uploadAudio(courseKey, batches[i], (p) => setUploading(Math.round(((i + p / 100) / batches.length) * 100))));
         summary.matched.push(...r.matched);
         summary.unmatched.push(...r.unmatched);
         summary.rejected.push(...r.rejected);
@@ -759,7 +816,7 @@ function ContentTab({ outline, onChanged }: { outline: any; onChanged: () => voi
             <div className="text-[14px] font-semibold text-nc-dark">Lesson audio</div>
             <div className="text-[12.5px] text-nc-muted">
               {st.withAudio} of {st.lessons} lessons have audio · {minutesLabel(st.totalMinutes)} in total.
-              Select all the MP3 files at once; each is matched to its lesson by name (e.g. <span className="font-mono">m4-01.mp3</span>).
+              Select all the MP3 files at once; each is matched to its lesson by name (e.g. <span className="font-mono">{courseKey === ASAAS_KEY ? "m4-01.mp3" : "l01.mp3"}</span>).
               Uploading a file again replaces that lesson’s audio.
             </div>
           </div>
@@ -781,31 +838,35 @@ function ContentTab({ outline, onChanged }: { outline: any; onChanged: () => voi
         )}
       </NcCard>
 
-      {outline.sections.map((s: any) => (
-        <NcCard key={s._id} className="!p-0">
-          <div className="border-b border-border px-5 py-3">
-            <div className="text-[13.5px] font-semibold text-nc-dark">{s.title}</div>
-            {s.titleUr && <div dir="rtl" className="urdu text-right text-[14px] text-nc-muted">{s.titleUr}</div>}
-          </div>
-          <ul className="divide-y divide-border/70">
-            {s.lessons.map((l: any) => (
-              <li key={l._id} className="px-5 py-2.5">
-                <div className="flex items-center gap-3 text-[12.5px]">
-                  <span className="w-14 flex-shrink-0 font-mono text-[11.5px] text-nc-muted">{l.code}</span>
-                  <span {...titleProps(l.title)} className="min-w-0 flex-1 truncate text-start text-nc-dark" title={l.trainerNotes || undefined}>{l.title}</span>
-                  <span className="flex-shrink-0 text-nc-muted">{clock(l.durationSec)}</span>
-                  {l.hasAudio ? (
-                    <button className="flex-shrink-0 text-[12px] font-medium text-teal hover:underline" onClick={() => play(l._id)}>
-                      {preview?.id === l._id ? "Close" : "Play"}
-                    </button>
-                  ) : <span className="flex-shrink-0 rounded-full bg-nc-amber-lt px-2 py-0.5 text-[11px] font-semibold text-nc-amber">No audio</span>}
-                </div>
-                {preview?.id === l._id && <audio src={preview.url} controls autoPlay className="mt-2 w-full" />}
-              </li>
-            ))}
-          </ul>
-        </NcCard>
-      ))}
+      {courseKey === ASAAS_KEY ? (
+        <>{outline.sections.map((s: any) => (
+          <NcCard key={s._id} className="!p-0">
+            <div className="border-b border-border px-5 py-3">
+              <div className="text-[13.5px] font-semibold text-nc-dark">{s.title}</div>
+              {s.titleUr && <div dir="rtl" className="urdu text-right text-[14px] text-nc-muted">{s.titleUr}</div>}
+            </div>
+            <ul className="divide-y divide-border/70">
+              {s.lessons.map((l: any) => (
+                <li key={l._id} className="px-5 py-2.5">
+                  <div className="flex items-center gap-3 text-[12.5px]">
+                    <span className="w-14 flex-shrink-0 font-mono text-[11.5px] text-nc-muted">{l.code}</span>
+                    <span {...titleProps(l.title)} className="min-w-0 flex-1 truncate text-start text-nc-dark" title={l.trainerNotes || undefined}>{l.title}</span>
+                    <span className="flex-shrink-0 text-nc-muted">{clock(l.durationSec)}</span>
+                    {l.hasAudio ? (
+                      <button className="flex-shrink-0 text-[12px] font-medium text-teal hover:underline" onClick={() => play(l._id)}>
+                        {preview?.id === l._id ? "Close" : "Play"}
+                      </button>
+                    ) : <span className="flex-shrink-0 rounded-full bg-nc-amber-lt px-2 py-0.5 text-[11px] font-semibold text-nc-amber">No audio</span>}
+                  </div>
+                  {preview?.id === l._id && <audio src={preview.url} controls autoPlay className="mt-2 w-full" />}
+                </li>
+              ))}
+            </ul>
+          </NcCard>
+        ))}</>
+      ) : (
+        <CourseBuilder courseKey={courseKey} outline={outline} onChanged={onChanged} />
+      )}
     </div>
   );
 }
@@ -815,6 +876,7 @@ function ContentTab({ outline, onChanged }: { outline: any; onChanged: () => voi
 const emptyQuestion = () => ({ question: "", questionEn: "", options: ["", "", "", ""], correctIndex: 0, explanation: "", module: "", sourceLesson: "" });
 
 function QuestionsTab({ outline, onChanged }: { outline: any; onChanged: () => void }) {
+  const { key: courseKey } = useCourse();
   const { toast } = useToast();
   const [questions, setQuestions] = useState<any[]>(() => outline.course.questions.map((q: any) => ({ ...q })));
   const [editing, setEditing] = useState<number | null>(null);
@@ -842,7 +904,7 @@ function QuestionsTab({ outline, onChanged }: { outline: any; onChanged: () => v
     setSaving(true);
     try {
       const clean = questions.map(({ _id, ...q }) => ({ ...q, options: q.options.map((o: string) => o.trim()) }));
-      const r = await courseService.questions(ASAAS_KEY, clean);
+      const r = await courseService.questions(courseKey, clean);
       toast({ title: apiMessage(r, "Questions saved.") });
       setDirty(false);
       onChanged();
@@ -947,6 +1009,7 @@ function QuestionModal({ question, isNew, onClose, onSave }: { question: any; is
 // ── Settings ────────────────────────────────────────────────────────────────
 
 function SettingsTab({ outline, onChanged }: { outline: any; onChanged: () => void }) {
+  const { key: courseKey } = useCourse();
   const { toast } = useToast();
   const c = outline.course;
   const [f, setF] = useState({
@@ -962,7 +1025,7 @@ function SettingsTab({ outline, onChanged }: { outline: any; onChanged: () => vo
   async function save() {
     setSaving(true);
     try {
-      const r = await courseService.settings(ASAAS_KEY, {
+      const r = await courseService.settings(courseKey, {
         completionThreshold: f.completion / 100, sequential: f.sequential, passingScore: f.passingScore,
         maxFailedAttemptsPerDay: f.maxFailedAttemptsPerDay, requirePractical: f.requirePractical,
         reflectionPrompt: f.reflectionPrompt, reflectionMinChars: f.reflectionMinChars,
@@ -978,6 +1041,8 @@ function SettingsTab({ outline, onChanged }: { outline: any; onChanged: () => vo
   }
 
   return (
+    <div className="space-y-6">
+    <MarketplaceSettings courseKey={courseKey} outline={outline} onChanged={onChanged} />
     <NcCard className="max-w-2xl">
       <div className="grid gap-x-6 sm:grid-cols-2">
         <FormGroup label="A lesson counts as heard at (%)">
@@ -1012,5 +1077,6 @@ function SettingsTab({ outline, onChanged }: { outline: any; onChanged: () => vo
       </div>
       <button className="btn-primary" disabled={saving} onClick={save}>{saving ? "Saving…" : "Save settings"}</button>
     </NcCard>
+    </div>
   );
 }

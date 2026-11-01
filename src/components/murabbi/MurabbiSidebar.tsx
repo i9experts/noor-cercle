@@ -29,7 +29,7 @@ const navGroups: SidebarNavGroup[] = [
   {
     label: "Support",
     items: [
-      { icon: Headphones, label: "Asaas Training", page: "murabbi-course"       },
+      { icon: Headphones, label: "Trainings",     page: "murabbi-trainings"     },
       { icon: School,    label: "Training",      page: "murabbi-training"      },
       { icon: BarChart3, label: "Reports",       page: "murabbi-reports"       },
       { icon: Megaphone, label: "Announcements", page: "murabbi-announcements" },

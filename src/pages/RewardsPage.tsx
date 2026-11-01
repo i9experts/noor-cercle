@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { CheckCircle2, Gift, GraduationCap, Plus, RefreshCw, Settings2, Trash2, Users, Wallet } from "lucide-react";
+import { CheckCircle2, Gift, GraduationCap, HeartHandshake, Plus, RefreshCw, Settings2, Trash2, Users, Wallet } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { adminService, contributionsService, rewardsService, studentsService } from "@/services/api.service";
+import { adminService, contributionsService, parentRatingsService, rewardsService, studentsService } from "@/services/api.service";
 import StatCard from "@/components/shared/StatCard";
 import NcCard, { CardHeader, CardTitle } from "@/components/shared/NcCard";
 import Modal, { FormGroup, FormInput, FormRow, FormSelect, FormTextarea } from "@/components/shared/Modal";
@@ -18,19 +18,24 @@ type AllocStatus = "proposed" | "approved" | "paid" | "cancelled";
 interface Pool {
   _id: string; month: string; budgetMode: "fixed" | "percent"; budgetValue: number; contributionsCollected: number;
   budget: number; studentSharePct: number; maxStudents: number; maxMurabbis: number; minMurabbiScore: number;
+  parentSharePct?: number; maxParents?: number; minParentScore?: number;
   status: PoolStatus; notes: string; approvedAt?: string;
   allocated?: number; paid?: number; recipients?: number;
 }
 interface Allocation {
-  _id: string; recipientType: "student" | "murabbi";
+  _id: string; recipientType: "student" | "murabbi" | "parent";
   student?: { _id: string; fullName: string; circle?: { name: string } } | null;
   murabbi?: { _id: string; fullName: string; email?: string } | null;
+  parent?: { _id: string; fullName: string; email?: string } | null;
   basisValue: number; rank: number; amount: number; status: AllocStatus; manual: boolean;
   method: string | null; reference: string; paidAt: string | null; paidBy?: { fullName: string } | null; notes: string;
 }
 interface PoolDetail {
   pool: Pool; allocations: Allocation[];
-  totals: { budget: number; studentBudget: number; murabbiBudget: number; allocated: number; remaining: number; paid: number; toStudents: number; toMurabbis: number };
+  totals: {
+    budget: number; studentBudget: number; parentBudget?: number; murabbiBudget: number; allocated: number; remaining: number; paid: number;
+    toStudents: number; toMurabbis: number; toParents?: number;
+  };
 }
 
 const POOL_STATUS: Record<PoolStatus, { label: string; cls: string }> = {
@@ -45,7 +50,9 @@ const ALLOC_STATUS: Record<AllocStatus, string> = {
   cancelled: "bg-muted text-nc-muted line-through",
 };
 
-const recipientName = (a: Allocation) => (a.recipientType === "student" ? a.student?.fullName : a.murabbi?.fullName) ?? "(removed)";
+const recipientName = (a: Allocation) =>
+  (a.recipientType === "student" ? a.student?.fullName : a.recipientType === "parent" ? a.parent?.fullName : a.murabbi?.fullName) ?? "(removed)";
+const RECIPIENT_LABEL: Record<Allocation["recipientType"], string> = { student: "student reward", murabbi: "Murabbi reward", parent: "parent reward" };
 
 export default function RewardsPage() {
   const { toast } = useToast();
@@ -100,6 +107,8 @@ export default function RewardsPage() {
   const draft = pool?.status === "draft";
   const students = detail?.allocations.filter((a) => a.recipientType === "student") ?? [];
   const murabbis = detail?.allocations.filter((a) => a.recipientType === "murabbi") ?? [];
+  const parents  = detail?.allocations.filter((a) => a.recipientType === "parent") ?? [];
+  const parentPct = pool?.parentSharePct ?? 0;
   const monthOptions = [...new Set([...recentMonths(13, currentMonth()), ...pools.map((p) => p.month)])].sort().reverse();
 
   function exportCsv() {
@@ -108,7 +117,7 @@ export default function RewardsPage() {
       ["Type", "Rank", "Recipient", "Circle", "Basis", "Amount (PKR)", "Status", "Method", "Reference", "Paid on", "Paid by", "Notes"],
       ...detail.allocations.map((a) => [
         a.recipientType, a.manual ? "manual" : a.rank, recipientName(a), a.student?.circle?.name ?? "",
-        a.recipientType === "student" ? `${a.basisValue} points` : `score ${a.basisValue}`, a.amount, a.status,
+        a.recipientType === "student" ? `${a.basisValue} points` : `${a.recipientType === "parent" ? "parent rating" : "score"} ${a.basisValue}`, a.amount, a.status,
         a.method ? PAYMENT_METHOD_LABELS[a.method] ?? a.method : "", a.reference, a.paidAt ? formatDate(a.paidAt) : "",
         a.paidBy?.fullName ?? "", a.notes,
       ]),
@@ -122,7 +131,7 @@ export default function RewardsPage() {
           <h2 className="font-serif text-[26px] text-nc-dark">Reward Pool</h2>
           <p className="mt-1 max-w-2xl text-[13.5px] text-nc-muted">
             Each month, part of what's contributed comes back as rewards. Students are rewarded by the points they earned,
-            and Murabbis by their engagement rating. The pool is proposed automatically; you review it, approve it and record each payout.
+            Murabbis by their engagement rating and parents by their parent rating. The pool is proposed automatically; you review it, approve it and record each payout.
           </p>
         </div>
         <select
@@ -149,7 +158,7 @@ export default function RewardsPage() {
               {pool.budgetMode === "percent"
                 ? `${pool.budgetValue}% of ${formatPKR(pool.contributionsCollected)} collected in ${monthLabel(month)}`
                 : `Fixed budget · ${formatPKR(pool.contributionsCollected)} collected in ${monthLabel(month)}`}
-              {" · "}{pool.studentSharePct}% students / {100 - pool.studentSharePct}% Murabbis
+              {" · "}{pool.studentSharePct}% students{parentPct ? ` / ${parentPct}% parents` : ""} / {100 - pool.studentSharePct - parentPct}% Murabbis
             </span>
             <div className="ml-auto flex flex-wrap gap-2">
               <button className="btn-outline !py-2 text-[12.5px]" onClick={exportCsv}>Export CSV</button>
@@ -176,8 +185,10 @@ export default function RewardsPage() {
           </div>
 
           <div className="mb-6 grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-3 sm:gap-4">
-            <StatCard label="Budget" value={formatPKR(t.budget)} meta={`${formatPKR(t.studentBudget)} students · ${formatPKR(t.murabbiBudget)} Murabbis`} color="purple" />
-            <StatCard label="Allocated" value={formatPKR(t.allocated)} meta={`${students.filter((a) => a.status !== "cancelled").length} students · ${murabbis.filter((a) => a.status !== "cancelled").length} Murabbis`} color="teal" />
+            <StatCard label="Budget" value={formatPKR(t.budget)}
+              meta={`${formatPKR(t.studentBudget)} students${t.parentBudget ? ` · ${formatPKR(t.parentBudget)} parents` : ""} · ${formatPKR(t.murabbiBudget)} Murabbis`} color="purple" />
+            <StatCard label="Allocated" value={formatPKR(t.allocated)}
+              meta={`${students.filter((a) => a.status !== "cancelled").length} students · ${murabbis.filter((a) => a.status !== "cancelled").length} Murabbis${parents.length ? ` · ${parents.filter((a) => a.status !== "cancelled").length} parents` : ""}`} color="teal" />
             <StatCard label={t.remaining < 0 ? "Over budget" : "Unallocated"} value={formatPKR(Math.abs(t.remaining))} meta={t.remaining < 0 ? "Reduce amounts to approve" : "Rounding & unused share"} color={t.remaining < 0 ? "red" : "gold"} />
             <StatCard label="Paid out" value={formatPKR(t.paid)} meta={t.allocated ? `${Math.round((t.paid / t.allocated) * 100)}% of allocated` : "—"} color="green" />
           </div>
@@ -197,6 +208,15 @@ export default function RewardsPage() {
               onToggle={(a) => act(() => rewardsService.updateAllocation(a._id, { status: a.status === "cancelled" ? "proposed" : "cancelled" }), "Could not update.")}
               onPay={setPaying}
             />
+            {(parentPct > 0 || parents.length > 0) && (
+              <AllocationList
+                title="Parents" sub={`By parent rating · score ≥ ${pool.minParentScore ?? 60} · top ${pool.maxParents ?? 5}`} icon={HeartHandshake}
+                items={parents} basis={(a) => `rating ${a.basisValue}`} draft={draft} busy={busy}
+                onAmount={(a, amount) => act(() => rewardsService.updateAllocation(a._id, { amount }), "Could not update.")}
+                onToggle={(a) => act(() => rewardsService.updateAllocation(a._id, { status: a.status === "cancelled" ? "proposed" : "cancelled" }), "Could not update.")}
+                onPay={setPaying}
+              />
+            )}
           </div>
 
           {draft && (
@@ -207,7 +227,7 @@ export default function RewardsPage() {
 
           <PoolSettingsModal open={settingsOpen} pool={pool} onClose={() => setSettingsOpen(false)}
             onSave={async (body) => { if (await act(() => rewardsService.updatePool(month, body), "Could not save settings.")) setSettingsOpen(false); }} />
-          <AddRewardModal open={addOpen} onClose={() => setAddOpen(false)}
+          <AddRewardModal open={addOpen} month={month} onClose={() => setAddOpen(false)}
             onSave={async (body) => { if (await act(() => rewardsService.addAllocation(month, body), "Could not add reward.")) setAddOpen(false); }} />
           <PayModal allocation={paying} onClose={() => setPaying(null)}
             onSave={async (body) => { if (paying && await act(() => rewardsService.pay(paying._id, body), "Could not mark paid.")) setPaying(null); }} />
@@ -293,7 +313,7 @@ function AllocationList({ title, sub, icon: Icon, items, basis, draft, busy, onA
       {items.length === 0 ? (
         <div className="py-8 text-center text-[12.5px] text-nc-muted">
           <Gift className="mx-auto mb-2 h-7 w-7 text-pale" strokeWidth={1.5} />
-          No one qualifies yet{title === "Students" ? " — award points during the month" : " — ratings fill in as sessions are submitted"}.
+          No one qualifies yet{title === "Students" ? " — award points during the month" : title === "Parents" ? " — parent ratings fill in through the month" : " — ratings fill in as sessions are submitted"}.
         </div>
       ) : (
         <div className="space-y-1.5">
@@ -346,7 +366,15 @@ function AllocationList({ title, sub, icon: Icon, items, basis, draft, busy, onA
 }
 
 // ── Create pool ───────────────────────────────────────────────────────────────
-type PoolSettings = { budgetMode: "fixed" | "percent"; budgetValue: number; studentSharePct: number; maxStudents: number; maxMurabbis: number; minMurabbiScore: number; notes?: string };
+type PoolSettings = {
+  budgetMode: "fixed" | "percent"; budgetValue: number; studentSharePct: number; maxStudents: number; maxMurabbis: number; minMurabbiScore: number;
+  parentSharePct: number; maxParents: number; minParentScore: number; notes?: string;
+};
+const settingsOf = (p: Pool): PoolSettings => ({
+  budgetMode: p.budgetMode, budgetValue: p.budgetValue, studentSharePct: p.studentSharePct, maxStudents: p.maxStudents,
+  maxMurabbis: p.maxMurabbis, minMurabbiScore: p.minMurabbiScore,
+  parentSharePct: p.parentSharePct ?? 0, maxParents: p.maxParents ?? 5, minParentScore: p.minParentScore ?? 60,
+});
 
 function PoolFields({ f, set, collected }: { f: PoolSettings; set: (k: keyof PoolSettings, v: any) => void; collected: number | null }) {
   const budget = f.budgetMode === "fixed" ? f.budgetValue : Math.floor(((collected ?? 0) * f.budgetValue) / 100);
@@ -367,8 +395,15 @@ function PoolFields({ f, set, collected }: { f: PoolSettings; set: (k: keyof Poo
         Budget: <strong>{formatPKR(budget)}</strong>
         {collected !== null && <> · {formatPKR(collected)} collected this month</>}
       </div>
-      <FormGroup label={`Split — ${f.studentSharePct}% students · ${100 - f.studentSharePct}% Murabbis`}>
-        <input type="range" min={0} max={100} step={5} value={f.studentSharePct} onChange={(e) => set("studentSharePct", Number(e.target.value))} className="w-full accent-[hsl(327,58%,26%)]" aria-label="Student share" />
+      <FormGroup label={`Split — ${f.studentSharePct}% students · ${f.parentSharePct}% parents · ${Math.max(0, 100 - f.studentSharePct - f.parentSharePct)}% Murabbis`}>
+        <div className="mb-1 text-[11.5px] text-nc-muted">Students</div>
+        <input type="range" min={0} max={100} step={5} value={f.studentSharePct}
+          onChange={(e) => { const v = Number(e.target.value); set("studentSharePct", v); if (v + f.parentSharePct > 100) set("parentSharePct", 100 - v); }}
+          className="w-full accent-[hsl(327,58%,26%)]" aria-label="Student share" />
+        <div className="mb-1 mt-2 text-[11.5px] text-nc-muted">Parents</div>
+        <input type="range" min={0} max={100} step={5} value={f.parentSharePct}
+          onChange={(e) => { const v = Number(e.target.value); set("parentSharePct", v); if (v + f.studentSharePct > 100) set("studentSharePct", 100 - v); }}
+          className="w-full accent-[hsl(327,58%,26%)]" aria-label="Parent share" />
       </FormGroup>
       <FormRow>
         <FormGroup label="Students rewarded (top N)">
@@ -378,8 +413,16 @@ function PoolFields({ f, set, collected }: { f: PoolSettings; set: (k: keyof Poo
           <FormInput type="number" min={0} max={100} value={f.maxMurabbis} onChange={(e) => set("maxMurabbis", Number(e.target.value))} />
         </FormGroup>
       </FormRow>
-      <FormGroup label="Minimum Murabbi score to qualify">
-        <FormInput type="number" min={0} max={100} value={f.minMurabbiScore} onChange={(e) => set("minMurabbiScore", Number(e.target.value))} />
+      <FormRow>
+        <FormGroup label="Minimum Murabbi score to qualify">
+          <FormInput type="number" min={0} max={100} value={f.minMurabbiScore} onChange={(e) => set("minMurabbiScore", Number(e.target.value))} />
+        </FormGroup>
+        <FormGroup label="Parents rewarded (top N)">
+          <FormInput type="number" min={0} max={100} value={f.maxParents} onChange={(e) => set("maxParents", Number(e.target.value))} />
+        </FormGroup>
+      </FormRow>
+      <FormGroup label="Minimum parent rating to qualify">
+        <FormInput type="number" min={0} max={100} value={f.minParentScore} onChange={(e) => set("minParentScore", Number(e.target.value))} />
       </FormGroup>
     </>
   );
@@ -389,7 +432,10 @@ function CreatePool({ month, onCreated }: { month: string; onCreated: (d: PoolDe
   const { toast } = useToast();
   const [collected, setCollected] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
-  const [f, setF] = useState<PoolSettings>({ budgetMode: "percent", budgetValue: 20, studentSharePct: 60, maxStudents: 10, maxMurabbis: 5, minMurabbiScore: 60 });
+  const [f, setF] = useState<PoolSettings>({
+    budgetMode: "percent", budgetValue: 20, studentSharePct: 60, maxStudents: 10, maxMurabbis: 5, minMurabbiScore: 60,
+    parentSharePct: 15, maxParents: 5, minParentScore: 60,
+  });
   const set = (k: keyof PoolSettings, v: any) => setF((x) => ({ ...x, [k]: v }));
 
   useEffect(() => {
@@ -415,8 +461,8 @@ function CreatePool({ month, onCreated }: { month: string; onCreated: (d: PoolDe
     <NcCard className="mx-auto max-w-xl p-5 sm:p-8">
       <div className="mb-1 font-serif text-[22px] text-nc-dark">Set up {monthLabel(month)} rewards</div>
       <p className="mb-6 text-[13px] text-nc-muted">
-        Choose the budget and how it's shared. Rewards are proposed from {monthLabel(month)}'s student points and Murabbi
-        ratings, in proportion to each person's points or score. Nothing is final until you approve it.
+        Choose the budget and how it's shared. Rewards are proposed from {monthLabel(month)}'s student points, Murabbi
+        ratings and parent ratings, in proportion to each person's points or score. Nothing is final until you approve it.
       </p>
       <PoolFields f={f} set={set} collected={collected} />
       <button className="btn-primary w-full disabled:opacity-50" disabled={saving} onClick={create}>
@@ -427,8 +473,8 @@ function CreatePool({ month, onCreated }: { month: string; onCreated: (d: PoolDe
 }
 
 function PoolSettingsModal({ open, pool, onClose, onSave }: { open: boolean; pool: Pool; onClose: () => void; onSave: (b: PoolSettings) => void }) {
-  const [f, setF] = useState<PoolSettings>(pool);
-  useEffect(() => { if (open) setF(pool); }, [open, pool]);
+  const [f, setF] = useState<PoolSettings>(settingsOf(pool));
+  useEffect(() => { if (open) setF(settingsOf(pool)); }, [open, pool]);
   const set = (k: keyof PoolSettings, v: any) => setF((x) => ({ ...x, [k]: v }));
   if (!open) return null;
   return (
@@ -439,15 +485,18 @@ function PoolSettingsModal({ open, pool, onClose, onSave }: { open: boolean; poo
         <button className="btn-primary" onClick={() => onSave({
           budgetMode: f.budgetMode, budgetValue: f.budgetValue, studentSharePct: f.studentSharePct,
           maxStudents: f.maxStudents, maxMurabbis: f.maxMurabbis, minMurabbiScore: f.minMurabbiScore,
+          parentSharePct: f.parentSharePct, maxParents: f.maxParents, minParentScore: f.minParentScore,
         })}>Save</button>
       </div>
     </Modal>
   );
 }
 
-function AddRewardModal({ open, onClose, onSave }: { open: boolean; onClose: () => void; onSave: (b: object) => void }) {
-  const [type, setType] = useState<"student" | "murabbi">("student");
-  const [people, setPeople] = useState<{ student: { _id: string; fullName: string }[]; murabbi: { _id: string; fullName: string }[] }>({ student: [], murabbi: [] });
+type Person = { _id: string; fullName: string };
+
+function AddRewardModal({ open, month, onClose, onSave }: { open: boolean; month: string; onClose: () => void; onSave: (b: object) => void }) {
+  const [type, setType] = useState<"student" | "murabbi" | "parent">("student");
+  const [people, setPeople] = useState<Record<"student" | "murabbi" | "parent", Person[]>>({ student: [], murabbi: [], parent: [] });
   const [f, setF] = useState({ recipientId: "", amount: "", notes: "" });
 
   useEffect(() => {
@@ -455,9 +504,16 @@ function AddRewardModal({ open, onClose, onSave }: { open: boolean; onClose: () 
     setF({ recipientId: "", amount: "", notes: "" });
     const list = (r: any) => { const d = unwrap<any>(r); return Array.isArray(d) ? d : d?.students ?? d?.murabbis ?? []; };
     Promise.all([studentsService.getAll(), adminService.getMurabbis()])
-      .then(([s, m]) => setPeople({ student: list(s), murabbi: list(m) }))
+      .then(([s, m]) => setPeople((p) => ({ ...p, student: list(s), murabbi: list(m) })))
       .catch(() => {});
-  }, [open]);
+    // Parents are picked by their portal account (the one their rating belongs to).
+    parentRatingsService.ratings(month)
+      .then((r) => setPeople((p) => ({
+        ...p,
+        parent: (unwrap<any[]>(r) || []).filter((x) => x.parent).map((x) => ({ _id: String(x.user), fullName: x.parent.fullName })),
+      })))
+      .catch(() => {});
+  }, [open, month]);
 
   return (
     <Modal open={open} onClose={onClose} title="Add a reward" subtitle="For someone the proposal missed, such as special effort or a one-off recognition.">
@@ -465,9 +521,10 @@ function AddRewardModal({ open, onClose, onSave }: { open: boolean; onClose: () 
         <FormSelect value={type} onChange={(e) => { setType(e.target.value as any); setF((x) => ({ ...x, recipientId: "" })); }}>
           <option value="student">Student</option>
           <option value="murabbi">Murabbi</option>
+          <option value="parent">Parent</option>
         </FormSelect>
       </FormGroup>
-      <FormGroup label={type === "student" ? "Student" : "Murabbi"} required>
+      <FormGroup label={type === "student" ? "Student" : type === "parent" ? "Parent" : "Murabbi"} required>
         <FormSelect value={f.recipientId} onChange={(e) => setF((x) => ({ ...x, recipientId: e.target.value }))}>
           <option value="">Select…</option>
           {[...people[type]].sort((a, b) => a.fullName.localeCompare(b.fullName)).map((p) => <option key={p._id} value={p._id}>{p.fullName}</option>)}
@@ -497,7 +554,7 @@ function PayModal({ allocation, onClose, onSave }: { allocation: Allocation | nu
   }, [allocation]);
   if (!allocation) return null;
   return (
-    <Modal open onClose={onClose} title={`Pay ${recipientName(allocation)}`} subtitle={`${formatPKR(allocation.amount)} · ${allocation.recipientType === "student" ? "student reward" : "Murabbi reward"}${allocation.recipientType === "murabbi" ? ". They'll get a notification." : ""}`}>
+    <Modal open onClose={onClose} title={`Pay ${recipientName(allocation)}`} subtitle={`${formatPKR(allocation.amount)} · ${RECIPIENT_LABEL[allocation.recipientType]}${allocation.recipientType !== "student" ? ". They'll get a notification." : ""}`}>
       <FormRow>
         <FormGroup label="Given as" required>
           <FormSelect value={f.method} onChange={(e) => setF((x) => ({ ...x, method: e.target.value }))}>

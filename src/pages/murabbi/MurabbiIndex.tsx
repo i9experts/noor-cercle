@@ -13,6 +13,7 @@ import MurabbiProfile from "./MurabbiProfile";
 import MurabbiAnnouncements from "./MurabbiAnnouncements";
 import MurabbiAgenda from "./MurabbiAgenda";
 import MurabbiCourse from "./MurabbiCourse";
+import MurabbiTrainings from "./MurabbiTrainings";
 import { EnrollModal, AwardPointsModal } from "@/components/modals/AllModals";
 
 const MurabbiIndex = () => {
@@ -37,6 +38,7 @@ const MurabbiIndex = () => {
       case 'murabbi-lessons': return <MurabbiLessons />;
       case 'murabbi-training': return <MurabbiTraining />;
       case 'murabbi-course': return <MurabbiCourse />;
+      case 'murabbi-trainings': return <MurabbiTrainings />;
       case 'murabbi-reports': return <MurabbiReports />;
       case 'murabbi-announcements': return <MurabbiAnnouncements />;
       case 'murabbi-profile': return <MurabbiProfile />;

@@ -420,6 +420,47 @@ export const courseService = {
   review       : (id: string, data: { status: 'approved' | 'revision'; feedback?: string }) => API.patch(`/course/reflections/${id}`, data),
   practical    : (key: string, userId: string, data: { scores: number[]; notes?: string }) =>
                    API.put(`/course/${key}/practical/${userId}`, data),
+  // admin: building a training
+  create       : (data: { title: string; titleUr?: string; audience: 'murabbi' | 'parent'; summary?: string; category?: string }) => API.post('/course', data),
+  remove       : (key: string)                       => API.delete(`/course/${key}`),
+  addSection   : (key: string, data: object)         => API.post(`/course/${key}/sections`, data),
+  updateSection: (id: string, data: object)          => API.patch(`/course/sections/${id}`, data),
+  deleteSection: (id: string)                        => API.delete(`/course/sections/${id}`),
+  addLesson    : (key: string, data: object)         => API.post(`/course/${key}/lessons`, data),
+  lessonForEdit: (id: string)                        => API.get(`/course/lessons/${id}/edit`),
+  updateLesson : (id: string, data: object)          => API.patch(`/course/lessons/${id}`, data),
+  deleteLesson : (id: string)                        => API.delete(`/course/lessons/${id}`),
+  uploadLessonAudio: (id: string, file: File)        => {
+    const form = new FormData();
+    form.append('file', file);
+    return API.post(`/course/lessons/${id}/audio`, form, { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 0 });
+  },
+};
+
+// ─────────────────────────────────────────────────────────────
+//  TRAININGS MARKETPLACE (murabbis and parents ask; admins approve)
+// ─────────────────────────────────────────────────────────────
+export const marketplaceService = {
+  mine        : ()                                   => API.get('/trainings'),
+  request     : (key: string, note?: string)         => API.post(`/trainings/${key}/request`, { note }),
+  cancel      : (key: string)                        => API.delete(`/trainings/${key}/request`),
+  // admin
+  catalogue   : ()                                   => API.get('/trainings/admin/catalogue'),
+  requests    : (status = 'pending')                 => API.get('/trainings/admin/requests', { params: { status } }),
+  approve     : (id: string, data: { dueDate?: string; note?: string } = {}) => API.post(`/trainings/admin/requests/${id}/approve`, data),
+  decline     : (id: string, reason?: string)        => API.post(`/trainings/admin/requests/${id}/decline`, { reason }),
+  tierUpgrades: ()                                   => API.get('/trainings/admin/tier-upgrades'),
+  approveTier : (userId: string, tier: number)       => API.post(`/trainings/admin/tier-upgrades/${userId}`, { tier }),
+};
+
+// ─────────────────────────────────────────────────────────────
+//  PARENT RATING (monthly; admins and the parent only)
+// ─────────────────────────────────────────────────────────────
+export const parentRatingsService = {
+  ratings: (month?: string) => API.get('/parent-ratings', { params: { month } }),
+  adjust : (userId: string, month: string, data: { adjustment: number; note?: string }) =>
+             API.patch(`/parent-ratings/${userId}`, data, { params: { month } }),
+  me     : (month?: string) => API.get('/parent-ratings/me', { params: { month } }),
 };
 
 // ─────────────────────────────────────────────────────────────
