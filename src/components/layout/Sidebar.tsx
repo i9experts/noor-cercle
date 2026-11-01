@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import {
   Award, BarChart3, BookMarked, CalendarDays, Gift, HandCoins, ListChecks, Star, BookOpen, CircleDot, ClipboardCheck, Globe2, GraduationCap,
-  Headphones, HeartHandshake, AudioLines, Inbox, PieChart, Mail, LayoutDashboard, MapPin, Network, School, Settings, TrendingUp, Users,
+  Headphones, HeartHandshake, AudioLines, Inbox, PieChart, Mail, LayoutDashboard, MapPin, Network, School, Settings, Store, TrendingUp, Users,
 } from "lucide-react";
-import { adminService, contributionsService, interestService } from "@/services/api.service";
+import { adminService, contributionsService, interestService, marketplaceService } from "@/services/api.service";
 import AppSidebar, { SidebarNavGroup } from "./AppSidebar";
 
 const navGroups: SidebarNavGroup[] = [
@@ -48,11 +48,13 @@ const navGroups: SidebarNavGroup[] = [
       { icon: HandCoins, label: "Contributions",   page: "contributions", badgeKey: "contributions" },
       { icon: Gift,      label: "Reward Pool",     page: "rewards"       },
       { icon: Star,      label: "Murabbi Ratings", page: "ratings"       },
+      { icon: Star,      label: "Parent Ratings",  page: "parent-ratings" },
     ],
   },
   {
     label: "Operations",
     items: [
+      { icon: Store,     label: "Trainings",           page: "trainings", badgeKey: "trainingRequests" },
       { icon: School,    label: "Murabbi Training",    page: "training"       },
       { icon: Headphones, label: "Asaas Training",     page: "asaas"          },
       { icon: AudioLines, label: "Parent Asaas",       page: "parent-asaas"   },
@@ -94,6 +96,10 @@ export default function Sidebar({ activePage, onNavigate, open, onClose }: Sideb
     // Badge = website pledges waiting to be confirmed
     contributionsService.getContributors({ status: "pending" })
       .then((r) => setCounts((c) => ({ ...c, contributions: (r.data.data || r.data || []).length })))
+      .catch(() => {});
+    // Badge = training requests waiting for approval
+    marketplaceService.requests("pending")
+      .then((r) => setCounts((c) => ({ ...c, trainingRequests: (r.data.data || r.data || []).length })))
       .catch(() => {});
   }, []);
 
