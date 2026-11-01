@@ -20,6 +20,12 @@ interface InterestRequest {
   phone        : string;
   city         : string;
   neighbourhood: string;
+  /** As typed, before the spelling was tidied. */
+  cityRaw?     : string;
+  neighbourhoodRaw?: string;
+  district?    : string;
+  /** "Use my location", rounded to about 1 km. */
+  location?    : { lat: number; lng: number } | null;
   roleDetail   : string;
   status       : InterestStatus;
   notes        : string;
@@ -207,7 +213,13 @@ export default function InterestPage() {
                         </span>
                       </div>
                       <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-[12.5px] text-nc-muted">
-                        <span className="inline-flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{item.neighbourhood}, {item.city}</span>
+                        <span className="inline-flex items-center gap-1" title={item.cityRaw && (item.cityRaw !== item.city || item.neighbourhoodRaw !== item.neighbourhood) ? `Typed: ${item.neighbourhoodRaw}, ${item.cityRaw}` : undefined}>
+                          <MapPin className="h-3.5 w-3.5" />{item.neighbourhood}, {item.city}{item.district && item.district !== item.city ? ` · ${item.district} district` : ""}
+                        </span>
+                        {item.location && (
+                          <a className="inline-flex items-center gap-1 text-teal hover:underline" target="_blank" rel="noreferrer"
+                            href={`https://www.google.com/maps?q=${item.location.lat},${item.location.lng}`}>Map (about 1 km)</a>
+                        )}
                         {item.roleDetail && <span>{role.detail}: <span className="text-foreground">{item.roleDetail}</span></span>}
                         <span>{timeAgo(item.createdAt)}</span>
                       </div>
