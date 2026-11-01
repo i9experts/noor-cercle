@@ -1,6 +1,6 @@
 import { FormEvent, useCallback, useState } from "react";
-import { GraduationCap, Headphones, KeyRound, LogOut, Mail } from "lucide-react";
-import { Link } from "react-router-dom";
+import { GraduationCap, Headphones, KeyRound, LogOut, Mail, Sparkles } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { familyService, usersService } from "@/services/api.service";
 import { authService } from "@/services/auth.service";
 import { useAuth } from "@/context/AuthContext";
@@ -11,10 +11,12 @@ import { PasswordRules, isPasswordValid } from "@/components/shared/PasswordRule
 import { apiError, unwrap } from "@/lib/finance";
 import { FamilyScreen } from "./FamilyPage";
 import EmailPreferences from "@/components/shared/EmailPreferences";
+import FounderCard from "@/components/founder/FounderCard";
 
 /** A signed-in parent's home: their family page, plus account actions. */
 export default function ParentHome() {
   const { logout } = useAuth();
+  const navigate = useNavigate();
   const [pwOpen, setPwOpen] = useState(false);
   const [mailOpen, setMailOpen] = useState(false);
   const load = useCallback(() => familyService.mine(), []);
@@ -26,6 +28,7 @@ export default function ParentHome() {
       <FamilyScreen
         load={load}
         saveProfile={save}
+        extra={<FounderCard audience="parent" className="" onOpen={() => navigate("/parent/founder")} />}
         actions={
           <div className="flex flex-wrap justify-end gap-2">
             <Link to="/parent/asaas" className={`${btn} !bg-gold !text-[#361a2c] hover:!brightness-105`} aria-label="والدین کا Asaas">
@@ -37,6 +40,11 @@ export default function ParentHome() {
               <GraduationCap className="h-3.5 w-3.5" />
               <span dir="rtl" lang="ur" className="urdu leading-[1.6]">تربیتیں</span>
               <span className="hidden sm:inline">· Trainings</span>
+            </Link>
+            <Link to="/parent/founder" className={btn} aria-label="Meet the Founder">
+              <Sparkles className="h-3.5 w-3.5" />
+              <span dir="rtl" lang="ur" className="urdu leading-[1.6]">بانی سے ملیے</span>
+              <span className="hidden sm:inline">· Founder</span>
             </Link>
             <button className={btn} onClick={() => setMailOpen(true)} aria-label="Email settings">
               <Mail className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Emails</span>
