@@ -1,12 +1,14 @@
 import { API } from '@/lib/api';
+import { shrinkImage } from '@/lib/image';
 
 // ─────────────────────────────────────────────────────────────
 //  UPLOAD
 // ─────────────────────────────────────────────────────────────
 export const uploadService = {
-  image: (file: File) => {
+  /** Shrinks the photo first (see lib/image), then uploads it; resolves with { data: { url } }. */
+  image: async (file: File) => {
     const fd = new FormData();
-    fd.append('file', file);
+    fd.append('file', await shrinkImage(file));
     return API.post<{ data: { url: string } }>('/upload/image', fd, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });

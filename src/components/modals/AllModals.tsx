@@ -4,6 +4,7 @@ import { adminService, attendanceService, circlesService, incentivesService, mur
 import { DAYS } from "@/lib/schedule";
 import { useToast } from "@/hooks/use-toast";
 import { Check, X, Camera, Loader2 } from "lucide-react";
+import { uploadError } from "@/lib/image";
 
 // ── Reusable image file picker ────────────────────────────────────────────────
 function ImageUpload({ value, onChange }: { value: string; onChange: (url: string) => void }) {
@@ -14,8 +15,8 @@ function ImageUpload({ value, onChange }: { value: string; onChange: (url: strin
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
-      toast({ variant: "destructive", title: "Image must be under 5 MB." }); return;
+    if (file.size > 25 * 1024 * 1024) {
+      toast({ variant: "destructive", title: "That photo is too large (over 25 MB)." }); return;
     }
     setUploading(true);
     try {
@@ -23,8 +24,8 @@ function ImageUpload({ value, onChange }: { value: string; onChange: (url: strin
       const url = (res.data as any)?.url || (res.data as any)?.data?.url;
       if (!url) throw new Error("No URL returned");
       onChange(url);
-    } catch {
-      toast({ variant: "destructive", title: "Image upload failed. Try again." });
+    } catch (err) {
+      toast({ variant: "destructive", title: "Image upload failed", description: uploadError(err) });
     } finally {
       setUploading(false);
       if (inputRef.current) inputRef.current.value = "";
@@ -65,7 +66,7 @@ function ImageUpload({ value, onChange }: { value: string; onChange: (url: strin
           </button>
         )}
       </div>
-      <input ref={inputRef} type="file" accept="image/jpeg,image/png" className="hidden" onChange={handleFile} />
+      <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
     </div>
   );
 }
