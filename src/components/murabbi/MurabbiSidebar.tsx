@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   BarChart3, BookOpen, CircleDot, ClipboardCheck, GraduationCap, Headphones, ListChecks,
-  LayoutDashboard, Megaphone, School, Settings,
+  IdCard, LayoutDashboard, Megaphone, School, Settings,
 } from "lucide-react";
 import { murabbisService } from "@/services/api.service";
 import AppSidebar, { SidebarNavGroup } from "@/components/layout/AppSidebar";
@@ -37,7 +37,10 @@ const navGroups: SidebarNavGroup[] = [
   },
   {
     label: "System",
-    items: [{ icon: Settings, label: "Settings", page: "settings" }],
+    items: [
+      { icon: IdCard,   label: "My Introduction", page: "murabbi-introduction" },
+      { icon: Settings, label: "Settings",        page: "settings" },
+    ],
   },
 ];
 

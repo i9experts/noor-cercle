@@ -507,6 +507,17 @@ export const insightsService = {
 };
 
 // ─────────────────────────────────────────────────────────────
+//  MURABBI INTRODUCTION (admin-only; plus the murabbi's own)
+// ─────────────────────────────────────────────────────────────
+export const murabbiProfileService = {
+  me      : ()                                => API.get('/murabbi-profile/me'),
+  saveMine: (data: object)                    => API.put('/murabbi-profile/me', data),
+  list    : (params: Record<string, string>)  => API.get('/murabbi-profile', { params }),
+  get     : (userId: string)                  => API.get(`/murabbi-profile/${encodeURIComponent(userId)}`),
+  save    : (userId: string, data: object)    => API.put(`/murabbi-profile/${encodeURIComponent(userId)}`, data),
+};
+
+// ─────────────────────────────────────────────────────────────
 //  EMAIL (queue, group emails, preferences)
 // ─────────────────────────────────────────────────────────────
 export const emailService = {
