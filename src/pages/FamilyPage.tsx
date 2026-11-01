@@ -22,10 +22,12 @@ export default function FamilyPage() {
  * The family page itself, for the private link and for a parent signed in
  * with their own account (who gets `actions` in the header).
  */
-export function FamilyScreen({ load, actions, saveProfile }: {
+export function FamilyScreen({ load, actions, saveProfile, extra }: {
   load: () => Promise<{ data: any }>;
   actions?: ReactNode;
   saveProfile?: (dto: object) => Promise<unknown>;
+  /** Shown after the family's own sections (the signed-in parent's home). */
+  extra?: ReactNode;
 }) {
   const [data, setData]   = useState<any>(null);
   const [error, setError] = useState("");
@@ -104,6 +106,8 @@ export function FamilyScreen({ load, actions, saveProfile }: {
                 }
               }} />
             )}
+
+            {extra}
 
             <footer className="pt-2 text-center text-[11.5px] text-nc-muted">
               <Lock className="mr-1 inline h-3 w-3" />

@@ -32,6 +32,7 @@ import MurabbiProfilesPage from "@/pages/MurabbiProfilesPage";
 import ClustersPage from "@/pages/ClustersPage";
 import TrainingsPage from "@/pages/TrainingsPage";
 import ParentRatingsPage from "@/pages/ParentRatingsPage";
+import FounderProfilePage from "@/pages/FounderProfilePage";
 import {
   EnrollModal,
   NewCircleModal,
@@ -141,6 +142,7 @@ const Index = () => {
       case "syllabus":       return <SyllabusPage />;
       case "syllabus-progress": return <SyllabusProgressPage />;
       case "calendar":       return <CalendarPage />;
+      case "founder-profile": return <FounderProfilePage />;
       case "settings":       return <SettingsPage />;
       default:               return <DashboardPage />;
     }

@@ -7,6 +7,7 @@ import NcCard, { CardHeader, CardTitle } from "@/components/shared/NcCard";
 import NcBadge from "@/components/shared/NcBadge";
 import SectionTitle from "@/components/shared/SectionTitle";
 import MyEngagementCard from "@/components/shared/MyEngagementCard";
+import FounderCard from "@/components/founder/FounderCard";
 import { murabbisService, performanceService, announcementsService, trainingService, courseService, murabbiProfileService } from "@/services/api.service";
 import { useToast } from "@/hooks/use-toast";
 
@@ -182,6 +183,8 @@ export default function MurabbiDashboard({ onNavigate }: { onNavigate?: (page: s
           </div>
         </div>
       )}
+
+      {onNavigate && <FounderCard audience="murabbi" onOpen={() => onNavigate("murabbi-founder")} />}
 
       {/* Stats row */}
       <div className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-3 sm:gap-4 mb-7">

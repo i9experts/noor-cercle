@@ -49,6 +49,8 @@ const pageNames: Record<string, string> = {
   'murabbi-announcements': 'Announcements',
   'murabbi-profile'  : 'My Profile',
   'murabbi-introduction': 'My Introduction',
+  'murabbi-founder'  : 'Meet the Founder',
+  'founder-profile'  : 'Founder Profile',
   'murabbi-profiles' : 'Murabbi Profiles',
 };
 import { useAuth } from "@/context/AuthContext";

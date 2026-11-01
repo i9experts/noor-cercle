@@ -25,6 +25,7 @@ const UnsubscribePage    = lazy(() => import('./pages/UnsubscribePage.tsx'));
 const SupervisorIndex    = lazy(() => import('./pages/supervisor/SupervisorIndex.tsx'));
 const ParentTrainings    = lazy(() => import('./pages/ParentTrainings.tsx'));
 const ParentTrainingPlayer = lazy(() => import('./pages/ParentTrainingPlayer.tsx'));
+const ParentFounder      = lazy(() => import('./pages/ParentFounder.tsx'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -98,6 +99,7 @@ const App = () => (
               <Route path="/parent/asaas" element={<ProtectedRoute role="parent"><ParentCoursePage /></ProtectedRoute>} />
               <Route path="/parent/trainings" element={<ProtectedRoute role="parent"><ParentTrainings /></ProtectedRoute>} />
               <Route path="/parent/trainings/:key" element={<ProtectedRoute role="parent"><ParentTrainingPlayer /></ProtectedRoute>} />
+              <Route path="/parent/founder" element={<ProtectedRoute role="parent"><ParentFounder /></ProtectedRoute>} />
               <Route path="/parent/*" element={<ProtectedRoute role="parent"><ParentHome /></ProtectedRoute>} />
 
               {/* ── Cluster supervisor routes ── */}
