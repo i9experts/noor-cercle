@@ -1,5 +1,5 @@
 import { FormEvent, useCallback, useState } from "react";
-import { Headphones, KeyRound, LogOut, Mail } from "lucide-react";
+import { GraduationCap, Headphones, KeyRound, LogOut, Mail } from "lucide-react";
 import { Link } from "react-router-dom";
 import { familyService, usersService } from "@/services/api.service";
 import { authService } from "@/services/auth.service";
@@ -27,11 +27,16 @@ export default function ParentHome() {
         load={load}
         saveProfile={save}
         actions={
-          <div className="flex gap-2">
+          <div className="flex flex-wrap justify-end gap-2">
             <Link to="/parent/asaas" className={`${btn} !bg-gold !text-[#361a2c] hover:!brightness-105`} aria-label="والدین کا Asaas">
               <Headphones className="h-3.5 w-3.5" />
               <span dir="rtl" lang="ur" className="urdu leading-[1.6] sm:hidden">Asaas</span>
               <span dir="rtl" lang="ur" className="urdu hidden leading-[1.6] sm:inline">والدین کا Asaas</span>
+            </Link>
+            <Link to="/parent/trainings" className={btn} aria-label="Trainings">
+              <GraduationCap className="h-3.5 w-3.5" />
+              <span dir="rtl" lang="ur" className="urdu leading-[1.6]">تربیتیں</span>
+              <span className="hidden sm:inline">· Trainings</span>
             </Link>
             <button className={btn} onClick={() => setMailOpen(true)} aria-label="Email settings">
               <Mail className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Emails</span>

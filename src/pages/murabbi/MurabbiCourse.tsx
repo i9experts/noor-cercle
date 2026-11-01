@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  Award, CheckCircle2, ChevronDown, Clock, Download, GraduationCap, Headphones, Lock, NotebookPen, PlayCircle,
-  Presentation, RotateCcw, Sparkles, X,
+  ArrowLeft, Award, CheckCircle2, ChevronDown, Clock, Download, GraduationCap, Headphones, Lock, NotebookPen, PlayCircle,
+  Presentation, Printer, RotateCcw, Sparkles, X,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { courseService, trainingService } from "@/services/api.service";
@@ -13,9 +13,13 @@ import { LessonPlayer } from "@/components/course/LessonPlayer";
 import { cn } from "@/lib/utils";
 import { apiError, apiMessage, formatDate, unwrap } from "@/lib/finance";
 import { ASAAS_KEY, BAND_META, clock, hasUrdu, minutesLabel, titleProps } from "@/lib/course";
+import { printTrainingCertificate } from "@/lib/trainingCertificate";
+import { useAuth } from "@/context/AuthContext";
 
-export default function MurabbiCourse() {
+/** A training's course page: Asaas by default, or any marketplace training (`courseKey`). */
+export default function MurabbiCourse({ courseKey = ASAAS_KEY, onBack }: { courseKey?: string; onBack?: () => void } = {}) {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [me, setMe]               = useState<any>(null);
   const [loading, setLoading]     = useState(true);
   const [notAssigned, setNotAssigned] = useState(false);
@@ -27,7 +31,7 @@ export default function MurabbiCourse() {
 
   const load = useCallback(async () => {
     try {
-      const d = unwrap(await courseService.me(ASAAS_KEY));
+      const d = unwrap(await courseService.me(courseKey));
       setMe(d);
       return d;
     } catch (err: any) {
@@ -38,7 +42,7 @@ export default function MurabbiCourse() {
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [courseKey]);
 
   useEffect(() => {
     load().then((d) => {
@@ -86,11 +90,13 @@ export default function MurabbiCourse() {
   if (notAssigned || !me) {
     return (
       <div className="page-animate">
-        <PageHead />
+        <PageHead onBack={onBack} />
         <NcCard className="py-14 text-center">
           <Headphones className="mx-auto mb-3 h-9 w-9 text-pale" strokeWidth={1.5} />
-          <div className="text-sm font-medium text-nc-dark">The Asaas training hasn’t been assigned to you yet</div>
-          <div className="mt-1 text-[12.5px] text-nc-muted">You’ll get a notification as soon as an admin assigns it.</div>
+          <div className="text-sm font-medium text-nc-dark">
+            {courseKey === ASAAS_KEY ? "The Asaas training hasn’t been assigned to you yet" : "This training hasn’t been opened for you yet"}
+          </div>
+          <div className="mt-1 text-[12.5px] text-nc-muted">You’ll get a notification as soon as an admin opens it for you.</div>
         </NcCard>
       </div>
     );
@@ -104,13 +110,20 @@ export default function MurabbiCourse() {
   const charts: any[] = me.flipCharts ?? [];
   const lessonCharts = lesson ? charts.filter((c) => c.lessons.some((x: any) => x._id === lesson._id)) : [];
   const openLessonById = (id: string) => { const l = lessons.find((x) => x._id === id); if (l) { setChartOpen(null); selectLesson(l); } };
+  const hasAssessment = me.course.hasAssessment !== false;
+  const hasReflection = me.course.hasReflection !== false;
+  const tierCert = me.certificate && me.certificate.tier != null;
+  const printCertificate = () => printTrainingCertificate({
+    name: user?.fullName ?? "", title: me.course.title, titleUr: me.course.titleUr, number: me.certificate.number,
+    issuedAt: me.certificate.issuedAt, badge: me.course.badge,
+  });
   const onChartReport = (r: { justStudied?: boolean }) => {
     if (r?.justStudied) { toast({ title: "Flip chart studied", description: "It’s now ticked off in your Flip charts." }); load(); }
   };
 
   return (
     <div className="page-animate">
-      <PageHead course={me.course} assignment={me.assignment} />
+      <PageHead course={me.course} assignment={me.assignment} onBack={onBack} />
 
       {me.certificate && (
         <NcCard className="mb-6 !border-gold/30 !bg-gold/[0.06]">
@@ -122,16 +135,22 @@ export default function MurabbiCourse() {
               <div>
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-[14px] font-semibold">MashaAllah, you are certified</span>
-                  <CertifiedBadge label={me.course.badge} />
+                  {me.course.badge && <CertifiedBadge label={me.course.badge} />}
                 </div>
                 <div className="text-[11.5px] text-nc-muted">
                   Certificate No. {me.certificate.number} · Issued {formatDate(me.certificate.issuedAt)}
                 </div>
               </div>
             </div>
-            <button className="btn-gold flex items-center gap-2 !py-2 text-[12.5px]" onClick={downloadCertificate}>
-              <Download className="h-3.5 w-3.5" /> Download certificate
-            </button>
+            {tierCert ? (
+              <button className="btn-gold flex items-center gap-2 !py-2 text-[12.5px]" onClick={downloadCertificate}>
+                <Download className="h-3.5 w-3.5" /> Download certificate
+              </button>
+            ) : (
+              <button className="btn-gold flex items-center gap-2 !py-2 text-[12.5px]" onClick={printCertificate}>
+                <Printer className="h-3.5 w-3.5" /> Print certificate
+              </button>
+            )}
           </div>
         </NcCard>
       )}
@@ -140,12 +159,14 @@ export default function MurabbiCourse() {
         <StatCard label="Lessons heard" value={`${p.lessonsCompleted}/${p.lessonsTotal}`} meta={`${pct}% complete`} color="purple" />
         <StatCard label="Listened" value={minutesLabel(p.listenMinutes)} meta={`of ${minutesLabel(p.totalMinutes)}`} color="teal" />
         <StatCard label="Training points" value={me.points} meta={`${me.course.points?.lesson ?? 10} per lesson`} color="gold" />
-        <StatCard
-          label="Assessment"
-          value={me.assessment.passed ? `${me.assessment.best}%` : me.assessment.unlocked ? "Ready" : "Locked"}
-          meta={me.assessment.passed ? "Passed" : `Pass mark ${me.course.passingScore}%`}
-          color={me.assessment.passed ? "green" : "red"}
-        />
+        {hasAssessment && (
+          <StatCard
+            label="Assessment"
+            value={me.assessment.passed ? `${me.assessment.best}%` : me.assessment.unlocked ? "Ready" : "Locked"}
+            meta={me.assessment.passed ? "Passed" : `Pass mark ${me.course.passingScore}%`}
+            color={me.assessment.passed ? "green" : "red"}
+          />
+        )}
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
@@ -187,8 +208,8 @@ export default function MurabbiCourse() {
             ? toast({ title: "This flip chart opens with its lesson.", description: `Listen up to ${c.lessons[0]?.code ?? "its lesson"} first.` })
             : setChartOpen(c.key))} />
 
-          <AssessmentCard me={me} onStart={() => setQuizOpen(true)} />
-          <ReflectionCard me={me} onSaved={load} />
+          {hasAssessment && <AssessmentCard me={me} onStart={() => setQuizOpen(true)} />}
+          {hasReflection && <ReflectionCard me={me} onSaved={load} />}
           {(me.course.requirePractical || me.practical) && <PracticalCard me={me} />}
         </div>
 
@@ -259,14 +280,38 @@ export default function MurabbiCourse() {
   );
 }
 
-function PageHead({ course, assignment }: { course?: any; assignment?: any }) {
+function PageHead({ course, assignment, onBack }: { course?: any; assignment?: any; onBack?: () => void }) {
+  const asaas = !course || course.key === ASAAS_KEY;
+  const todo = [
+    "listen to every lesson",
+    ...(course?.hasAssessment !== false ? ["pass the assessment"] : []),
+    ...(course?.hasReflection !== false ? ["share your reflection"] : []),
+  ];
+  const todoText = todo.length > 1 ? `${todo.slice(0, -1).join(", ")} and ${todo[todo.length - 1]}` : todo[0];
   return (
     <div className="mb-6">
-      <h2 className="font-serif text-[26px] text-nc-dark">{course?.title ?? "Asaas Murabbi Training"}</h2>
+      {onBack && (
+        <button className="mb-2 inline-flex items-center gap-1 text-[12.5px] text-nc-muted hover:text-nc-dark" onClick={onBack}>
+          <ArrowLeft className="h-3.5 w-3.5" /> All trainings
+        </button>
+      )}
+      <h2 {...titleProps(course?.title ?? "")} className="font-serif text-[26px] text-nc-dark">{course?.title ?? "Asaas Murabbi Training"}</h2>
+      {course?.titleUr && course.titleUr !== course.title && (
+        <div dir="rtl" lang="ur" className="urdu text-[17px] leading-[2] text-plum">{course.titleUr}</div>
+      )}
       <p className="mt-1 max-w-2xl text-[13.5px] text-nc-muted">
         {course?.trainer ? `Audio course by ${course.trainer}. ` : ""}
-        Listen to every lesson, pass the assessment and share your reflection to earn your Tier 1 certificate
-        and the {course?.badge ?? "Certified Asaas Murabbi"} badge.
+        {asaas ? (
+          <>
+            Listen to every lesson, pass the assessment and share your reflection to earn your Tier 1 certificate
+            and the {course?.badge ?? "Certified Asaas Murabbi"} badge.
+          </>
+        ) : (
+          <>
+            {course?.summary ? `${course.summary} ` : ""}
+            To complete it, {todoText}.
+          </>
+        )}
         {assignment?.dueDate && <> Please finish by <span className="font-semibold text-nc-dark">{formatDate(assignment.dueDate)}</span>.</>}
       </p>
       {assignment?.note && <p className="mt-2 max-w-2xl rounded-md bg-muted px-3 py-2 text-[12.5px] text-nc-dark">{assignment.note}</p>}
@@ -388,7 +433,7 @@ function ReflectionCard({ me, onSaved }: { me: any; onSaved: () => void }) {
   async function submit() {
     setSaving(true);
     try {
-      const res = await courseService.reflect(ASAAS_KEY, text);
+      const res = await courseService.reflect(me.course.key, text);
       toast({ title: apiMessage(res, "Reflection submitted.") });
       setEditing(false);
       onSaved();
@@ -504,7 +549,7 @@ function QuizModal({ me, onClose, onDone }: { me: any; onClose: () => void; onDo
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    courseService.assessment(ASAAS_KEY)
+    courseService.assessment(me.course.key)
       .then((r) => {
         const d = unwrap(r);
         setQuestions(d.questions);
@@ -525,7 +570,7 @@ function QuizModal({ me, onClose, onDone }: { me: any; onClose: () => void; onDo
   async function submit() {
     setSaving(true);
     try {
-      const r = unwrap(await courseService.submit(ASAAS_KEY, answers as number[]));
+      const r = unwrap(await courseService.submit(me.course.key, answers as number[]));
       setResult(r);
       onDone();
       document.getElementById("quiz-top")?.scrollIntoView();
