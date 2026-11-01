@@ -163,7 +163,7 @@ export default function SettingsPage() {
             <input
               ref={imgInputRef}
               type="file"
-              accept="image/jpeg,image/png,image/webp"
+              accept="image/*"
               className="hidden"
               onChange={handleImageUpload}
             />

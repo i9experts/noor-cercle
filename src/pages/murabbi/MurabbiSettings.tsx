@@ -1,4 +1,5 @@
 import { FormEvent, useEffect, useRef, useState } from 'react';
+import { uploadError } from '@/lib/image';
 import NcCard, { CardHeader, CardTitle } from '@/components/shared/NcCard';
 import SectionTitle from '@/components/shared/SectionTitle';
 import PasswordInput from '@/components/shared/PasswordInput';
@@ -46,8 +47,8 @@ export default function MurabbiSettings() {
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
-      toast({ variant: 'destructive', title: 'Image must be under 5 MB.' }); return;
+    if (file.size > 25 * 1024 * 1024) {
+      toast({ variant: 'destructive', title: 'That photo is too large (over 25 MB).' }); return;
     }
     setImgUploading(true);
     try {
@@ -59,8 +60,8 @@ export default function MurabbiSettings() {
       setProfile((p) => ({ ...p, image: url }));
       updateUser({ image: url });
       toast({ title: 'Profile photo updated!' });
-    } catch {
-      toast({ variant: 'destructive', title: 'Image upload failed. Try again.' });
+    } catch (err) {
+      toast({ variant: 'destructive', title: 'Image upload failed', description: uploadError(err) });
     } finally {
       setImgUploading(false);
       if (imgInputRef.current) imgInputRef.current.value = '';
@@ -157,7 +158,7 @@ export default function MurabbiSettings() {
                 <Camera className="h-4 w-4 text-white" />
               </div>
             </div>
-            <input ref={imgInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleImageUpload} />
+            <input ref={imgInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
 
             <div className="min-w-0">
               <p className="text-[15px] font-semibold text-foreground leading-tight truncate">{profile.fullName || '—'}</p>
