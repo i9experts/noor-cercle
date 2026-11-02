@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import {
-  ArrowLeft, Check, ChevronLeft, ChevronRight, Headphones, Lock, NotebookPen, Play, Printer, ShieldCheck, Sparkles, Trash2,
+  ArrowLeft, Check, ChevronLeft, ChevronRight, Headphones, Lock, NotebookPen, Play, Printer, ShieldCheck, Sparkles, Star, Trash2,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { courseService, murabbisService } from "@/services/api.service";
@@ -156,13 +156,13 @@ function Cover({ data }: { data: JournalData }) {
         </div>
       </div>
       <div className="mt-5 flex flex-col gap-3 border-t border-gold/25 pt-4 sm:flex-row sm:items-center">
-        <p className="flex flex-1 items-start gap-2 text-[12px] leading-relaxed text-nc-muted">
+        <div className="flex flex-1 items-start gap-2 text-[12px] leading-relaxed text-nc-muted">
           <ShieldCheck className="mt-0.5 h-4 w-4 flex-shrink-0 text-plum" />
-          <span>
-            Private: only you can read your journal. The Noor Circles team sees only how many pages you’ve written
-            (and your final reflection, which they review).
-          </span>
-        </p>
+          <div className="min-w-0">
+            Your journal is shared with the Noor Circles team so they can support you. Supervisors and other murabbis can’t see it.
+            <Urdu className="mt-1 text-[12.5px] leading-[2]">آپ کا جرنل نور سرکلز ٹیم دیکھ سکتی ہے تاکہ آپ کی مدد کر سکے۔ سپروائزر اور دوسرے مربی اسے نہیں دیکھ سکتے۔</Urdu>
+          </div>
+        </div>
         <button className="btn-outline flex-shrink-0 justify-center !py-2 text-[12.5px]" onClick={() => printJournal(data)}>
           <Printer className="h-3.5 w-3.5" /> Print my journal
         </button>
@@ -610,6 +610,8 @@ function MomentsView({ data, initialCircleId, onChanged, toCourse }: {
   const [saving, setSaving] = useState(false);
   const [removing, setRemoving] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [shareName, setShareName] = useState(false);
+  const [sharing, setSharing] = useState<string | null>(null);
 
   useEffect(() => {
     if (!m.open) return;
@@ -621,7 +623,7 @@ function MomentsView({ data, initialCircleId, onChanged, toCourse }: {
   async function add() {
     setSaving(true);
     try {
-      const res = await journalService.addMoment({ text: text.trim(), date, circleId: circleId || undefined });
+      const res = await journalService.addMoment({ text: text.trim(), date, circleId: circleId || undefined, shareName });
       toast({ title: apiMessage(res, "Moment saved.") });
       setText("");
       await onChanged();
@@ -629,6 +631,19 @@ function MomentsView({ data, initialCircleId, onChanged, toCourse }: {
       toast({ variant: "destructive", title: apiError(err, "Could not save this moment.") });
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function toggleShare(id: string, value: boolean) {
+    setSharing(id);
+    try {
+      const res = await journalService.updateMoment(id, { shareName: value });
+      toast({ title: apiMessage(res, "Saved.") });
+      await onChanged();
+    } catch (err) {
+      toast({ variant: "destructive", title: apiError(err, "Could not change this.") });
+    } finally {
+      setSharing(null);
     }
   }
 
@@ -703,6 +718,13 @@ function MomentsView({ data, initialCircleId, onChanged, toCourse }: {
               className={cn("w-full resize-y rounded-md border border-gold/30 bg-transparent px-3 pb-2 pt-[10px] text-[14.5px] text-nc-dark focus:border-plum focus:outline-none",
                 hasUrdu(text) && "urdu text-[15px]")}
             />
+            <label className="mt-2 flex cursor-pointer items-start gap-2 text-[12px] leading-relaxed text-nc-muted">
+              <input type="checkbox" checked={shareName} onChange={(e) => setShareName(e.target.checked)} className="mt-1 flex-shrink-0 accent-[hsl(var(--plum))]" />
+              <span className="min-w-0">
+                If the team features this moment, they may use my name
+                <span dir="rtl" lang="ur" className="urdu block text-right text-[12.5px] leading-[2]">اگر ٹیم یہ لمحہ شائع کرے تو میرا نام استعمال کر سکتی ہے</span>
+              </span>
+            </label>
             <div className="mt-2 flex justify-end">
               <button className="btn-gold !py-2 text-[12.5px]" disabled={saving || !text.trim() || !date} onClick={add}>
                 {saving ? "Saving…" : "Save this moment"}
@@ -720,12 +742,28 @@ function MomentsView({ data, initialCircleId, onChanged, toCourse }: {
                     <div className="min-w-0 flex-1 text-[11.5px] font-semibold uppercase tracking-wide text-gold-dim">
                       {momentDate(x.date)}{x.circle ? <span className="normal-case tracking-normal text-nc-muted"> · {x.circle.name}</span> : null}
                     </div>
+                    {x.featured && (
+                      <span className="flex flex-shrink-0 items-center gap-1 rounded-full bg-gold/20 px-2 py-0.5 text-[10.5px] font-semibold text-gold-dim">
+                        <Star className="h-3 w-3" /> Featured
+                      </span>
+                    )}
                     <button className="flex-shrink-0 rounded p-1 text-nc-muted hover:bg-nc-red-lt hover:text-nc-red" aria-label="Delete this moment" onClick={() => setRemoving(x._id)}>
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
                   </div>
                   <p dir="auto" className={cn("whitespace-pre-wrap break-words text-nc-dark",
                     hasUrdu(x.text) ? "urdu text-[15px] leading-[2.2]" : "text-[13.5px] leading-relaxed")}>{x.text}</p>
+                  <button
+                    role="switch"
+                    aria-checked={!!x.shareName}
+                    disabled={sharing === x._id}
+                    onClick={() => toggleShare(x._id, !x.shareName)}
+                    title={x.shareName ? "Your name may be shown if the team features this moment. Tap to change." : "Your name won’t be shown with this moment. Tap to change."}
+                    className={cn("mt-2 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-medium transition-colors disabled:opacity-60",
+                      x.shareName ? "border-plum/30 bg-plum/10 text-plum" : "border-border bg-card text-nc-muted hover:text-nc-dark")}>
+                    <span className={cn("h-2 w-2 rounded-full", x.shareName ? "bg-plum" : "bg-nc-muted/40")} />
+                    {x.shareName ? "My name may be used if featured" : "Without my name if featured"}
+                  </button>
                 </li>
               ))}
             </ul>
