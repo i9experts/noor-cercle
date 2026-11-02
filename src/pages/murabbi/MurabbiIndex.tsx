@@ -15,6 +15,7 @@ import MurabbiAgenda from "./MurabbiAgenda";
 import MurabbiCourse from "./MurabbiCourse";
 import MurabbiTrainings from "./MurabbiTrainings";
 import MurabbiIntroduction from "./MurabbiIntroduction";
+import MurabbiJournal from "./MurabbiJournal";
 import FounderProfile from "@/components/founder/FounderProfile";
 import { EnrollModal, AwardPointsModal } from "@/components/modals/AllModals";
 
@@ -23,11 +24,19 @@ const MurabbiIndex = () => {
   const [navOpen, setNavOpen] = useState(false);
   const [enrollOpen, setEnrollOpen] = useState(false);
   const [awardOpen, setAwardOpen] = useState(false);
+  // Where the Noor Journal should open (a page key or "moments"), when another page sends the murabbi there.
+  const [journalAt, setJournalAt] = useState<{ view: string | null; circleId?: string; n: number }>({ view: null, n: 0 });
 
   const handleNav = (page: string) => {
+    if (page === 'murabbi-journal') setJournalAt((j) => ({ view: null, n: j.n + 1 }));
     setActivePage(page);
     setNavOpen(false);
     window.scrollTo(0, 0);
+  };
+
+  const openJournal = (view: string | null, circleId?: string) => {
+    handleNav('murabbi-journal');
+    setJournalAt((j) => ({ view, circleId, n: j.n + 1 }));
   };
 
   const renderPage = () => {
@@ -35,11 +44,13 @@ const MurabbiIndex = () => {
       case 'murabbi-dashboard': return <MurabbiDashboard onNavigate={handleNav} />;
       case 'murabbi-students': return <MurabbiStudents />;
       case 'murabbi-agenda': return <MurabbiAgenda />;
-      case 'murabbi-attendance': return <MurabbiAttendance />;
+      case 'murabbi-attendance': return <MurabbiAttendance onAddMoment={(circleId) => openJournal('moments', circleId)} />;
       case 'murabbi-circles': return <MurabbiCircles />;
       case 'murabbi-lessons': return <MurabbiLessons />;
       case 'murabbi-training': return <MurabbiTraining />;
-      case 'murabbi-course': return <MurabbiCourse />;
+      case 'murabbi-course': return <MurabbiCourse onOpenJournal={(view) => openJournal(view)} />;
+      case 'murabbi-journal':
+        return <MurabbiJournal key={journalAt.n} initialView={journalAt.view} initialCircleId={journalAt.circleId} onNavigate={handleNav} />;
       case 'murabbi-trainings': return <MurabbiTrainings />;
       case 'murabbi-reports': return <MurabbiReports />;
       case 'murabbi-announcements': return <MurabbiAnnouncements />;

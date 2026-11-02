@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { apiError, apiMessage, downloadCsv, formatDate, unwrap } from "@/lib/finance";
 import { ASAAS_KEY, BAND_META, STATUS_META, clock, hasUrdu, minutesLabel, practicalBand, titleProps } from "@/lib/course";
 import CourseBuilder from "@/components/training-admin/CourseBuilder";
+import { journalService, type JournalAdminRow } from "@/lib/journal";
 import MarketplaceSettings from "@/components/training-admin/MarketplaceSettings";
 
 /** Which training this page manages, and who takes it. */
@@ -156,6 +157,15 @@ function ProgressTab({ report, outline, onChanged }: { report: any; outline: any
   const [status, setStatus] = useState("");
   const [assignOpen, setAssignOpen] = useState(false);
   const [detailId, setDetailId] = useState<string | null>(null);
+  // Noor Journal counts (Asaas only): never the text, which stays private to the murabbi.
+  const [journal, setJournal] = useState<Map<string, JournalAdminRow> | null>(null);
+  const withJournal = c.key === ASAAS_KEY && c.audience === "murabbi";
+  useEffect(() => {
+    if (!withJournal) return;
+    journalService.adminProgress()
+      .then((r) => setJournal(new Map(unwrap<JournalAdminRow[]>(r).map((j) => [String(j.user._id), j]))))
+      .catch(() => setJournal(new Map()));
+  }, [withJournal]);
 
   const rows: any[] = (report?.rows ?? [])
     .filter((r: any) => !status || r.status === status || (status === "overdue" && r.overdue))
@@ -216,6 +226,11 @@ function ProgressTab({ report, outline, onChanged }: { report: any; outline: any
                 <th className="px-3 py-2 font-medium">Reflection</th>
                 {hasCharts && <th className="px-3 py-2 font-medium">Flip charts</th>}
                 {outline.course.requirePractical && <th className="px-3 py-2 font-medium">Practical</th>}
+                {withJournal && (
+                  <th className="px-3 py-2 font-medium" title="Counts only: what murabbis write is private">
+                    <span className="cursor-help border-b border-dotted border-nc-muted">Journal</span>
+                  </th>
+                )}
                 <th className="px-3 py-2 font-medium">Status</th>
                 <th className="px-3 py-2 font-medium">Due</th>
               </tr>
@@ -257,6 +272,19 @@ function ProgressTab({ report, outline, onChanged }: { report: any; outline: any
                         ) : <span className="text-nc-muted">—</span>}
                       </td>
                     )}
+                    {withJournal && (() => {
+                      const j = journal?.get(String(r.user._id));
+                      return (
+                        <td className="whitespace-nowrap px-3 py-3 text-nc-dark">
+                          {j ? (
+                            <>
+                              <span className={cn(j.pagesDone === j.totalPages && "font-semibold text-nc-green")}>{j.pagesDone}/{j.totalPages}</span>
+                              <span className="text-[11.5px] text-nc-muted"> · {j.moments} moment{j.moments === 1 ? "" : "s"}</span>
+                            </>
+                          ) : <span className="text-nc-muted">—</span>}
+                        </td>
+                      );
+                    })()}
                     <td className="px-3 py-3">
                       {r.status === "certified" ? <CertifiedBadge label="Certified" /> : (
                         <span className={cn("whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-semibold", STATUS_META[r.status]?.cls)}>

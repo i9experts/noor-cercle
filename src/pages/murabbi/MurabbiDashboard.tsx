@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Star, AlertTriangle, Bell, Calendar, GraduationCap, Heart, Info, CalendarDays, Headphones, IdCard } from "lucide-react";
+import { Star, AlertTriangle, Bell, Calendar, GraduationCap, Heart, Info, CalendarDays, Headphones, IdCard, NotebookPen } from "lucide-react";
 import CertifiedBadge from "@/components/course/CertifiedBadge";
 import StatCard from "@/components/shared/StatCard";
 import QuranBox from "@/components/shared/QuranBox";
@@ -10,6 +10,7 @@ import MyEngagementCard from "@/components/shared/MyEngagementCard";
 import FounderCard from "@/components/founder/FounderCard";
 import { murabbisService, performanceService, announcementsService, trainingService, courseService, murabbiProfileService } from "@/services/api.service";
 import { useToast } from "@/hooks/use-toast";
+import { journalService, type JournalData } from "@/lib/journal";
 
 const ICON_MAP: Record<string, { Icon: React.ElementType; bg: string; text: string }> = {
   session  : { Icon: Calendar,      bg: "bg-teal/10",     text: "text-teal"     },
@@ -43,6 +44,7 @@ export default function MurabbiDashboard({ onNavigate }: { onNavigate?: (page: s
   const [announcements, setAnnouncements] = useState<any[]>([]);
   const [courses, setCourses]             = useState<any[]>([]);
   const [introPct, setIntroPct]           = useState<number | null>(null);
+  const [journal, setJournal]             = useState<JournalData | null>(null);
   const user = JSON.parse(localStorage.getItem("user") || "{}");
 
   useEffect(() => {
@@ -61,6 +63,10 @@ export default function MurabbiDashboard({ onNavigate }: { onNavigate?: (page: s
 
     courseService.my()
       .then((res) => setCourses(res.data.data || []))
+      .catch(() => {});
+
+    journalService.get()
+      .then((res) => setJournal(res.data.data ?? res.data))
       .catch(() => {});
 
     murabbiProfileService.me()
@@ -153,6 +159,32 @@ export default function MurabbiDashboard({ onNavigate }: { onNavigate?: (page: s
           </div>
         );
       })}
+
+      {/* Noor Journal */}
+      {journal?.assigned && (
+        <div className="rounded-xl border border-gold/35 bg-[#fffdf8] p-4 mb-6 flex flex-wrap items-center gap-4">
+          <div className="w-10 h-10 rounded-lg bg-plum/10 flex items-center justify-center flex-shrink-0">
+            <NotebookPen className="h-5 w-5 text-plum" />
+          </div>
+          <div className="flex-1 min-w-[200px]">
+            <p className="flex flex-wrap items-baseline gap-x-2 font-semibold text-[13.5px]">
+              Noor Journal
+              <span dir="rtl" lang="ur" className="urdu font-normal text-[13px] leading-[2] text-nc-muted">نور جرنل</span>
+            </p>
+            <div className="mt-1.5 h-1.5 max-w-xs overflow-hidden rounded-full bg-gold/15">
+              <div className="h-full rounded-full bg-gold" style={{ width: `${journal.progress.total ? Math.round((journal.progress.done / journal.progress.total) * 100) : 0}%` }} />
+            </div>
+            <p className="text-[11.5px] text-nc-muted mt-1">
+              {journal.progress.done}/{journal.progress.total} pages written
+              {journal.moments.list.length ? ` · ${journal.moments.list.length} moment${journal.moments.list.length === 1 ? "" : "s"} of light` : ""}
+              {" "}· private to you
+            </p>
+          </div>
+          {onNavigate && (
+            <button className="btn-outline !py-2 text-[12.5px]" onClick={() => onNavigate("murabbi-journal")}>Open journal</button>
+          )}
+        </div>
+      )}
 
       {/* Training schedule widget */}
       {activeBatch && (

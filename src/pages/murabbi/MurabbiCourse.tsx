@@ -14,10 +14,16 @@ import { cn } from "@/lib/utils";
 import { apiError, apiMessage, formatDate, unwrap } from "@/lib/finance";
 import { ASAAS_KEY, BAND_META, clock, hasUrdu, minutesLabel, titleProps } from "@/lib/course";
 import { printTrainingCertificate } from "@/lib/trainingCertificate";
+import { MOMENTS_LESSON, MOMENTS_VIEW, journalService, type JournalData } from "@/lib/journal";
 import { useAuth } from "@/context/AuthContext";
 
 /** A training's course page: Asaas by default, or any marketplace training (`courseKey`). */
-export default function MurabbiCourse({ courseKey = ASAAS_KEY, onBack }: { courseKey?: string; onBack?: () => void } = {}) {
+export default function MurabbiCourse({ courseKey = ASAAS_KEY, onBack, onOpenJournal }: {
+  courseKey?: string;
+  onBack?: () => void;
+  /** Opens the Noor Journal at a page key (or "moments"); the journal button shows only when this is given. */
+  onOpenJournal?: (view: string) => void;
+} = {}) {
   const { toast } = useToast();
   const { user } = useAuth();
   const [me, setMe]               = useState<any>(null);
@@ -28,6 +34,19 @@ export default function MurabbiCourse({ courseKey = ASAAS_KEY, onBack }: { cours
   const [quizOpen, setQuizOpen]   = useState(false);
   const autoplay = useRef(false);
   const [chartOpen, setChartOpen] = useState<string | null>(null);
+  // Lesson code → the Noor Journal page that goes with it (Asaas only).
+  const [journalPages, setJournalPages] = useState<Record<string, string>>({});
+  const withJournal = !!onOpenJournal && courseKey === ASAAS_KEY;
+
+  useEffect(() => {
+    if (!withJournal) return;
+    journalService.get()
+      .then((r) => {
+        const j = unwrap<JournalData>(r);
+        setJournalPages({ ...Object.fromEntries(j.pages.map((p) => [p.lessonCode, p.key])), [MOMENTS_LESSON]: MOMENTS_VIEW });
+      })
+      .catch(() => {});
+  }, [withJournal]);
 
   const load = useCallback(async () => {
     try {
@@ -172,15 +191,27 @@ export default function MurabbiCourse({ courseKey = ASAAS_KEY, onBack }: { cours
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
         <div className="min-w-0 space-y-6">
           {lesson ? (
-            <LessonPlayer
-              key={lesson._id}
-              lessonId={lesson._id}
-              nextLesson={nextLesson}
-              threshold={me.course.completionThreshold}
-              autoPlay={autoplay.current}
-              onProgress={load}
-              onNext={(play) => nextLesson && selectLesson({ ...nextLesson, locked: false }, play)}
-            />
+            <>
+              <LessonPlayer
+                key={lesson._id}
+                lessonId={lesson._id}
+                nextLesson={nextLesson}
+                threshold={me.course.completionThreshold}
+                autoPlay={autoplay.current}
+                onProgress={load}
+                onNext={(play) => nextLesson && selectLesson({ ...nextLesson, locked: false }, play)}
+              />
+              {onOpenJournal && journalPages[lesson.code] && (
+                <div className="-mt-3 flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <button className="btn-gold !py-2 text-[12.5px]" onClick={() => onOpenJournal(journalPages[lesson.code])}>
+                    <NotebookPen className="h-3.5 w-3.5" /> Write in your Noor Journal
+                  </button>
+                  <span className="text-[11.5px] text-nc-muted">
+                    {lesson.completed ? "Its journal page is open." : "Its journal page opens once you’ve heard this lesson."}
+                  </span>
+                </div>
+              )}
+            </>
           ) : (
             <NcCard className="py-14 text-center">
               <Sparkles className="mx-auto mb-3 h-9 w-9 text-pale" strokeWidth={1.5} />
