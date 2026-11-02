@@ -45,6 +45,7 @@ const pageNames: Record<string, string> = {
   'murabbi-lessons'  : 'Lesson Plans',
   'murabbi-training' : 'Training',
   'murabbi-course'   : 'Asaas Training',
+  'murabbi-journal'  : 'Noor Journal',
   'murabbi-reports'  : 'My Reports',
   'murabbi-announcements': 'Announcements',
   'murabbi-profile'  : 'My Profile',

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import NcCard, { CardHeader, CardTitle } from "@/components/shared/NcCard";
 import SectionTitle from "@/components/shared/SectionTitle";
 import Modal from "@/components/shared/Modal";
-import { Check, X, Clock, Pencil, CalendarDays, Users } from "lucide-react";
+import { Check, X, Clock, Pencil, CalendarDays, Sparkles, Users } from "lucide-react";
 import { murabbisService, attendanceService } from "@/services/api.service";
 import { useToast } from "@/hooks/use-toast";
 
@@ -145,8 +145,13 @@ function EditModal({
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
-export default function MurabbiAttendance() {
+export default function MurabbiAttendance({ onAddMoment }: {
+  /** Opens the Noor Journal's Moments of light (with this circle preselected). */
+  onAddMoment?: (circleId?: string) => void;
+} = {}) {
   const { toast } = useToast();
+  // After a submit: a gentle, optional invitation to write a moment of light.
+  const [momentFor, setMomentFor] = useState<{ _id: string; name?: string } | null>(null);
 
   // Data
   const [circles,        setCircles]        = useState<any[]>([]);
@@ -214,6 +219,7 @@ export default function MurabbiAttendance() {
         records      : circleStudents.map((s) => ({ student: s._id, status: getStatus(s._id), note: "" })),
       });
       toast({ title: "Attendance submitted!", description: `${fmtDate(sessionDate)} recorded.` });
+      setMomentFor({ _id: selectedCircle._id, name: selectedCircle.name });
       setRecords({});
       setTopic("");
       // Reload past sessions
@@ -248,6 +254,24 @@ export default function MurabbiAttendance() {
   return (
     <div className="page-animate">
       <SectionTitle title="Mark Attendance" subtitle="Record student presence for today's session." />
+
+      {onAddMoment && momentFor && (
+        <div className="mb-5 flex flex-wrap items-center gap-3 rounded-xl border border-gold/35 bg-[#fffdf8] p-3.5 sm:p-4">
+          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-gold/15 text-gold-dim">
+            <Sparkles className="h-4 w-4" />
+          </div>
+          <div className="min-w-[180px] flex-1">
+            <p className="text-[13px] font-semibold text-nc-dark">Add a moment of light from today?</p>
+            <p dir="rtl" lang="ur" className="urdu text-right text-[13px] leading-[2] text-nc-muted sm:text-left">آج کا کوئی روشن لمحہ لکھیں؟</p>
+          </div>
+          <div className="flex gap-2">
+            <button className="btn-gold !py-1.5 text-[12px]" onClick={() => onAddMoment(momentFor._id)}>Write in my journal</button>
+            <button className="rounded-sm p-1.5 text-nc-muted hover:bg-muted hover:text-nc-dark" aria-label="Not now" onClick={() => setMomentFor(null)}>
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
