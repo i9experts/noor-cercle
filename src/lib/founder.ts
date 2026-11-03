@@ -34,7 +34,8 @@ export type FounderUpdate = Partial<Omit<FounderData, "updatedAt">>;
 
 export interface BlogPost { title: string; url: string; date: string | null }
 
-export type FounderAudience = "murabbi" | "parent";
+/** Hosts have no message of their own: they see the founder's general quote (Urdu first). */
+export type FounderAudience = "murabbi" | "parent" | "host";
 
 export const FOUNDER_PHOTO = "/founder.webp";
 export const MAX_VISION_POINTS = 8;
@@ -67,6 +68,7 @@ export function postDate(date: string | null) {
 
 /** The message a portal shows, in the order it shows them (the portal's main language first). */
 export function messageFor(d: FounderData, audience: FounderAudience) {
+  if (audience === "host") return { primary: d.quoteUr, primaryUr: true, secondary: d.quoteEn };
   return audience === "parent"
     ? { primary: d.messageParentsUr, primaryUr: true, secondary: d.messageParentsEn }
     : { primary: d.messageMurabbisEn, primaryUr: false, secondary: d.messageMurabbisUr };

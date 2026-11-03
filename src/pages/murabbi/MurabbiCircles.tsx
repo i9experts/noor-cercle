@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import NcBadge from "@/components/shared/NcBadge";
 import { murabbisService } from "@/services/api.service";
 import { useToast } from "@/hooks/use-toast";
+import { Home, Phone } from "lucide-react";
+import { joinAddress } from "@/lib/host";
 
 export default function MurabbiCircles() {
   const { toast }                 = useToast();
@@ -67,6 +69,29 @@ export default function MurabbiCircles() {
                 {!nbh?.mosques && (
                   <div className="text-[11.5px] text-nc-muted mb-3">
                     Capacity: {c.capacity}
+                  </div>
+                )}
+
+                {/* Venue (a host's space) */}
+                {c.venue && (
+                  <div className="mb-3 rounded-lg border border-border/60 bg-plum-lt/30 px-3 py-2 text-[12px]">
+                    <div className="flex items-start gap-1.5 font-medium text-nc-dark">
+                      <Home className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-plum" />
+                      <span className="min-w-0 break-words">{c.venue.name}</span>
+                    </div>
+                    {(c.venue.address || c.venue.area || c.venue.city) && (
+                      <div className="mt-0.5 break-words pl-5 text-nc-muted">{joinAddress(c.venue.address, c.venue.area, c.venue.city)}</div>
+                    )}
+                    {c.venue.host && (
+                      <div className="mt-1 flex flex-wrap items-center gap-x-2 pl-5 text-nc-muted">
+                        <span>Host: <span className="text-nc-dark">{c.venue.host.fullName}</span></span>
+                        {c.venue.host.phone && (
+                          <a href={`tel:${String(c.venue.host.phone).replace(/\s/g, "")}`} className="inline-flex items-center gap-1 font-medium text-teal hover:underline">
+                            <Phone className="h-3 w-3" /> {c.venue.host.phone}
+                          </a>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
 

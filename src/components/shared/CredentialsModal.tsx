@@ -8,6 +8,8 @@ export interface IssuedCredentials {
   credentials: { email: string; password: string; loginUrl: string };
   /** A welcome / reset email with a set-password link went out too. */
   emailed?: boolean;
+  /** A host account: the space created from their interest. */
+  spaceId?: string;
 }
 
 /** The message an admin sends the person, in English and Urdu. */
@@ -16,7 +18,7 @@ export function credentialsMessage({ account, credentials }: IssuedCredentials) 
   return [
     `Assalam-o-Alaikum ${first},`,
     "",
-    `Your Noor Circles ${account.role === "parent" ? "parent" : account.role === "supervisor" ? "cluster supervisor" : "murabbi"} account is ready.`,
+    `Your Noor Circles ${account.role === "parent" ? "parent" : account.role === "supervisor" ? "cluster supervisor" : account.role === "host" ? "host" : "murabbi"} account is ready.`,
     "",
     `Sign in: ${credentials.loginUrl}`,
     `Email: ${credentials.email}`,

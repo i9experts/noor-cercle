@@ -69,7 +69,7 @@ const SignInPage = () => {
   return (
     <AuthShell
       title="Sign In"
-      subtitle="Welcome back. Sign in to your Noor Circles account: team members, murabbis and parents."
+      subtitle="Welcome back. Sign in to your Noor Circles account: team members, murabbis, parents and hosts."
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">

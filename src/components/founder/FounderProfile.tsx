@@ -42,7 +42,8 @@ export default function FounderProfile({ audience, data, posts }: FounderProfile
     return <div className="mx-auto max-w-4xl animate-pulse rounded-xl border border-border bg-card p-10 text-center text-[13px] text-nc-muted shadow-nc">Loading…</div>;
   }
 
-  const parent = audience === "parent";
+  // Hosts read the page Urdu first, like parents; the quote is already in the hero, so no message section.
+  const parent = audience === "parent" || audience === "host";
   const blogPosts = (posts ?? loadedPosts).slice(0, 3);
   const host = d.blogUrl ? blogHost(d.blogUrl) : "";
   const message = messageFor(d, audience);
@@ -142,7 +143,7 @@ export default function FounderProfile({ audience, data, posts }: FounderProfile
       )}
 
       {/* ── A message for you ── */}
-      {(message.primary || message.secondary) && (
+      {audience !== "host" && (message.primary || message.secondary) && (
         <section>
           <SectionHeading en="A message for you" ur="آپ کے نام پیغام" />
           <article className="relative overflow-hidden rounded-2xl border border-gold/30 bg-[#fffcf6] px-5 py-7 shadow-nc sm:px-10 sm:py-10">

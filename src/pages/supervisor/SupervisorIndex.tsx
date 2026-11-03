@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import {
-  CalendarDays, CircleDot, ClipboardPen, GraduationCap, Inbox, LayoutDashboard, Mail, Plus, Settings, Users,
+  CalendarDays, CircleDot, ClipboardPen, GraduationCap, Inbox, LayoutDashboard, Mail, Plus, Settings, Users, Warehouse,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import AppSidebar, { SidebarNavGroup } from "@/components/layout/AppSidebar";
@@ -20,6 +20,7 @@ import { formatDay, scheduleLabel } from "@/lib/schedule";
 import { ChecklistItem, TRAINING_META, Visit } from "@/lib/cluster";
 import { SupervisorChildren, SupervisorInterest } from "./SupervisorPeople";
 import { SupervisorCalendar, SupervisorMessages } from "./SupervisorComms";
+import SupervisorSpaces from "./SupervisorSpaces";
 
 const navGroups: SidebarNavGroup[] = [
   { label: "Overview", items: [{ icon: LayoutDashboard, label: "Dashboard", page: "supervisor-dashboard" }] },
@@ -30,6 +31,7 @@ const navGroups: SidebarNavGroup[] = [
       { icon: GraduationCap, label: "Children", page: "supervisor-children", badgeKey: "children" },
       { icon: Users,         label: "Murabbis", page: "supervisor-murabbis" },
       { icon: Inbox,         label: "Interest Requests", page: "supervisor-interest", badgeKey: "interest" },
+      { icon: Warehouse,     label: "Spaces",   page: "supervisor-spaces"   },
     ],
   },
   {
@@ -94,6 +96,7 @@ export default function SupervisorIndex() {
       case "supervisor-children":  return <SupervisorChildren shared={shared} enrolOpen={enrolOpen} setEnrolOpen={setEnrolOpen} />;
       case "supervisor-murabbis":  return <MurabbisPage />;
       case "supervisor-interest":  return <SupervisorInterest onChanged={reload} />;
+      case "supervisor-spaces":    return <SupervisorSpaces />;
       case "supervisor-visits":    return <VisitsPage key={visitsKey} onLog={() => logVisit()} />;
       case "supervisor-calendar":  return <SupervisorCalendar shared={shared} />;
       case "supervisor-messages":  return <SupervisorMessages shared={shared} />;

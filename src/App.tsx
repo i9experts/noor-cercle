@@ -26,6 +26,10 @@ const SupervisorIndex    = lazy(() => import('./pages/supervisor/SupervisorIndex
 const ParentTrainings    = lazy(() => import('./pages/ParentTrainings.tsx'));
 const ParentTrainingPlayer = lazy(() => import('./pages/ParentTrainingPlayer.tsx'));
 const ParentFounder      = lazy(() => import('./pages/ParentFounder.tsx'));
+const HostHome           = lazy(() => import('./pages/host/HostHome.tsx'));
+const HostSpacePage      = lazy(() => import('./pages/host/HostSpacePage.tsx'));
+const HostTraining       = lazy(() => import('./pages/host/HostTraining.tsx'));
+const HostFounder        = lazy(() => import('./pages/host/HostFounder.tsx'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -42,7 +46,7 @@ const storedUser = (): { role?: string; mustChangePassword?: boolean } => {
   }
 };
 
-function ProtectedRoute({ children, role }: { children: JSX.Element; role?: 'admin' | 'murabbi' | 'parent' | 'supervisor' }) {
+function ProtectedRoute({ children, role }: { children: JSX.Element; role?: 'admin' | 'murabbi' | 'parent' | 'supervisor' | 'host' }) {
   if (!isLoggedIn()) return <Navigate to="/signin" replace />;
   const u = storedUser();
   // A temporary password must be replaced before anything else.
@@ -101,6 +105,13 @@ const App = () => (
               <Route path="/parent/trainings/:key" element={<ProtectedRoute role="parent"><ParentTrainingPlayer /></ProtectedRoute>} />
               <Route path="/parent/founder" element={<ProtectedRoute role="parent"><ParentFounder /></ProtectedRoute>} />
               <Route path="/parent/*" element={<ProtectedRoute role="parent"><ParentHome /></ProtectedRoute>} />
+
+              {/* ── Host routes ── */}
+              <Route path="/host"          element={<ProtectedRoute role="host"><HostHome /></ProtectedRoute>} />
+              <Route path="/host/space"    element={<ProtectedRoute role="host"><HostSpacePage /></ProtectedRoute>} />
+              <Route path="/host/training" element={<ProtectedRoute role="host"><HostTraining /></ProtectedRoute>} />
+              <Route path="/host/founder"  element={<ProtectedRoute role="host"><HostFounder /></ProtectedRoute>} />
+              <Route path="/host/*"        element={<ProtectedRoute role="host"><HostHome /></ProtectedRoute>} />
 
               {/* ── Cluster supervisor routes ── */}
               <Route path="/supervisor"   element={<ProtectedRoute role="supervisor"><SupervisorIndex /></ProtectedRoute>} />

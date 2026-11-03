@@ -250,36 +250,36 @@ export default function InterestPage() {
                   </div>
 
                   {/* Portal account */}
-                  {item.role !== "host" && (
-                    <div className="mt-3 flex flex-wrap items-center gap-2 rounded-md border border-dashed border-border bg-card/60 px-3 py-2">
-                      {item.account ? (
-                        <>
-                          <UserCheck className="h-4 w-4 text-nc-green" />
-                          <span className="text-[12.5px] text-nc-dark">
-                            <span className="font-semibold">{item.account.role === "parent" ? "Parent" : "Murabbi"} account</span>
-                            <span className="text-nc-muted">
-                              {" · "}{!item.account.isActive ? "sign-in blocked"
-                                : item.account.lastLoginAt ? `last signed in ${timeAgo(item.account.lastLoginAt)}`
-                                : "hasn’t signed in yet"}
-                            </span>
+                  <div className="mt-3 flex flex-wrap items-center gap-2 rounded-md border border-dashed border-border bg-card/60 px-3 py-2">
+                    {item.account ? (
+                      <>
+                        <UserCheck className="h-4 w-4 text-nc-green" />
+                        <span className="text-[12.5px] text-nc-dark">
+                          <span className="font-semibold">{item.account.role === "parent" ? "Parent" : item.account.role === "host" ? "Host" : "Murabbi"} account</span>
+                          <span className="text-nc-muted">
+                            {" · "}{!item.account.isActive ? "sign-in blocked"
+                              : item.account.lastLoginAt ? `last signed in ${timeAgo(item.account.lastLoginAt)}`
+                              : "hasn’t signed in yet"}
                           </span>
-                          <button className="ml-auto inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-1.5 text-[12px] text-nc-dark hover:border-primary hover:text-primary"
-                            onClick={() => resetPassword(item)}>
-                            <KeyRound className="h-3.5 w-3.5" /> Reset password
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          <span className="text-[12.5px] text-nc-muted">
-                            {item.role === "mentor" ? "Ready to start? Give them a murabbi login." : "Give this family a login to follow their child’s circle."}
-                          </span>
-                          <button className="btn-primary ml-auto !py-1.5 text-[12.5px]" onClick={() => setToConvert(item)}>
-                            <UserPlus className="h-3.5 w-3.5" /> Create {item.role === "mentor" ? "murabbi" : "parent"} account
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  )}
+                        </span>
+                        <button className="ml-auto inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-1.5 text-[12px] text-nc-dark hover:border-primary hover:text-primary"
+                          onClick={() => resetPassword(item)}>
+                          <KeyRound className="h-3.5 w-3.5" /> Reset password
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-[12.5px] text-nc-muted">
+                          {item.role === "mentor" ? "Ready to start? Give them a murabbi login."
+                            : item.role === "host" ? "Give this host a login to describe their space and take Asaas for Hosts."
+                            : "Give this family a login to follow their child’s circle."}
+                        </span>
+                        <button className="btn-primary ml-auto !py-1.5 text-[12.5px]" onClick={() => setToConvert(item)}>
+                          <UserPlus className="h-3.5 w-3.5" /> Create {item.role === "mentor" ? "murabbi" : item.role === "host" ? "host" : "parent"} account
+                        </button>
+                      </>
+                    )}
+                  </div>
 
                   {/* Notes */}
                   <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-start">
@@ -342,6 +342,7 @@ function ConvertModal({ item, onClose, onDone }: { item: InterestRequest; onClos
   const [assignTraining, setAssignTraining] = useState(true);
   const [saving, setSaving] = useState(false);
   const mentor = item.role === "mentor";
+  const host = item.role === "host";
   const name = `${item.firstName} ${item.lastName}`;
 
   async function create() {
@@ -359,9 +360,14 @@ function ConvertModal({ item, onClose, onDone }: { item: InterestRequest; onClos
   }
 
   return (
-    <Modal open onClose={onClose} title={`Create ${mentor ? "murabbi" : "parent"} account`} subtitle={`${name} · ${item.email}`}>
+    <Modal open onClose={onClose} title={`Create ${mentor ? "murabbi" : host ? "host" : "parent"} account`} subtitle={`${name} · ${item.email}`}>
       <ul className="mb-5 space-y-2 text-[13px] text-nc-dark">
-        {mentor ? (
+        {host ? (
+          <>
+            <li>• {item.firstName} signs in to the host portal with <span className="font-semibold">{item.email}</span>.</li>
+            <li>• Their space is added as “Offered” (type, city and area from the form). Visit it and approve it from Hosts &amp; Spaces, then place a circle there.</li>
+          </>
+        ) : mentor ? (
           <>
             <li>• {item.firstName} signs in to the murabbi portal with <span className="font-semibold">{item.email}</span>.</li>
             <li>• You can assign their circle later from Circles.</li>
