@@ -33,6 +33,7 @@ import ClustersPage from "@/pages/ClustersPage";
 import TrainingsPage from "@/pages/TrainingsPage";
 import ParentRatingsPage from "@/pages/ParentRatingsPage";
 import FounderProfilePage from "@/pages/FounderProfilePage";
+import HostsPage from "@/pages/HostsPage";
 import {
   EnrollModal,
   NewCircleModal,
@@ -134,6 +135,7 @@ const Index = () => {
       case "parent-insights": return <ParentInsightsPage />;
       case "murabbi-profiles": return <MurabbiProfilesPage />;
       case "clusters": return <ClustersPage />;
+      case "hosts":    return <HostsPage />;
       case "trainings": return <TrainingsPage />;
       case "parent-ratings": return <ParentRatingsPage />;
       case "contributions":  return <ContributionsPage />;

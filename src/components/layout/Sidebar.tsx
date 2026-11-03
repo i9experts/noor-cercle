@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   Award, BarChart3, BookMarked, CalendarDays, Gift, HandCoins, ListChecks, Star, BookOpen, CircleDot, ClipboardCheck, Globe2, GraduationCap,
-  Headphones, HeartHandshake, IdCard, AudioLines, Inbox, PieChart, Mail, LayoutDashboard, MapPin, Network, School, Settings, Sparkles, Store, TrendingUp, Users,
+  Headphones, HeartHandshake, Warehouse, IdCard, AudioLines, Inbox, PieChart, Mail, LayoutDashboard, MapPin, Network, School, Settings, Sparkles, Store, TrendingUp, Users,
 } from "lucide-react";
 import { adminService, contributionsService, interestService, marketplaceService } from "@/services/api.service";
 import AppSidebar, { SidebarNavGroup } from "./AppSidebar";
@@ -61,6 +61,7 @@ const navGroups: SidebarNavGroup[] = [
       { icon: AudioLines, label: "Parent Asaas",       page: "parent-asaas"   },
       { icon: MapPin,    label: "Neighbourhoods",      page: "neighbourhoods" },
       { icon: Network,   label: "Clusters",            page: "clusters"       },
+      { icon: Warehouse, label: "Hosts & Spaces",      page: "hosts"          },
       { icon: BarChart3, label: "Reports & Analytics", page: "reports"        },
     ],
   },

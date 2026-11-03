@@ -27,6 +27,8 @@ const pageNames: Record<string, string> = {
   reports            : 'Reports & Analytics',
   settings           : 'System Settings',
   clusters           : 'Clusters',
+  hosts              : 'Hosts & Spaces',
+  'supervisor-spaces'   : 'Spaces',
   trainings          : 'Trainings',
   'parent-ratings'   : 'Parent Ratings',
   'murabbi-trainings': 'Trainings',

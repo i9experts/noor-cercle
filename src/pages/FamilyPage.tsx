@@ -1,6 +1,6 @@
 import { ReactNode, useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { Award, CalendarDays, Heart, Home, Lock, MessageCircleHeart, Pencil, Sparkles, Star, Users } from "lucide-react";
+import { Award, CalendarDays, Heart, Home, Lock, MapPin, MessageCircleHeart, Pencil, Sparkles, Star, Users } from "lucide-react";
 import { familyService } from "@/services/api.service";
 import CalendarList from "@/components/shared/CalendarList";
 import { titleProps, urduCls } from "@/lib/course";
@@ -9,6 +9,7 @@ import { apiError, unwrap } from "@/lib/finance";
 import { formatDay, scheduleLabel } from "@/lib/schedule";
 import FamilyProfileForm from "@/components/shared/FamilyProfileForm";
 import { FamilyProfile, summarise } from "@/lib/familyProfile";
+import { joinAddress } from "@/lib/host";
 
 /** Public, password-free family page: /family/:token (link shared by the Noor team). */
 export default function FamilyPage() {
@@ -134,6 +135,15 @@ function ChildCard({ child: c }: { child: any }) {
           </p>
         ) : (
           <p className="text-[13px] text-nc-muted">Not in a circle yet.</p>
+        )}
+        {c.circle?.venue && (
+          <p className="mt-1 flex items-start gap-1.5 text-[13px] text-nc-dark">
+            <MapPin className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-plum" />
+            <span className="min-w-0 break-words">
+              <span className="font-medium">Venue · <span lang="ur" className="urdu">جگہ</span>:</span>{" "}
+              {joinAddress(c.circle.venue.name, c.circle.venue.address, c.circle.venue.area, c.circle.venue.city)}
+            </span>
+          </p>
         )}
       </div>
 
