@@ -15,17 +15,19 @@ import { ASAAS_KEY, BAND_META, STATUS_META, clock, hasUrdu, minutesLabel, practi
 import CourseBuilder from "@/components/training-admin/CourseBuilder";
 import { journalService, type JournalAdminRow } from "@/lib/journal";
 import MarketplaceSettings from "@/components/training-admin/MarketplaceSettings";
+import JournalInsights from "@/components/training-admin/JournalInsights";
 
 /** Which training this page manages, and who takes it. */
 interface CourseCtx { key: string; audience: "murabbi" | "parent"; who: string; Who: string }
 const Course = createContext<CourseCtx>({ key: ASAAS_KEY, audience: "murabbi", who: "murabbis", Who: "Murabbi" });
 const useCourse = () => useContext(Course);
 
-type Tab = "progress" | "flipcharts" | "reflections" | "content" | "questions" | "settings";
+type Tab = "progress" | "flipcharts" | "reflections" | "journal" | "content" | "questions" | "settings";
 const TABS: { key: Tab; label: string }[] = [
   { key: "progress",    label: "Murabbis & progress" },
   { key: "flipcharts",  label: "Flip charts" },
   { key: "reflections", label: "Reflections" },
+  { key: "journal",     label: "Noor Journal" },
   { key: "content",     label: "Lessons & audio" },
   { key: "questions",   label: "Assessment" },
   { key: "settings",    label: "Settings" },
@@ -62,6 +64,7 @@ export default function AsaasTrainingPage({ courseKey = ASAAS_KEY, onBack }: { c
   }), [courseKey, audience]);
   const tabs = TABS
     .filter((t) => t.key !== "flipcharts" || !outline || isAsaas || outline.course.flipCharts?.length)
+    .filter((t) => t.key !== "journal" || isAsaas)
     .map((t) => (t.key === "progress" ? { ...t, label: `${ctx.Who}s & progress` } : t));
 
   return (
@@ -134,6 +137,8 @@ export default function AsaasTrainingPage({ courseKey = ASAAS_KEY, onBack }: { c
         <ProgressTab report={report} outline={outline} onChanged={load} />
       ) : tab === "reflections" ? (
         <ReflectionsTab onChanged={load} />
+      ) : tab === "journal" && isAsaas ? (
+        <JournalInsights />
       ) : tab === "flipcharts" ? (
         <FlipChartsTab report={report} outline={outline} />
       ) : tab === "content" ? (
@@ -157,7 +162,7 @@ function ProgressTab({ report, outline, onChanged }: { report: any; outline: any
   const [status, setStatus] = useState("");
   const [assignOpen, setAssignOpen] = useState(false);
   const [detailId, setDetailId] = useState<string | null>(null);
-  // Noor Journal counts (Asaas only): never the text, which stays private to the murabbi.
+  // Noor Journal counts (Asaas only); the pages themselves are read in the Noor Journal tab.
   const [journal, setJournal] = useState<Map<string, JournalAdminRow> | null>(null);
   const withJournal = c.key === ASAAS_KEY && c.audience === "murabbi";
   useEffect(() => {
@@ -227,7 +232,7 @@ function ProgressTab({ report, outline, onChanged }: { report: any; outline: any
                 {hasCharts && <th className="px-3 py-2 font-medium">Flip charts</th>}
                 {outline.course.requirePractical && <th className="px-3 py-2 font-medium">Practical</th>}
                 {withJournal && (
-                  <th className="px-3 py-2 font-medium" title="Counts only: what murabbis write is private">
+                  <th className="px-3 py-2 font-medium" title="Pages written and moments of light. Read them in the Noor Journal tab.">
                     <span className="cursor-help border-b border-dotted border-nc-muted">Journal</span>
                   </th>
                 )}

@@ -177,7 +177,7 @@ export default function MurabbiDashboard({ onNavigate }: { onNavigate?: (page: s
             <p className="text-[11.5px] text-nc-muted mt-1">
               {journal.progress.done}/{journal.progress.total} pages written
               {journal.moments.list.length ? ` · ${journal.moments.list.length} moment${journal.moments.list.length === 1 ? "" : "s"} of light` : ""}
-              {" "}· private to you
+              {" "}· seen by the Noor Circles team
             </p>
           </div>
           {onNavigate && (
