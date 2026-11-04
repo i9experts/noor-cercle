@@ -63,8 +63,10 @@ const Index = () => {
   const [murabbisKey,  setMurabbisKey]  = useState(0);
   const [circlesKey,   setCirclesKey]   = useState(0);
 
-  const handleNav = (page: string) => {
+  const [pageTab, setPageTab] = useState<string | undefined>(undefined);
+  const handleNav = (page: string, tab?: string) => {
     setActivePage(page);
+    setPageTab(tab);
     setNavOpen(false);
     window.scrollTo(0, 0);
   };
@@ -115,11 +117,11 @@ const Index = () => {
 
   const renderPage = () => {
     switch (activePage) {
-      case "dashboard":      return <DashboardPage />;
+      case "dashboard":      return <DashboardPage onNavigate={handleNav} />;
       case "world":          return <WorldPage />;
       case "students":       return <StudentsPage onEnroll={() => setEnrollOpen(true)} refreshKey={studentsKey} />;
-      case "murabbis":       return <MurabbisPage onAddMurabbi={() => setAddMurabbiOpen(true)} refreshKey={murabbisKey} />;
-      case "parents":        return <ParentsPage />;
+      case "murabbis":       return <MurabbisPage key={pageTab ?? "list"} initialTab={pageTab} onAddMurabbi={() => setAddMurabbiOpen(true)} refreshKey={murabbisKey} />;
+      case "parents":        return <ParentsPage key={pageTab ?? "list"} initialTab={pageTab} />;
       case "circles":        return <CirclesPage onNewCircle={() => setNewCircleOpen(true)} refreshKey={circlesKey} />;
       case "attendance":     return <AttendancePage />;
       case "sessions":       return <SessionsPage />;
@@ -135,7 +137,7 @@ const Index = () => {
       case "parent-insights": return <ParentInsightsPage />;
       case "murabbi-profiles": return <MurabbiProfilesPage />;
       case "clusters": return <ClustersPage />;
-      case "hosts":    return <HostsPage />;
+      case "hosts":    return <HostsPage key={pageTab ?? "spaces"} initialTab={pageTab} />;
       case "trainings": return <TrainingsPage />;
       case "parent-ratings": return <ParentRatingsPage />;
       case "contributions":  return <ContributionsPage />;

@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import RegisterView from "@/components/register/RegisterView";
+import PageTabs, { RegisterHeading } from "@/components/register/PageTabs";
 import StatCard from "@/components/shared/StatCard";
 import NcCard, { CardHeader, CardTitle } from "@/components/shared/NcCard";
 import NcBadge from "@/components/shared/NcBadge";
@@ -120,7 +122,7 @@ const TIERS = [
   { num: 3, name: "Mudarrib (Master Trainer)", desc: "2 circles + Tier 2 · Trains other Murabbis" },
 ];
 
-export default function MurabbisPage({
+function MurabbisList({
   refreshKey,
 }: { onAddMurabbi?: () => void; refreshKey?: number }) {
   const { toast } = useToast();
@@ -435,6 +437,25 @@ export default function MurabbisPage({
         onSuccess={() => { setEditMurabbi(null); load(); }}
       />
       <CredentialsModal issued={issued} title="New temporary password" onClose={() => setIssued(null)} />
+    </div>
+  );
+}
+
+/** Murabbis: the list (accounts, tiers) and the register with follow-ups. */
+export default function MurabbisPage(props: { onAddMurabbi?: () => void; refreshKey?: number; initialTab?: string }) {
+  const [tab, setTab] = useState<"list" | "register">(props.initialTab === "register" ? "register" : "list");
+  return (
+    <div className="min-w-0">
+      <PageTabs<"list" | "register"> tabs={[["list", "Murabbis"], ["register", "Register & follow-up"]] as const} value={tab} onChange={setTab} />
+      {tab === "register" ? (
+        <div className="page-animate min-w-0">
+          <RegisterHeading title="Murabbi register">
+            Everything about each murabbi in one place: contact, area, account, circles and attendance, training, rating and rewards.
+            Note each call or visit, set the next follow-up date, and export to Excel or PDF.
+          </RegisterHeading>
+          <RegisterView type="murabbi" />
+        </div>
+      ) : <MurabbisList refreshKey={props.refreshKey} />}
     </div>
   );
 }

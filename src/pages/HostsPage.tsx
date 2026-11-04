@@ -8,16 +8,18 @@ import { AdminSpace, HOST_MODULE_TITLES, HostOptions, HostTrainingRow, hostServi
 import SpaceList from "@/components/host/SpaceList";
 import SpaceDetail from "@/components/host/SpaceDetail";
 import SpaceVisitForm from "@/components/host/SpaceVisitForm";
+import RegisterView from "@/components/register/RegisterView";
 
 const TABS = [
   { key: "spaces", label: "Spaces" },
   { key: "training", label: "Host training" },
+  { key: "register", label: "Register & follow-up" },
 ] as const;
 
 /** Admin: hosts' spaces (visit, approve, place circles) and Asaas for Hosts. */
-export default function HostsPage() {
+export default function HostsPage({ initialTab }: { initialTab?: string }) {
   const { toast } = useToast();
-  const [tab, setTab] = useState<(typeof TABS)[number]["key"]>("spaces");
+  const [tab, setTab] = useState<(typeof TABS)[number]["key"]>(initialTab === "register" ? "register" : "spaces");
   const [spaces, setSpaces] = useState<AdminSpace[]>([]);
   const [loading, setLoading] = useState(true);
   const [options, setOptions] = useState<HostOptions | null>(null);
@@ -62,6 +64,8 @@ export default function HostsPage() {
 
       {tab === "spaces" ? (
         <SpaceList spaces={spaces} options={options} loading={loading} onOpen={(s) => setOpenId(s._id)} onVisit={(s) => setVisitFor(s)} />
+      ) : tab === "register" ? (
+        <RegisterView type="host" />
       ) : (
         <HostTrainingTab />
       )}
