@@ -1,3 +1,5 @@
+import RegisterView from "@/components/register/RegisterView";
+import PageTabs, { RegisterHeading } from "@/components/register/PageTabs";
 import { useEffect, useRef, useState } from "react";
 import StatCard from "@/components/shared/StatCard";
 import NcCard, { CardHeader, CardTitle } from "@/components/shared/NcCard";
@@ -238,7 +240,7 @@ function SendWhatsappModal({ open, onClose, onSuccess }: {
 }
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
-export default function ParentsPage() {
+function ParentsList() {
   const { toast } = useToast();
   const [data, setData]                         = useState<any>(null);
   const [engagement, setEngagement]             = useState<any>(null);
@@ -708,5 +710,24 @@ function CreateLoginModal({ parent, onClose, onDone }: { parent: any; onClose: (
         {saving ? "Creating…" : "Create login"}
       </button>
     </Modal>
+  );
+}
+
+/** Parents: the list and the register with follow-ups. */
+export default function ParentsPage({ initialTab }: { initialTab?: string }) {
+  const [tab, setTab] = useState<"list" | "register">(initialTab === "register" ? "register" : "list");
+  return (
+    <div className="min-w-0">
+      <PageTabs<"list" | "register"> tabs={[["list", "Parents"], ["register", "Register & follow-up"]] as const} value={tab} onChange={setTab} />
+      {tab === "register" ? (
+        <div className="page-animate min-w-0">
+          <RegisterHeading title="Parent register">
+            Every family in one place: contact, area, children with their circle and attendance, account, family profile,
+            Asaas for Parents and rating. Note each call, set the next follow-up date, and export to Excel or PDF.
+          </RegisterHeading>
+          <RegisterView type="parent" />
+        </div>
+      ) : <ParentsList />}
+    </div>
   );
 }

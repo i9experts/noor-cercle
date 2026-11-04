@@ -4,6 +4,7 @@ import {
   Tooltip, ResponsiveContainer, Cell, ReferenceLine,
 } from "recharts";
 import StatCard from "@/components/shared/StatCard";
+import FollowUpsDueCard from "@/components/register/FollowUpsDueCard";
 import QuranBox from "@/components/shared/QuranBox";
 import NcCard, { CardHeader, CardTitle } from "@/components/shared/NcCard";
 import NcBadge from "@/components/shared/NcBadge";
@@ -97,7 +98,7 @@ type CircleTrend = {
 
 
 // ── Main Component ────────────────────────────────────────────────────────────
-export default function DashboardPage() {
+export default function DashboardPage({ onNavigate }: { onNavigate?: (page: string, tab?: string) => void }) {
   const { toast } = useToast();
   const [stats,         setStats]         = useState<any>(null);
   const [extended,      setExtended]      = useState<any>(null);
@@ -215,6 +216,8 @@ export default function DashboardPage() {
         <StatCard label="Sessions Completed" value={stats?.sessionsCompleted ?? "—"} meta="Year 1"               color="teal"   />
         <StatCard label="Parent Engagement"  value={stats ? `${stats.parentEngagement  ?? 0}%` : "—"} meta="This month" color="gold" />
       </div>
+
+      <FollowUpsDueCard onOpen={onNavigate} />
 
       {/* ── Attendance Trend ─────────────────────────────────────────────── */}
       <NcCard>
