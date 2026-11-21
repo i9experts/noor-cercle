@@ -219,6 +219,9 @@ export const trainingService = {
   getMyCertificates : ()                                              => API.get('/training/my-certificates'),
   downloadCertificate: (tier: number)                                 =>
     API.get(`/training/certificate/${tier}/download`, { responseType: 'blob' }),
+  /** Admin: the same tier certificate PDF for any murabbi. */
+  downloadCertificateFor: (userId: string, tier: number)              =>
+    API.get(`/training/admin/certificate/${userId}/${tier}/download`, { responseType: 'blob' }),
   // Admin: exam management
   upsertExam        : (data: { tier: number; title: string; questions: object[]; passingScore?: number }) =>
                        API.post('/training/exams', data),

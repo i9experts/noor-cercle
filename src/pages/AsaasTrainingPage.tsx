@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import {
-  ArrowLeft, CheckCircle2, Eye, Headphones, Pencil, Plus, Presentation, Search, Trash2, Upload, UserPlus, X,
+  ArrowLeft, Award, CheckCircle2, Eye, Headphones, Pencil, Plus, Presentation, Search, Trash2, Upload, UserPlus, X,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { courseService, murabbisService, parentsService } from "@/services/api.service";
@@ -16,6 +16,8 @@ import CourseBuilder from "@/components/training-admin/CourseBuilder";
 import { journalService, type JournalAdminRow } from "@/lib/journal";
 import MarketplaceSettings from "@/components/training-admin/MarketplaceSettings";
 import JournalInsights from "@/components/training-admin/JournalInsights";
+import CertifiedShareModal from "@/components/training-admin/CertifiedShareModal";
+import type { CertifiedPostData } from "@/lib/certifiedPost";
 
 /** Which training this page manages, and who takes it. */
 interface CourseCtx { key: string; audience: "murabbi" | "parent"; who: string; Who: string }
@@ -162,6 +164,7 @@ function ProgressTab({ report, outline, onChanged }: { report: any; outline: any
   const [status, setStatus] = useState("");
   const [assignOpen, setAssignOpen] = useState(false);
   const [detailId, setDetailId] = useState<string | null>(null);
+  const [share, setShare] = useState<{ userId: string; data: CertifiedPostData } | null>(null);
   // Noor Journal counts (Asaas only); the pages themselves are read in the Noor Journal tab.
   const [journal, setJournal] = useState<Map<string, JournalAdminRow> | null>(null);
   const withJournal = c.key === ASAAS_KEY && c.audience === "murabbi";
@@ -178,6 +181,21 @@ function ProgressTab({ report, outline, onChanged }: { report: any; outline: any
       const q = search.trim().toLowerCase();
       return !q || [r.user.fullName, r.user.email].some((v) => v?.toLowerCase().includes(q));
     });
+
+  const anyCertified = (report?.rows ?? []).some((r: any) => r.certificate);
+  const shareData = (r: any): CertifiedPostData => {
+    const j = journal?.get(String(r.user._id));
+    const k = outline.course;
+    return {
+      name: r.user.fullName, courseTitle: k.title, courseTitleUr: k.titleUr, badge: k.badge || "Certified Asaas Murabbi",
+      certificateNumber: r.certificate.number, issuedAt: r.certificate.issuedAt ?? null,
+      lessonsCompleted: r.lessonsCompleted, lessonsTotal: r.lessonsTotal, listenMinutes: r.listenMinutes ?? 0,
+      assessmentBest: r.assessment?.best ?? null, reflectionApproved: r.reflection === "approved",
+      flipCharts: r.flipCharts?.total ? r.flipCharts : null,
+      journal: withJournal && j ? { pagesDone: j.pagesDone, totalPages: j.totalPages } : null,
+      practical: r.practical?.total ?? null,
+    };
+  };
 
   function exportCsv() {
     downloadCsv(`${c.key}-progress.csv`, [
@@ -238,6 +256,7 @@ function ProgressTab({ report, outline, onChanged }: { report: any; outline: any
                 )}
                 <th className="px-3 py-2 font-medium">Status</th>
                 <th className="px-3 py-2 font-medium">Due</th>
+                {anyCertified && <th className="px-3 py-2 font-medium">Certificate</th>}
               </tr>
             </thead>
             <tbody>
@@ -300,6 +319,16 @@ function ProgressTab({ report, outline, onChanged }: { report: any; outline: any
                     <td className={cn("whitespace-nowrap px-3 py-3", r.overdue ? "font-semibold text-nc-red" : "text-nc-dark")}>
                       {r.dueDate ? formatDate(r.dueDate) : "—"}
                     </td>
+                    {anyCertified && (
+                      <td className="px-3 py-3">
+                        {r.certificate ? (
+                          <button className="btn-outline flex items-center gap-1.5 whitespace-nowrap !px-2.5 !py-1 text-[12px]"
+                            onClick={(e) => { e.stopPropagation(); setShare({ userId: String(r.user._id), data: shareData(r) }); }}>
+                            <Award className="h-3.5 w-3.5" /> Certificate &amp; post
+                          </button>
+                        ) : null}
+                      </td>
+                    )}
                   </tr>
                 );
               })}
@@ -310,6 +339,7 @@ function ProgressTab({ report, outline, onChanged }: { report: any; outline: any
 
       <AssignModal open={assignOpen} assigned={new Set((report?.rows ?? []).map((r: any) => r.user._id))}
         onClose={() => setAssignOpen(false)} onDone={() => { setAssignOpen(false); onChanged(); }} />
+      {share && <CertifiedShareModal data={share.data} userId={share.userId} tier={outline.course.tier ?? null} onClose={() => setShare(null)} />}
       {detailId && (
         <DetailModal userId={detailId} requirePractical={outline.course.requirePractical}
           onClose={() => setDetailId(null)} onChanged={onChanged} />
