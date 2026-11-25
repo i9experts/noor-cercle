@@ -17,6 +17,8 @@ export interface JournalField {
   labelEn: string;
   kind: "text" | "textarea" | "choice";
   options?: JournalOption[];
+  /** Not needed for the page to count as written (Parent Journal). */
+  optional?: boolean;
 }
 
 export interface JournalReflection {
@@ -36,7 +38,8 @@ export interface JournalPage {
   introEn: string;
   hintUr?: string;
   hintEn?: string;
-  kind: "fields" | "reflection";
+  /** Absent on Parent Journal pages (always writing pages). */
+  kind?: "fields" | "reflection";
   fields: JournalField[];
   lesson: { _id: string; code: string; title: string } | null;
   open: boolean;
@@ -52,7 +55,7 @@ export interface JournalMoment {
   _id: string;
   date: string;
   text: string;
-  circle: { _id: string; name: string } | null;
+  circle?: { _id: string; name: string } | null;
   createdAt: string;
   /** The murabbi agreed their name may be shown if the team features it. */
   shareName?: boolean;
@@ -174,6 +177,78 @@ export const journalService = {
   feature      : (id: string, featured: boolean)            => API.patch(`/journal/admin/moments/${id}`, { featured }),
 };
 
+export const parentJournalService = {
+  get          : ()                                         => API.get("/parent-journal"),
+  save         : (key: string, answers: Record<string, string>) => API.put(`/parent-journal/pages/${key}`, { answers }),
+  addMoment    : (data: { text: string; date?: string })    => API.post("/parent-journal/moments", data),
+  deleteMoment : (id: string)                               => API.delete(`/parent-journal/moments/${id}`),
+  adminProgress: ()                                         => API.get("/parent-journal/admin/progress"),
+};
+
+/**
+ * Who the journal belongs to. The murabbis' Noor Journal is read by the team;
+ * the Parent Journal is private ("only for you", as the parents' audio says),
+ * so it has no circles, no featuring and no team reading.
+ */
+export interface JournalVariant {
+  key: "murabbi" | "parent";
+  title: string;
+  titleUr: string;
+  /** The training the pages come from, as named in sentences. */
+  course: string;
+  privacyEn: string;
+  privacyUr: string;
+  notAssigned: string;
+  momentsLesson: string;
+  momentsTitle: string;
+  momentsTitleUr: string;
+  momentsIntro: string;
+  momentsEmpty: string;
+  /** Murabbis link a moment to a circle and may let the team feature it. */
+  sharing: boolean;
+  service: {
+    get: () => Promise<{ data: any }>;
+    save: (key: string, answers: Record<string, string>) => Promise<{ data: any }>;
+    addMoment: (data: { text: string; date?: string; circleId?: string; shareName?: boolean }) => Promise<{ data: any }>;
+    deleteMoment: (id: string) => Promise<{ data: any }>;
+    updateMoment?: (id: string, data: { shareName: boolean }) => Promise<{ data: any }>;
+  };
+}
+
+export const MURABBI_JOURNAL: JournalVariant = {
+  key: "murabbi",
+  title: "Noor Journal",
+  titleUr: "نور جرنل",
+  course: "Asaas Training",
+  privacyEn: "Your journal is shared with the Noor Circles team so they can support you. Supervisors and other murabbis can’t see it.",
+  privacyUr: "آپ کا جرنل نور سرکلز ٹیم دیکھ سکتی ہے تاکہ آپ کی مدد کر سکے۔ سپروائزر اور دوسرے مربی اسے نہیں دیکھ سکتے۔",
+  notAssigned: "Your journal’s pages open as you listen to the Asaas Training. It hasn’t been assigned to you yet; you’ll get a notification when it is.",
+  momentsLesson: MOMENTS_LESSON,
+  momentsTitle: "Moments of light",
+  momentsTitleUr: "روشن لمحے",
+  momentsIntro: "Small moments from your circles worth remembering: a child’s question, a smile, a change you noticed. Write them down while they’re fresh.",
+  momentsEmpty: "No moments yet. The first one is waiting in your next circle.",
+  sharing: true,
+  service: journalService,
+};
+
+export const PARENT_JOURNAL: JournalVariant = {
+  key: "parent",
+  title: "Parent Journal",
+  titleUr: "والدین کا جرنل",
+  course: "Asaas for Parents",
+  privacyEn: "Your journal is only for you. Nobody else reads it, not the Noor Circles team, not your child’s murabbi. The team only sees how many pages are written.",
+  privacyUr: "یہ جرنل صرف آپ کے لیے ہے۔ اسے کوئی اور نہیں پڑھتا، نہ نور سرکلز ٹیم، نہ آپ کے بچے کا مربی۔ ٹیم صرف یہ دیکھتی ہے کہ کتنے صفحے لکھے گئے۔",
+  notAssigned: "Your journal’s pages open as you listen to Asaas for Parents. You haven’t been enrolled yet; the Noor Circles team will add you.",
+  momentsLesson: "PW-02",
+  momentsTitle: "Moments at home",
+  momentsTitleUr: "گھر کے روشن لمحے",
+  momentsIntro: "Small moments at home worth remembering: a question your child asked, a prayer together, a change you noticed. Write them down while they’re fresh.",
+  momentsEmpty: "No moments yet. The first one may be at dinner tonight.",
+  sharing: false,
+  service: parentJournalService,
+};
+
 /** Today in Pakistan time, as YYYY-MM-DD (matches the backend). */
 export const pkToday = () => new Date(Date.now() + 5 * 3600_000).toISOString().slice(0, 10);
 
@@ -199,7 +274,7 @@ function fieldHtml(f: JournalField, value?: string) {
 }
 
 /** Opens a Noor Circles branded A5 booklet of the journal with the print dialog. */
-export function printJournal(data: JournalData) {
+export function printJournal(data: JournalData, v: JournalVariant = MURABBI_JOURNAL) {
   const w = window.open("", "_blank", "width=720,height=1000");
   if (!w) return;
   const today = new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
@@ -222,7 +297,7 @@ export function printJournal(data: JournalData) {
     ? data.moments.list.map((m) => `<div class="moment"><div class="md">${esc(momentDate(m.date))}${m.circle ? ` · ${esc(m.circle.name)}` : ""}</div><div class="ans" dir="auto">${para(m.text)}</div></div>`).join("")
     : lines(16);
 
-  w.document.write(`<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Noor Journal · ${esc(data.owner)}</title>
+  w.document.write(`<!doctype html><html lang="en"><head><meta charset="utf-8"><title>${esc(v.title)} · ${esc(data.owner)}</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;700&display=swap">
 <style>
 @page { size: A5 portrait; margin: 0 }
@@ -267,16 +342,16 @@ body { margin: 0; font-family: Georgia, serif; color: #361a2c; font-size: 11px; 
 <section class="sheet cover"><div class="inner">
 <div class="brand">NOOR CIRCLES</div>
 <div class="bism">بسم اللہ الرحمٰن الرحیم</div>
-<div class="ttl">Noor Journal</div>
-<div class="ttlu">نور جرنل</div>
+<div class="ttl">${esc(v.title)}</div>
+<div class="ttlu">${esc(v.titleUr)}</div>
 <div class="rule"></div>
 <div class="owner">${esc(data.owner)}</div>
-<div class="small">Asaas Murabbi Training · ${esc(today)}</div>
+<div class="small">${esc(v.key === "parent" ? "Asaas for Parents" : "Asaas Murabbi Training")} · ${esc(today)}</div>
 <div class="small">${data.progress.done} of ${data.progress.total} pages written</div>
 </div>${foot}</section>
 ${pages}
-<section class="sheet"><div class="ph"><div class="num">✦</div><div><div class="t">Moments of light</div><div class="u tu">روشن لمحے</div></div></div>
-<div class="intro"><div class="en">Small moments from your circles worth remembering: a question, a smile, a change.</div></div>
+<section class="sheet"><div class="ph"><div class="num">✦</div><div><div class="t">${esc(v.momentsTitle)}</div><div class="u tu">${esc(v.momentsTitleUr)}</div></div></div>
+<div class="intro"><div class="en">${esc(v.momentsIntro)}</div></div>
 ${moments}${foot}</section>
 <script>document.fonts.ready.then(() => setTimeout(() => window.print(), 300));</script></body></html>`);
   w.document.close();

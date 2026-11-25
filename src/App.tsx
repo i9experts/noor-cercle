@@ -26,6 +26,7 @@ const SupervisorIndex    = lazy(() => import('./pages/supervisor/SupervisorIndex
 const ParentTrainings    = lazy(() => import('./pages/ParentTrainings.tsx'));
 const ParentTrainingPlayer = lazy(() => import('./pages/ParentTrainingPlayer.tsx'));
 const ParentFounder      = lazy(() => import('./pages/ParentFounder.tsx'));
+const ParentJournalPage  = lazy(() => import('./pages/ParentJournalPage.tsx'));
 const HostHome           = lazy(() => import('./pages/host/HostHome.tsx'));
 const HostSpacePage      = lazy(() => import('./pages/host/HostSpacePage.tsx'));
 const HostTraining       = lazy(() => import('./pages/host/HostTraining.tsx'));
@@ -104,6 +105,7 @@ const App = () => (
               <Route path="/parent/trainings" element={<ProtectedRoute role="parent"><ParentTrainings /></ProtectedRoute>} />
               <Route path="/parent/trainings/:key" element={<ProtectedRoute role="parent"><ParentTrainingPlayer /></ProtectedRoute>} />
               <Route path="/parent/founder" element={<ProtectedRoute role="parent"><ParentFounder /></ProtectedRoute>} />
+              <Route path="/parent/journal" element={<ProtectedRoute role="parent"><ParentJournalPage /></ProtectedRoute>} />
               <Route path="/parent/*" element={<ProtectedRoute role="parent"><ParentHome /></ProtectedRoute>} />
 
               {/* ── Host routes ── */}

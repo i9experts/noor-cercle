@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import {
   ArrowLeft, Check, ChevronLeft, ChevronRight, Headphones, Lock, NotebookPen, Play, Printer, ShieldCheck, Sparkles, Star, Trash2,
@@ -11,9 +11,13 @@ import { cn } from "@/lib/utils";
 import { apiError, apiMessage, unwrap } from "@/lib/finance";
 import { ASAAS_KEY, hasUrdu } from "@/lib/course";
 import {
-  MOMENTS_LESSON, MOMENTS_VIEW, journalService, momentDate, pkToday, printJournal,
-  type JournalData, type JournalField, type JournalPage,
+  MOMENTS_VIEW, MURABBI_JOURNAL, momentDate, pkToday, printJournal,
+  type JournalData, type JournalField, type JournalPage, type JournalVariant,
 } from "@/lib/journal";
+
+/** Whose journal this is (murabbi or parent): titles, privacy, moments and the API. */
+const Variant = createContext<JournalVariant>(MURABBI_JOURNAL);
+const useVariant = () => useContext(Variant);
 
 const PAPER = "relative overflow-hidden rounded-xl border border-gold/35 bg-[#fffdf8] shadow-nc";
 
@@ -37,9 +41,13 @@ interface Props {
   /** Preselects a circle when opening Moments of light. */
   initialCircleId?: string | null;
   onNavigate?: (page: string) => void;
+  /** Opens the training the pages come from (overrides onNavigate). */
+  onOpenCourse?: () => void;
+  /** The murabbis' Noor Journal (default) or the Parent Journal. */
+  variant?: JournalVariant;
 }
 
-export default function MurabbiJournal({ initialView = null, initialCircleId = null, onNavigate }: Props) {
+export default function MurabbiJournal({ initialView = null, initialCircleId = null, onNavigate, onOpenCourse, variant = MURABBI_JOURNAL }: Props) {
   const { toast } = useToast();
   const [data, setData] = useState<JournalData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -48,7 +56,7 @@ export default function MurabbiJournal({ initialView = null, initialCircleId = n
 
   const load = useCallback(async () => {
     try {
-      setData(unwrap<JournalData>(await journalService.get()));
+      setData(unwrap<JournalData>(await variant.service.get()));
       setFailed(false);
     } catch (err) {
       setFailed(true);
@@ -75,6 +83,7 @@ export default function MurabbiJournal({ initialView = null, initialCircleId = n
   }, []);
 
   if (loading) return <NcCard><div className="py-16 text-center text-sm text-nc-muted">Opening your journal…</div></NcCard>;
+  const v = variant;
   if (failed || !data) {
     return (
       <NcCard className="py-14 text-center">
@@ -88,21 +97,22 @@ export default function MurabbiJournal({ initialView = null, initialCircleId = n
   const views = [...data.pages.map((p) => p.key), MOMENTS_VIEW];
   const idx = view ? views.indexOf(view) : -1;
   const page = data.pages.find((p) => p.key === view);
-  const toCourse = onNavigate ? () => onNavigate("murabbi-course") : undefined;
+  const toCourse = onOpenCourse ?? (onNavigate ? () => onNavigate("murabbi-course") : undefined);
   const nav = idx >= 0 && (
     <PageNav
       prev={idx > 0 ? views[idx - 1] : null}
       next={idx < views.length - 1 ? views[idx + 1] : null}
-      label={(v) => (v === MOMENTS_VIEW ? "Moments of light" : `${data.pages.find((p) => p.key === v)?.number}. ${data.pages.find((p) => p.key === v)?.titleEn}`)}
+      label={(x) => (x === MOMENTS_VIEW ? v.momentsTitle : `${data.pages.find((p) => p.key === x)?.number}. ${data.pages.find((p) => p.key === x)?.titleEn}`)}
       onGo={go}
     />
   );
 
   return (
+    <Variant.Provider value={v}>
     <div className="page-animate mx-auto max-w-4xl">
       {!data.assigned && (
         <div className="mb-4 rounded-lg border border-gold/30 bg-gold/[0.07] px-4 py-3 text-[12.5px] text-nc-dark">
-          Your journal’s pages open as you listen to the Asaas Training. It hasn’t been assigned to you yet; you’ll get a notification when it is.
+          {v.notAssigned}
         </div>
       )}
 
@@ -114,7 +124,7 @@ export default function MurabbiJournal({ initialView = null, initialCircleId = n
       ) : (
         <>
           <button className="mb-3 inline-flex items-center gap-1 text-[12.5px] text-nc-muted hover:text-nc-dark" onClick={() => go(null)}>
-            <ArrowLeft className="h-3.5 w-3.5" /> Noor Journal · all pages
+            <ArrowLeft className="h-3.5 w-3.5" /> {v.title} · all pages
           </button>
           {view === MOMENTS_VIEW ? (
             <MomentsView data={data} initialCircleId={initialCircleId} onChanged={load} toCourse={toCourse} />
@@ -129,12 +139,14 @@ export default function MurabbiJournal({ initialView = null, initialCircleId = n
         </>
       )}
     </div>
+    </Variant.Provider>
   );
 }
 
 // ── Cover & contents ────────────────────────────────────────────────────────
 
 function Cover({ data }: { data: JournalData }) {
+  const v = useVariant();
   const { done, total } = data.progress;
   const pct = total ? Math.round((done / total) * 100) : 0;
   return (
@@ -144,8 +156,8 @@ function Cover({ data }: { data: JournalData }) {
       <div className="text-center">
         <div className="text-[10.5px] font-semibold uppercase tracking-[0.22em] text-gold-dim">Noor Circles</div>
         <Urdu className="mt-2 !text-center text-[17px] leading-[2.4] text-plum">بسم اللہ الرحمٰن الرحیم</Urdu>
-        <h2 className="mt-1 font-serif text-[28px] leading-tight text-plum sm:text-[32px]">Noor Journal</h2>
-        <Urdu className="!text-center text-[22px] leading-[2.2] text-plum">نور جرنل</Urdu>
+        <h2 className="mt-1 font-serif text-[28px] leading-tight text-plum sm:text-[32px]">{v.title}</h2>
+        <Urdu className="!text-center text-[22px] leading-[2.2] text-plum">{v.titleUr}</Urdu>
         <div className="mx-auto my-3 h-px w-24 bg-gold" />
         <div className="font-serif text-[18px] text-nc-dark">{data.owner}</div>
         <div className="mx-auto mt-4 max-w-xs">
@@ -159,11 +171,11 @@ function Cover({ data }: { data: JournalData }) {
         <div className="flex flex-1 items-start gap-2 text-[12px] leading-relaxed text-nc-muted">
           <ShieldCheck className="mt-0.5 h-4 w-4 flex-shrink-0 text-plum" />
           <div className="min-w-0">
-            Your journal is shared with the Noor Circles team so they can support you. Supervisors and other murabbis can’t see it.
-            <Urdu className="mt-1 text-[12.5px] leading-[2]">آپ کا جرنل نور سرکلز ٹیم دیکھ سکتی ہے تاکہ آپ کی مدد کر سکے۔ سپروائزر اور دوسرے مربی اسے نہیں دیکھ سکتے۔</Urdu>
+            {v.privacyEn}
+            <Urdu className="mt-1 text-[12.5px] leading-[2]">{v.privacyUr}</Urdu>
           </div>
         </div>
-        <button className="btn-outline flex-shrink-0 justify-center !py-2 text-[12.5px]" onClick={() => printJournal(data)}>
+        <button className="btn-outline flex-shrink-0 justify-center !py-2 text-[12.5px]" onClick={() => printJournal(data, v)}>
           <Printer className="h-3.5 w-3.5" /> Print my journal
         </button>
       </div>
@@ -172,6 +184,7 @@ function Cover({ data }: { data: JournalData }) {
 }
 
 function Contents({ data, onOpen }: { data: JournalData; onOpen: (v: string) => void }) {
+  const v = useVariant();
   const m = data.moments;
   return (
     <div className={cn(PAPER, "p-2 sm:p-3")}>
@@ -207,11 +220,11 @@ function Contents({ data, onOpen }: { data: JournalData; onOpen: (v: string) => 
             </span>
             <span className="min-w-0 flex-1">
               <span className={cn("block text-[13.5px] font-semibold", m.open ? "text-nc-dark" : "text-nc-muted")}>
-                Moments of light{m.list.length ? <span className="font-normal text-nc-muted"> · {m.list.length}</span> : null}
+                {v.momentsTitle}{m.list.length ? <span className="font-normal text-nc-muted"> · {m.list.length}</span> : null}
               </span>
-              <span dir="rtl" lang="ur" className="urdu block text-right text-[13px] leading-[2] text-nc-muted">روشن لمحے</span>
+              <span dir="rtl" lang="ur" className="urdu block text-right text-[13px] leading-[2] text-nc-muted">{v.momentsTitleUr}</span>
             </span>
-            <PageStatus done={false} open={m.open} code={MOMENTS_LESSON} />
+            <PageStatus done={false} open={m.open} code={v.momentsLesson} />
           </button>
         </li>
       </ol>
@@ -321,17 +334,18 @@ function ListenButton({ page }: { page: JournalPage }) {
 }
 
 function LockedPage({ page, toCourse }: { page: JournalPage; toCourse?: () => void }) {
+  const v = useVariant();
   return (
     <div className={cn(PAPER, "p-5 sm:p-8")}>
       <PageHeader page={page} />
       <div className="py-6 text-center">
         <Lock className="mx-auto mb-3 h-8 w-8 text-gold-dim" strokeWidth={1.5} />
         <p className="mx-auto max-w-md text-[13.5px] text-nc-dark">
-          This page opens after you listen to <span className="font-semibold" dir="auto">{page.lesson?.title ?? "its lesson"}</span> ({page.lessonCode}) in Asaas Training.
+          This page opens after you listen to <span className="font-semibold" dir="auto">{page.lesson?.title ?? "its lesson"}</span> ({page.lessonCode}) in {v.course}.
         </p>
         {toCourse && (
           <button className="btn-primary mt-4 !py-2 text-[12.5px]" onClick={toCourse}>
-            <Headphones className="h-3.5 w-3.5" /> Go to Asaas Training
+            <Headphones className="h-3.5 w-3.5" /> Go to {v.course}
           </button>
         )}
       </div>
@@ -343,6 +357,7 @@ type SaveState = "idle" | "saving" | "saved" | "error";
 
 function WritingPage({ page, onSaved }: { page: JournalPage; onSaved: (key: string, answers: Record<string, string>, done: boolean) => void }) {
   const { toast } = useToast();
+  const v = useVariant();
   const [answers, setAnswers] = useState<Record<string, string>>(() => ({ ...(page.answers ?? {}) }));
   const [state, setState] = useState<SaveState>("idle");
   const latest = useRef(answers);
@@ -361,11 +376,11 @@ function WritingPage({ page, onSaved }: { page: JournalPage; onSaved: (key: stri
     setState("saving");
     const snapshot = { ...latest.current };
     try {
-      const r = unwrap<{ done: boolean; points: number }>(await journalService.save(page.key, snapshot));
+      const r = unwrap<{ done: boolean; points: number }>(await v.service.save(page.key, snapshot));
       setState("saved");
       onSaved(page.key, snapshot, r.done);
       if (r.done && !wasDone.current) {
-        toast({ title: "This page is complete. MashaAllah!", description: r.points ? `+${r.points} training points` : undefined });
+        toast({ title: "This page is complete. MashaAllah!", description: r.points ? `+${r.points} points` : undefined });
       }
       wasDone.current = r.done;
     } catch (err) {
@@ -376,7 +391,7 @@ function WritingPage({ page, onSaved }: { page: JournalPage; onSaved: (key: stri
       inflight.current = false;
       if (queued.current) { queued.current = false; dirty.current = true; save(); }
     }
-  }, [page.key, onSaved, toast]);
+  }, [page.key, onSaved, toast, v]);
 
   // Save anything still waiting when the page is left.
   const saveRef = useRef(save);
@@ -420,7 +435,7 @@ function FieldInput({ field, value, onChange, onBlur }: {
   const label = (
     <label htmlFor={field.kind === "choice" ? undefined : id} className="mb-1.5 block">
       <Urdu className="text-[15px] leading-[2.2] text-nc-dark">{field.labelUr}</Urdu>
-      <span className="block text-[12.5px] font-medium text-nc-muted">{field.labelEn}</span>
+      <span className="block text-[12.5px] font-medium text-nc-muted">{field.labelEn}{field.optional && <span className="font-normal"> · optional</span>}</span>
     </label>
   );
 
@@ -602,6 +617,7 @@ function MomentsView({ data, initialCircleId, onChanged, toCourse }: {
   data: JournalData; initialCircleId: string | null; onChanged: () => Promise<void> | void; toCourse?: () => void;
 }) {
   const { toast } = useToast();
+  const v = useVariant();
   const m = data.moments;
   const [circles, setCircles] = useState<{ _id: string; name: string }[]>([]);
   const [text, setText] = useState("");
@@ -614,16 +630,16 @@ function MomentsView({ data, initialCircleId, onChanged, toCourse }: {
   const [sharing, setSharing] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!m.open) return;
+    if (!m.open || !v.sharing) return;
     murabbisService.getMyCircles()
       .then((r) => setCircles(unwrap<any[]>(r) ?? []))
       .catch(() => {});
-  }, [m.open]);
+  }, [m.open, v.sharing]);
 
   async function add() {
     setSaving(true);
     try {
-      const res = await journalService.addMoment({ text: text.trim(), date, circleId: circleId || undefined, shareName });
+      const res = await v.service.addMoment(v.sharing ? { text: text.trim(), date, circleId: circleId || undefined, shareName } : { text: text.trim(), date });
       toast({ title: apiMessage(res, "Moment saved.") });
       setText("");
       await onChanged();
@@ -637,7 +653,8 @@ function MomentsView({ data, initialCircleId, onChanged, toCourse }: {
   async function toggleShare(id: string, value: boolean) {
     setSharing(id);
     try {
-      const res = await journalService.updateMoment(id, { shareName: value });
+      if (!v.service.updateMoment) return;
+      const res = await v.service.updateMoment(id, { shareName: value });
       toast({ title: apiMessage(res, "Saved.") });
       await onChanged();
     } catch (err) {
@@ -651,7 +668,7 @@ function MomentsView({ data, initialCircleId, onChanged, toCourse }: {
     if (!removing) return;
     setBusy(true);
     try {
-      const res = await journalService.deleteMoment(removing);
+      const res = await v.service.deleteMoment(removing);
       toast({ title: apiMessage(res, "Moment removed.") });
       setRemoving(null);
       await onChanged();
@@ -667,23 +684,21 @@ function MomentsView({ data, initialCircleId, onChanged, toCourse }: {
       <div className="mb-4 flex items-start gap-3 border-b border-gold/40 pb-3">
         <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gold/20 text-gold-dim"><Sparkles className="h-5 w-5" /></span>
         <div className="min-w-0 flex-1">
-          <h2 className="font-serif text-[21px] leading-tight text-plum sm:text-[24px]">Moments of light</h2>
-          <Urdu className="text-[16px] leading-[2.1] text-plum/80">روشن لمحے</Urdu>
+          <h2 className="font-serif text-[21px] leading-tight text-plum sm:text-[24px]">{v.momentsTitle}</h2>
+          <Urdu className="text-[16px] leading-[2.1] text-plum/80">{v.momentsTitleUr}</Urdu>
         </div>
       </div>
-      <p className="mb-4 text-[13px] leading-relaxed text-nc-muted">
-        Small moments from your circles worth remembering: a child’s question, a smile, a change you noticed. Write them down while they’re fresh.
-      </p>
+      <p className="mb-4 text-[13px] leading-relaxed text-nc-muted">{v.momentsIntro}</p>
 
       {!m.open ? (
         <div className="py-6 text-center">
           <Lock className="mx-auto mb-3 h-8 w-8 text-gold-dim" strokeWidth={1.5} />
           <p className="mx-auto max-w-md text-[13.5px] text-nc-dark">
-            Moments of light open after you listen to <span className="font-semibold" dir="auto">{m.lesson?.title ?? "its lesson"}</span> ({MOMENTS_LESSON}) in Asaas Training.
+            {v.momentsTitle} open after you listen to <span className="font-semibold" dir="auto">{m.lesson?.title ?? "its lesson"}</span> ({v.momentsLesson}) in {v.course}.
           </p>
           {toCourse && (
             <button className="btn-primary mt-4 !py-2 text-[12.5px]" onClick={toCourse}>
-              <Headphones className="h-3.5 w-3.5" /> Go to Asaas Training
+              <Headphones className="h-3.5 w-3.5" /> Go to {v.course}
             </button>
           )}
         </div>
@@ -691,20 +706,20 @@ function MomentsView({ data, initialCircleId, onChanged, toCourse }: {
         <>
           <div className="mb-6 rounded-lg border border-gold/30 bg-white/50 p-3 sm:p-4">
             <div className="mb-2 text-[13px] font-semibold text-nc-dark">Add a moment</div>
-            <div className="mb-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <div className={cn("mb-2 grid grid-cols-1 gap-2", v.sharing && "sm:grid-cols-2")}>
               <label className="block text-[11.5px] text-nc-muted">
                 Date
                 <input type="date" value={date} max={pkToday()} onChange={(e) => setDate(e.target.value)}
                   className="mt-0.5 h-9 w-full rounded-md border border-input bg-card px-2.5 text-[13px] text-nc-dark focus:border-primary focus:outline-none" />
               </label>
-              <label className="block text-[11.5px] text-nc-muted">
+              {v.sharing && <label className="block text-[11.5px] text-nc-muted">
                 Circle (optional)
                 <select value={circleId} onChange={(e) => setCircleId(e.target.value)}
                   className="mt-0.5 h-9 w-full rounded-md border border-input bg-card px-2.5 text-[13px] text-nc-dark focus:border-primary focus:outline-none">
                   <option value="">No circle</option>
                   {circles.map((c) => <option key={c._id} value={c._id}>{c.name}</option>)}
                 </select>
-              </label>
+              </label>}
             </div>
             <textarea
               value={text}
@@ -718,13 +733,13 @@ function MomentsView({ data, initialCircleId, onChanged, toCourse }: {
               className={cn("w-full resize-y rounded-md border border-gold/30 bg-transparent px-3 pb-2 pt-[10px] text-[14.5px] text-nc-dark focus:border-plum focus:outline-none",
                 hasUrdu(text) && "urdu text-[15px]")}
             />
-            <label className="mt-2 flex cursor-pointer items-start gap-2 text-[12px] leading-relaxed text-nc-muted">
+            {v.sharing && <label className="mt-2 flex cursor-pointer items-start gap-2 text-[12px] leading-relaxed text-nc-muted">
               <input type="checkbox" checked={shareName} onChange={(e) => setShareName(e.target.checked)} className="mt-1 flex-shrink-0 accent-[hsl(var(--plum))]" />
               <span className="min-w-0">
                 If the team features this moment, they may use my name
                 <span dir="rtl" lang="ur" className="urdu block text-right text-[12.5px] leading-[2]">اگر ٹیم یہ لمحہ شائع کرے تو میرا نام استعمال کر سکتی ہے</span>
               </span>
-            </label>
+            </label>}
             <div className="mt-2 flex justify-end">
               <button className="btn-gold !py-2 text-[12.5px]" disabled={saving || !text.trim() || !date} onClick={add}>
                 {saving ? "Saving…" : "Save this moment"}
@@ -733,7 +748,7 @@ function MomentsView({ data, initialCircleId, onChanged, toCourse }: {
           </div>
 
           {m.list.length === 0 ? (
-            <p className="py-6 text-center text-[13px] text-nc-muted">No moments yet. The first one is waiting in your next circle.</p>
+            <p className="py-6 text-center text-[13px] text-nc-muted">{v.momentsEmpty}</p>
           ) : (
             <ul className="space-y-3">
               {m.list.map((x) => (
@@ -753,7 +768,7 @@ function MomentsView({ data, initialCircleId, onChanged, toCourse }: {
                   </div>
                   <p dir="auto" className={cn("whitespace-pre-wrap break-words text-nc-dark",
                     hasUrdu(x.text) ? "urdu text-[15px] leading-[2.2]" : "text-[13.5px] leading-relaxed")}>{x.text}</p>
-                  <button
+                  {v.sharing && <button
                     role="switch"
                     aria-checked={!!x.shareName}
                     disabled={sharing === x._id}
@@ -763,7 +778,7 @@ function MomentsView({ data, initialCircleId, onChanged, toCourse }: {
                       x.shareName ? "border-plum/30 bg-plum/10 text-plum" : "border-border bg-card text-nc-muted hover:text-nc-dark")}>
                     <span className={cn("h-2 w-2 rounded-full", x.shareName ? "bg-plum" : "bg-nc-muted/40")} />
                     {x.shareName ? "My name may be used if featured" : "Without my name if featured"}
-                  </button>
+                  </button>}
                 </li>
               ))}
             </ul>
