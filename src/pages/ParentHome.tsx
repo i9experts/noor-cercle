@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { GraduationCap, Headphones, KeyRound, LogOut, Mail, Sparkles } from "lucide-react";
+import { GraduationCap, Headphones, KeyRound, LogOut, Mail, NotebookPen, Sparkles } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { familyService } from "@/services/api.service";
 import { useAuth } from "@/context/AuthContext";
@@ -31,6 +31,11 @@ export default function ParentHome() {
               <Headphones className="h-3.5 w-3.5" />
               <span dir="rtl" lang="ur" className="urdu leading-[1.6] sm:hidden">Asaas</span>
               <span dir="rtl" lang="ur" className="urdu hidden leading-[1.6] sm:inline">والدین کا Asaas</span>
+            </Link>
+            <Link to="/parent/journal" className={btn} aria-label="Parent Journal">
+              <NotebookPen className="h-3.5 w-3.5" />
+              <span dir="rtl" lang="ur" className="urdu leading-[1.6]">جرنل</span>
+              <span className="hidden sm:inline">· Journal</span>
             </Link>
             <Link to="/parent/trainings" className={btn} aria-label="Trainings">
               <GraduationCap className="h-3.5 w-3.5" />

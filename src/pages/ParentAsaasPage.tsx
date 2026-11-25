@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { CheckCircle2, Eye, Lock, Printer, Search, Trash2, Unlock, Upload, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { courseService, parentCourseService, PARENT_COURSE_KEY } from "@/services/api.service";
+import { parentJournalService } from "@/lib/journal";
 import StatCard from "@/components/shared/StatCard";
 import NcCard from "@/components/shared/NcCard";
 import Modal from "@/components/shared/Modal";
@@ -34,6 +35,7 @@ export default function ParentAsaasPage() {
       const [r, o] = await Promise.all([parentCourseService.progress(), courseService.outline(PARENT_COURSE_KEY)]);
       setReport(unwrap(r));
       setOutline(unwrap(o));
+
     } catch (err) {
       toast({ variant: "destructive", title: apiError(err, "Could not load Asaas for Parents.") });
     } finally {
@@ -96,6 +98,13 @@ export default function ParentAsaasPage() {
 // ── Progress ────────────────────────────────────────────────────────────────
 
 function ProgressTab({ report, onChanged }: { report: any; onChanged: () => void }) {
+  /** Parent Journal pages written per parent (counts only; the journal is private). */
+  const [journal, setJournal] = useState<Map<string, { pagesDone: number; totalPages: number }>>(new Map());
+  useEffect(() => {
+    parentJournalService.adminProgress()
+      .then((j) => setJournal(new Map(unwrap<any[]>(j).map((x) => [String(x.user._id), x]))))
+      .catch(() => setJournal(new Map()));
+  }, [report]);
   const { toast } = useToast();
   const [q, setQ] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
@@ -168,6 +177,9 @@ function ProgressTab({ report, onChanged }: { report: any; onChanged: () => void
                   <th className="px-3 py-2.5 font-medium">Clips</th>
                   <th className="px-3 py-2.5 font-medium">Checks</th>
                   <th className="px-3 py-2.5 font-medium">Targets</th>
+                  <th className="px-3 py-2.5 font-medium" title="Parent Journal pages written. The journal is private: the team sees counts only.">
+                    <span className="cursor-help border-b border-dotted border-nc-muted">Journal</span>
+                  </th>
                   <th className="px-3 py-2.5 font-medium">Self-check</th>
                   <th className="px-3 py-2.5 font-medium">Certificate</th>
                   <th className="px-3 py-2.5 font-medium">Status</th>
@@ -205,6 +217,9 @@ function ProgressTab({ report, onChanged }: { report: any; onChanged: () => void
                         {r.finalPassed && <span className="ml-1.5 text-nc-green" title="Final check passed">· final ✓</span>}
                       </td>
                       <td className="whitespace-nowrap px-3 py-3">{r.targetsMet}/8</td>
+                      <td className="whitespace-nowrap px-3 py-3">
+                        {(() => { const j = journal.get(String(r.user._id)); return j ? <span className={cn(j.pagesDone === j.totalPages && "font-semibold text-nc-green")}>{j.pagesDone}/{j.totalPages}</span> : <span className="text-nc-muted">—</span>; })()}
+                      </td>
                       <td className="whitespace-nowrap px-3 py-3">
                         <span className={r.selfCheck.start ? "text-nc-green" : "text-nc-muted"}>Start {r.selfCheck.start ? "✓" : "—"}</span>
                         <span className={cn("ml-2", r.selfCheck.end ? "text-nc-green" : "text-nc-muted")}>End {r.selfCheck.end ? "✓" : "—"}</span>
